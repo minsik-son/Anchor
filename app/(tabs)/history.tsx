@@ -27,9 +27,32 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const DELETE_THRESHOLD = 80;
 const DELETE_CONFIRM_THRESHOLD = 160;
 
+// Format relative time (당일이면 "X분 전", 24시간 이상이면 날짜)
+function formatRelativeTime(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    // 24시간 이내
+    if (diffDays < 1) {
+        if (diffMinutes < 1) return '방금 전';
+        if (diffMinutes < 60) return `${diffMinutes}분 전`;
+        return `${diffHours}시간 전`;
+    }
+
+    // 24시간 이상이면 날짜 표시
+    return date.toLocaleDateString('ko-KR', {
+        month: 'short',
+        day: 'numeric',
+    });
+}
+
 export default function History() {
     const insets = useSafeAreaInsets();
-    const { alarms, loadAlarms, deleteAlarm } = useAlarmStore();
+    const { alarms, loadAlarms, deleteAlarm, activeAlarm } = useAlarmStore();
     const [selectedAlarm, setSelectedAlarm] = useState<Alarm | null>(null);
     const [showDetail, setShowDetail] = useState(false);
     const [locationAddress, setLocationAddress] = useState('');
@@ -66,6 +89,7 @@ export default function History() {
     const renderAlarmItem = ({ item }: { item: Alarm }) => (
         <SwipeableAlarmCard
             alarm={item}
+            isActive={activeAlarm?.id === item.id}
             onPress={() => handleAlarmPress(item)}
             onDelete={() => handleDeleteAlarm(item)}
         />
@@ -218,10 +242,12 @@ export default function History() {
 // Swipeable Alarm Card Component
 function SwipeableAlarmCard({
     alarm,
+    isActive,
     onPress,
     onDelete
 }: {
     alarm: Alarm;
+    isActive: boolean;
     onPress: () => void;
     onDelete: () => void;
 }) {
@@ -301,9 +327,9 @@ function SwipeableAlarmCard({
                     <View style={styles.alarmHeader}>
                         <View style={styles.alarmTitleContainer}>
                             <Ionicons
-                                name={alarm.is_active ? 'navigate-circle' : 'navigate-circle-outline'}
+                                name={isActive ? 'navigate-circle' : 'navigate-circle-outline'}
                                 size={24}
-                                color={alarm.is_active ? colors.primary : colors.textWeak}
+                                color={isActive ? colors.primary : colors.textWeak}
                             />
                             <Text style={styles.alarmTitle}>{alarm.title}</Text>
                         </View>
@@ -316,11 +342,11 @@ function SwipeableAlarmCard({
                         </Text>
                         <Text style={styles.alarmDetail}>•</Text>
                         <Text style={styles.alarmDetail}>
-                            {new Date(alarm.created_at).toLocaleDateString('ko-KR')}
+                            {formatRelativeTime(alarm.created_at)}
                         </Text>
                     </View>
 
-                    {alarm.is_active && (
+                    {isActive && (
                         <View style={styles.activeBadge}>
                             <Text style={styles.activeBadgeText}>활성화</Text>
                         </View>

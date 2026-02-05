@@ -77,6 +77,28 @@ export default function Home() {
         init();
     }, []);
 
+    // Fit map to route when navigation starts
+    useEffect(() => {
+        if (isNavigating && selectedRoute && mapRef.current) {
+            // Add current user location to route coordinates for full path
+            const allCoordinates = [...selectedRoute.coordinates];
+            if (currentLocation) {
+                allCoordinates.unshift({
+                    latitude: currentLocation.coords.latitude,
+                    longitude: currentLocation.coords.longitude,
+                });
+            }
+
+            // Fit map to show entire route
+            setTimeout(() => {
+                mapRef.current?.fitToCoordinates(allCoordinates, {
+                    edgePadding: { top: 100, right: 50, bottom: 200, left: 50 },
+                    animated: true,
+                });
+            }, 300);
+        }
+    }, [isNavigating, selectedRoute]);
+
     // Set initial center location when user location is available
     useEffect(() => {
         if (currentLocation && !centerLocation) {
@@ -383,15 +405,21 @@ export default function Home() {
                 }}
                 showsUserLocation
                 showsMyLocationButton={false}
+                scrollEnabled={!isNavigating || true}
+                zoomEnabled={!isNavigating || true}
+                rotateEnabled={!isNavigating}
+                pitchEnabled={!isNavigating}
                 onPress={(e) => {
+                    // Disable interactions during navigation
+                    if (isNavigating) return;
                     // Instant close without waiting for animation
                     if (showRadiusSlider) {
                         setShowRadiusSlider(false);
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }
                 }}
-                onPanDrag={handlePanDrag}
-                onRegionChangeComplete={handleRegionChangeComplete}
+                onPanDrag={isNavigating ? undefined : handlePanDrag}
+                onRegionChangeComplete={isNavigating ? undefined : handleRegionChangeComplete}
             >
                 {/* OSM Tile Overlay for Android */}
                 {Platform.OS === 'android' && (
@@ -461,8 +489,8 @@ export default function Home() {
                 />
             )}
 
-            {/* Center Pin (Fixed at screen center) */}
-            <CenterPinMarker isDragging={isDragging} />
+            {/* Center Pin (Fixed at screen center - hidden during navigation) */}
+            {!isNavigating && <CenterPinMarker isDragging={isDragging} />}
 
             {/* Top Bar Container - Search + Location Button aligned */}
             <View style={[styles.topBarContainer, { top: insets.top + spacing.sm }]}>
