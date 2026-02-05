@@ -20,7 +20,10 @@ export default function CenterPinMarker({ isDragging }: CenterPinMarkerProps) {
     const shadowScale = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
+        console.log('[PIN DEBUG] CenterPinMarker useEffect - isDragging changed to:', isDragging);
+
         if (isDragging) {
+            console.log('[PIN DEBUG] CenterPinMarker - Starting LIFT animation');
             // Lift pin up
             Animated.parallel([
                 Animated.spring(translateY, {
@@ -45,8 +48,11 @@ export default function CenterPinMarker({ isDragging }: CenterPinMarkerProps) {
                     duration: 150,
                     useNativeDriver: true,
                 }),
-            ]).start();
+            ]).start(() => {
+                console.log('[PIN DEBUG] CenterPinMarker - LIFT animation completed');
+            });
         } else {
+            console.log('[PIN DEBUG] CenterPinMarker - Starting DROP animation');
             // Drop pin with bounce
             Animated.parallel([
                 Animated.sequence([
@@ -73,7 +79,9 @@ export default function CenterPinMarker({ isDragging }: CenterPinMarkerProps) {
                     duration: 150,
                     useNativeDriver: true,
                 }),
-            ]).start();
+            ]).start(() => {
+                console.log('[PIN DEBUG] CenterPinMarker - DROP animation completed');
+            });
         }
     }, [isDragging]);
 

@@ -184,7 +184,11 @@ export default function Home() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }, []);
 
-    const handleRegionChange = useCallback(() => {
+    // Handle user pan/drag gesture (NOT programmatic map changes)
+    // This prevents Circle rendering from triggering pin lifts
+    const handlePanDrag = useCallback(() => {
+        const timestamp = Date.now();
+
         // Skip if programmatic animation is in progress
         if (isAnimatingRef.current) {
             return;
@@ -192,6 +196,11 @@ export default function Home() {
 
         // Only set dragging if not already dragging (prevent repeated calls)
         if (!isDraggingRef.current) {
+            console.log(`[PIN DEBUG ${timestamp}] ========== LIFTING PIN (USER PAN DRAG) ==========`);
+            console.log(`[PIN DEBUG ${timestamp}] User started dragging the map`);
+            console.log(`[PIN DEBUG ${timestamp}] isDraggingRef was: false`);
+            console.log(`[PIN DEBUG ${timestamp}] isAnimatingRef: ${isAnimatingRef.current}`);
+
             isDraggingRef.current = true;
             setIsDragging(true);
             setIsLoadingAddress(true);
@@ -206,6 +215,10 @@ export default function Home() {
     }, [isFirstHint]);
 
     const handleRegionChangeComplete = useCallback((region: Region) => {
+        const timestamp = Date.now();
+        console.log(`[PIN DEBUG ${timestamp}] ========== DROPPING PIN (REGION COMPLETE) ==========`);
+        console.log(`[PIN DEBUG ${timestamp}] isDraggingRef was: ${isDraggingRef.current} | isAnimatingRef: ${isAnimatingRef.current}`);
+
         // Always reset dragging state when gesture ends
         isDraggingRef.current = false;
         setIsDragging(false);
@@ -321,7 +334,7 @@ export default function Home() {
                 }}
                 showsUserLocation
                 showsMyLocationButton={false}
-                onRegionChange={handleRegionChange}
+                onPanDrag={handlePanDrag}
                 onRegionChangeComplete={handleRegionChangeComplete}
             >
                 {/* Radius preview circle */}
