@@ -1,0 +1,63 @@
+/**
+ * LocaAlert Tabs Layout
+ * Bottom tab navigation
+ */
+
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../src/styles/theme';
+
+export default function TabsLayout() {
+    return (
+        <Tabs
+            screenOptions={{
+                headerShown: false,
+                tabBarActiveTintColor: colors.primary,
+                tabBarInactiveTintColor: colors.textWeak,
+                tabBarStyle: {
+                    backgroundColor: colors.surface,
+                    borderTopWidth: 0,
+                    elevation: 8,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -2 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 8,
+                    height: 60,
+                    paddingBottom: 8,
+                },
+                tabBarLabelStyle: {
+                    fontSize: 11,
+                    fontWeight: '600',
+                },
+            }}
+        >
+            <Tabs.Screen
+                name="home"
+                options={{
+                    title: '홈',
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="map" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="history"
+                options={{
+                    title: '히스토리',
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="time" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="settings"
+                options={{
+                    title: '설정',
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="settings" size={size} color={color} />
+                    ),
+                }}
+            />
+        </Tabs>
+    );
+}
