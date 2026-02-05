@@ -25,11 +25,12 @@ export default function FavoritePlaceSetup() {
         latitude: string;
         longitude: string;
         address?: string;
+        radius?: string;
     }>();
 
     const [label, setLabel] = useState('');
     const [selectedIcon, setSelectedIcon] = useState('home');
-    const [customRadius] = useState(500);
+    const savedRadius = params.radius ? parseInt(params.radius) : 500;
 
     const { addFavorite, favorites } = useFavoritePlaceStore();
 
@@ -57,7 +58,7 @@ export default function FavoritePlaceSetup() {
                 icon: selectedIcon,
                 latitude: parseFloat(params.latitude),
                 longitude: parseFloat(params.longitude),
-                radius: customRadius,
+                radius: savedRadius,
             });
 
             router.back();

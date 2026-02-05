@@ -7,6 +7,16 @@ import * as Location from 'expo-location';
 import { smartInterval } from '../styles/theme';
 
 export type LocationPhase = 'rest' | 'approach' | 'prepare' | 'target';
+export type TransportMode = 'driving' | 'transit' | 'walking' | 'cycling';
+
+export interface RouteInfo {
+    id: string;
+    name: string;  // "추천 경로", "최단 시간", etc.
+    duration: number;  // minutes
+    distance: number;  // meters
+    eta: string;  // "14:30"
+    coordinates: { latitude: number; longitude: number }[];
+}
 
 interface LocationState {
     // Current location
@@ -27,6 +37,13 @@ interface LocationState {
     hasPermission: boolean;
     permissionStatus: Location.PermissionStatus | null;
 
+    // Navigation state
+    isNavigating: boolean;
+    transportMode: TransportMode;
+    routes: RouteInfo[];
+    selectedRoute: RouteInfo | null;
+    startLocation: { latitude: number; longitude: number } | null;
+
     // Actions
     requestPermissions: () => Promise<boolean>;
     getCurrentLocation: () => Promise<Location.LocationObject | null>;
@@ -35,6 +52,14 @@ interface LocationState {
     updateLocation: (location: Location.LocationObject) => void;
     calculatePhase: (distance: number, speed: number) => LocationPhase;
     getCheckInterval: () => number;
+
+    // Navigation actions
+    setTransportMode: (mode: TransportMode) => void;
+    setRoutes: (routes: RouteInfo[]) => void;
+    selectRoute: (routeId: string) => void;
+    setStartLocation: (location: { latitude: number; longitude: number } | null) => void;
+    startNavigation: () => void;
+    stopNavigation: () => void;
 }
 
 /**
@@ -69,6 +94,13 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     targetRadius: 500,
     hasPermission: false,
     permissionStatus: null,
+
+    // Navigation initial state
+    isNavigating: false,
+    transportMode: 'driving',
+    routes: [],
+    selectedRoute: null,
+    startLocation: null,
 
     requestPermissions: async () => {
         try {
@@ -221,5 +253,44 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             default:
                 return smartInterval.restPhase.interval;
         }
+    },
+
+    // Navigation actions
+    setTransportMode: (mode) => {
+        set({ transportMode: mode });
+    },
+
+    setRoutes: (routes) => {
+        set({ routes });
+    },
+
+    selectRoute: (routeId) => {
+        const { routes } = get();
+        const selectedRoute = routes.find(r => r.id === routeId) || null;
+        set({ selectedRoute });
+    },
+
+    setStartLocation: (location) => {
+        set({ startLocation: location });
+    },
+
+    startNavigation: () => {
+        const { selectedRoute } = get();
+        if (!selectedRoute) {
+            console.warn('[LocationStore] Cannot start navigation without selected route');
+            return;
+        }
+        set({ isNavigating: true });
+        console.log('[LocationStore] Navigation started with route:', selectedRoute.name);
+    },
+
+    stopNavigation: () => {
+        set({
+            isNavigating: false,
+            selectedRoute: null,
+            routes: [],
+            startLocation: null,
+        });
+        console.log('[LocationStore] Navigation stopped');
     },
 }));

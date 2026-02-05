@@ -4,8 +4,8 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator, Alert } from 'react-native';
-import MapView, { PROVIDER_GOOGLE, Circle, Marker, Region } from 'react-native-maps';
+import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator, Alert, Platform } from 'react-native';
+import MapView, { PROVIDER_GOOGLE, Circle, Marker, Region, UrlTile, Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -17,6 +17,7 @@ import { useFavoritePlaceStore } from '../../src/stores/favoritePlaceStore';
 import { colors, typography, spacing, radius, shadows } from '../../src/styles/theme';
 import CenterPinMarker from '../../src/components/map/CenterPinMarker';
 import AddressBar from '../../src/components/map/AddressBar';
+import NavigationPanel from '../../src/components/navigation/NavigationPanel';
 import { debouncedReverseGeocode, GeocodingResult } from '../../src/services/geocoding';
 import {
     PlaceResult,
@@ -56,7 +57,15 @@ export default function Home() {
     const isAnimatingRef = useRef(false);
 
     const { activeAlarm } = useAlarmStore();
-    const { currentLocation, requestPermissions, getCurrentLocation } = useLocationStore();
+    const {
+        currentLocation,
+        requestPermissions,
+        getCurrentLocation,
+        isNavigating,
+        selectedRoute,
+        stopNavigation,
+        stopTracking,
+    } = useLocationStore();
     const { favorites, loadFavorites, deleteFavorite } = useFavoritePlaceStore();
 
     useEffect(() => {
@@ -365,7 +374,7 @@ export default function Home() {
             {/* Map */}
             <MapView
                 ref={mapRef}
-                provider={PROVIDER_GOOGLE}
+                provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
                 style={styles.map}
                 initialRegion={{
                     ...userLocation,
@@ -384,6 +393,17 @@ export default function Home() {
                 onPanDrag={handlePanDrag}
                 onRegionChangeComplete={handleRegionChangeComplete}
             >
+                {/* OSM Tile Overlay for Android */}
+                {Platform.OS === 'android' && (
+                    <UrlTile
+                        urlTemplate={centerLocation && isInKorea(centerLocation.latitude, centerLocation.longitude)
+                            ? "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            : "https://tile.openstreetmap.org/{z}/{x}/{y}.png"}
+                        maximumZ={19}
+                        flipY={false}
+                        zIndex={-1}
+                    />
+                )}
                 {/* Radius preview circle */}
                 {centerLocation && !isDragging && (
                     <Circle
@@ -416,6 +436,15 @@ export default function Home() {
                             fillColor={`${colors.error}20`}
                         />
                     </>
+                )}
+
+                {/* Navigation route polyline */}
+                {isNavigating && selectedRoute && (
+                    <Polyline
+                        coordinates={selectedRoute.coordinates}
+                        strokeColor={colors.primary}
+                        strokeWidth={4}
+                    />
                 )}
             </MapView>
 
@@ -536,147 +565,158 @@ export default function Home() {
             )}
 
             {/* First time hint toast */}
-            {isFirstHint && !isDragging && centerLocation && (
+            {isFirstHint && !isDragging && centerLocation && !isNavigating && (
                 <View style={styles.hintToast}>
                     <Text style={styles.hintText}>지도를 움직여 위치를 정해보세요</Text>
                 </View>
             )}
 
-            {/* Bottom Sheet */}
-            <View style={[styles.bottomSheet, { paddingBottom: insets.bottom }]}>
-                {/* Address Bar with Radius Chip */}
-                <View style={styles.addressRow}>
-                    <View style={styles.addressBarWrapper}>
-                        <AddressBar
-                            address={addressInfo.address}
-                            detail={addressInfo.detail}
-                            isLoading={isLoadingAddress}
-                        />
+            {/* Navigation Panel (shown during navigation mode) */}
+            {isNavigating ? (
+                <NavigationPanel
+                    onStopNavigation={() => {
+                        stopNavigation();
+                        stopTracking();
+                    }}
+                />
+            ) : (
+                /* Bottom Sheet (hidden during navigation) */
+                <View style={[styles.bottomSheet, { paddingBottom: insets.bottom }]}>
+                    {/* Address Bar with Radius Chip */}
+                    <View style={styles.addressRow}>
+                        <View style={styles.addressBarWrapper}>
+                            <AddressBar
+                                address={addressInfo.address}
+                                detail={addressInfo.detail}
+                                isLoading={isLoadingAddress}
+                            />
+                        </View>
+
+                        {/* Radius Chip - Tappable to show slider */}
+                        {centerLocation && (
+                            <Pressable
+                                style={[
+                                    styles.radiusChip,
+                                    showRadiusSlider && styles.radiusChipActive
+                                ]}
+                                onPress={() => {
+                                    setShowRadiusSlider(!showRadiusSlider);
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                }}
+                            >
+                                <Ionicons
+                                    name="radio-button-on"
+                                    size={14}
+                                    color={showRadiusSlider ? colors.surface : colors.primary}
+                                />
+                                <Text style={[
+                                    styles.radiusChipText,
+                                    showRadiusSlider && styles.radiusChipTextActive
+                                ]}>
+                                    {formatRadius(selectedRadius)}
+                                </Text>
+                            </Pressable>
+                        )}
                     </View>
 
-                    {/* Radius Chip - Tappable to show slider */}
+                    {/* Radius Slider (shown when chip is tapped) */}
+                    {centerLocation && (
+                        <Animated.View
+                            style={[
+                                styles.radiusSliderContainer,
+                                {
+                                    maxHeight: sliderHeight.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [0, 120], // 0 to full height
+                                    }),
+                                    opacity: sliderHeight,
+                                    overflow: 'hidden',
+                                }
+                            ]}
+                        >
+                            <View style={styles.radiusSliderHeader}>
+                                <Text style={styles.radiusSliderLabel}>알림 반경</Text>
+                                <Text style={styles.radiusSliderValue}>{formatRadius(selectedRadius)}</Text>
+                            </View>
+                            <Slider
+                                style={styles.radiusSlider}
+                                minimumValue={100}
+                                maximumValue={2000}
+                                step={50}
+                                value={selectedRadius}
+                                onValueChange={handleRadiusChange}
+                                minimumTrackTintColor={colors.primary}
+                                maximumTrackTintColor={`${colors.textWeak}50`}
+                                thumbTintColor={colors.primary}
+                            />
+                            <View style={styles.radiusSliderLabels}>
+                                <Text style={styles.radiusSliderMinMax}>100m</Text>
+                                <Text style={styles.radiusSliderMinMax}>2km</Text>
+                            </View>
+                        </Animated.View>
+                    )}
+
+                    {/* Create Alarm Button */}
                     {centerLocation && (
                         <Pressable
-                            style={[
-                                styles.radiusChip,
-                                showRadiusSlider && styles.radiusChipActive
+                            style={({ pressed }) => [
+                                styles.createButton,
+                                pressed && styles.createButtonPressed,
                             ]}
-                            onPress={() => {
-                                setShowRadiusSlider(!showRadiusSlider);
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            }}
+                            onPress={handleCreateAlarm}
                         >
-                            <Ionicons
-                                name="radio-button-on"
-                                size={14}
-                                color={showRadiusSlider ? colors.surface : colors.primary}
-                            />
-                            <Text style={[
-                                styles.radiusChipText,
-                                showRadiusSlider && styles.radiusChipTextActive
-                            ]}>
-                                {formatRadius(selectedRadius)}
-                            </Text>
+                            <Text style={styles.createButtonText}>여기로 알람 설정</Text>
+                            <Ionicons name="arrow-forward" size={20} color={colors.surface} />
                         </Pressable>
                     )}
+
+                    {/* Quick Actions - Favorite Places (Compact) */}
+                    <View style={styles.quickActionsCompact}>
+                        {favorites.map((fav) => (
+                            <Pressable
+                                key={fav.id}
+                                style={styles.quickChip}
+                                onPress={() => handleJumpToFavorite(fav)}
+                                onLongPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                                    Alert.alert(
+                                        '즐겨찾기 삭제',
+                                        `"${fav.label}"을(를) 삭제하시겠습니까?`,
+                                        [
+                                            { text: '취소', style: 'cancel' },
+                                            { text: '삭제', style: 'destructive', onPress: () => deleteFavorite(fav.id) },
+                                        ]
+                                    );
+                                }}
+                            >
+                                <Ionicons name={fav.icon as any} size={16} color={colors.primary} />
+                                <Text style={styles.quickChipLabel}>{fav.label}</Text>
+                            </Pressable>
+                        ))}
+                        {favorites.length < 3 && (
+                            <Pressable
+                                style={styles.quickChipAdd}
+                                onPress={() => {
+                                    if (centerLocation) {
+                                        router.push({
+                                            pathname: '/favorite-place-setup',
+                                            params: {
+                                                latitude: centerLocation.latitude,
+                                                longitude: centerLocation.longitude,
+                                                address: addressInfo.address || '',
+                                                radius: selectedRadius.toString(),
+                                            },
+                                        });
+                                    }
+                                }}
+                            >
+                                <Ionicons name="add" size={16} color={colors.textWeak} />
+                                <Text style={styles.quickChipLabelAdd}>즐겨찾기</Text>
+                            </Pressable>
+                        )}
+                    </View>
                 </View>
-
-                {/* Radius Slider (shown when chip is tapped) */}
-                {centerLocation && (
-                    <Animated.View
-                        style={[
-                            styles.radiusSliderContainer,
-                            {
-                                maxHeight: sliderHeight.interpolate({
-                                    inputRange: [0, 1],
-                                    outputRange: [0, 120], // 0 to full height
-                                }),
-                                opacity: sliderHeight,
-                                overflow: 'hidden',
-                            }
-                        ]}
-                    >
-                        <View style={styles.radiusSliderHeader}>
-                            <Text style={styles.radiusSliderLabel}>알림 반경</Text>
-                            <Text style={styles.radiusSliderValue}>{formatRadius(selectedRadius)}</Text>
-                        </View>
-                        <Slider
-                            style={styles.radiusSlider}
-                            minimumValue={100}
-                            maximumValue={2000}
-                            step={50}
-                            value={selectedRadius}
-                            onValueChange={handleRadiusChange}
-                            minimumTrackTintColor={colors.primary}
-                            maximumTrackTintColor={`${colors.textWeak}50`}
-                            thumbTintColor={colors.primary}
-                        />
-                        <View style={styles.radiusSliderLabels}>
-                            <Text style={styles.radiusSliderMinMax}>100m</Text>
-                            <Text style={styles.radiusSliderMinMax}>2km</Text>
-                        </View>
-                    </Animated.View>
-                )}
-
-                {/* Create Alarm Button */}
-                {centerLocation && (
-                    <Pressable
-                        style={({ pressed }) => [
-                            styles.createButton,
-                            pressed && styles.createButtonPressed,
-                        ]}
-                        onPress={handleCreateAlarm}
-                    >
-                        <Text style={styles.createButtonText}>여기로 알람 설정</Text>
-                        <Ionicons name="arrow-forward" size={20} color={colors.surface} />
-                    </Pressable>
-                )}
-
-                {/* Quick Actions - Favorite Places (Compact) */}
-                <View style={styles.quickActionsCompact}>
-                    {favorites.map((fav) => (
-                        <Pressable
-                            key={fav.id}
-                            style={styles.quickChip}
-                            onPress={() => handleJumpToFavorite(fav)}
-                            onLongPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                                Alert.alert(
-                                    '즐겨찾기 삭제',
-                                    `"${fav.label}"을(를) 삭제하시겠습니까?`,
-                                    [
-                                        { text: '취소', style: 'cancel' },
-                                        { text: '삭제', style: 'destructive', onPress: () => deleteFavorite(fav.id) },
-                                    ]
-                                );
-                            }}
-                        >
-                            <Ionicons name={fav.icon as any} size={16} color={colors.primary} />
-                            <Text style={styles.quickChipLabel}>{fav.label}</Text>
-                        </Pressable>
-                    ))}
-                    {favorites.length < 3 && (
-                        <Pressable
-                            style={styles.quickChipAdd}
-                            onPress={() => {
-                                if (centerLocation) {
-                                    router.push({
-                                        pathname: '/favorite-place-setup',
-                                        params: {
-                                            latitude: centerLocation.latitude,
-                                            longitude: centerLocation.longitude,
-                                            address: addressInfo.address || '',
-                                        },
-                                    });
-                                }
-                            }}
-                        >
-                            <Ionicons name="add" size={16} color={colors.textWeak} />
-                            <Text style={styles.quickChipLabelAdd}>즐겨찾기</Text>
-                        </Pressable>
-                    )}
-                </View>
-            </View>
+            )}
         </View>
     );
 }
@@ -827,7 +867,6 @@ const styles = StyleSheet.create({
         borderTopRightRadius: radius.lg,
         paddingHorizontal: spacing.sm,
         paddingTop: 12,
-        gap: 8,
         ...shadows.card,
     },
     addressRow: {
@@ -862,6 +901,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background,
         borderRadius: radius.md,
         padding: spacing.sm,
+        marginTop: 8,
     },
     radiusSliderHeader: {
         flexDirection: 'row',
@@ -899,6 +939,7 @@ const styles = StyleSheet.create({
         borderRadius: radius.md,
         paddingVertical: 12,
         gap: spacing.xs,
+        marginTop: 8,
     },
     createButtonPressed: {
         opacity: 0.9,
@@ -913,7 +954,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: spacing.xs,
-        marginTop: 0,
+        marginTop: 4,
     },
     quickChip: {
         flexDirection: 'row',
