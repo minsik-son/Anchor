@@ -199,8 +199,6 @@ export default function Home() {
     // Handle user pan/drag gesture (NOT programmatic map changes)
     // This prevents Circle rendering from triggering pin lifts
     const handlePanDrag = useCallback(() => {
-        const timestamp = Date.now();
-
         // Skip if programmatic animation is in progress
         if (isAnimatingRef.current) {
             return;
@@ -208,11 +206,6 @@ export default function Home() {
 
         // Only set dragging if not already dragging (prevent repeated calls)
         if (!isDraggingRef.current) {
-            console.log(`[PIN DEBUG ${timestamp}] ========== LIFTING PIN (USER PAN DRAG) ==========`);
-            console.log(`[PIN DEBUG ${timestamp}] User started dragging the map`);
-            console.log(`[PIN DEBUG ${timestamp}] isDraggingRef was: false`);
-            console.log(`[PIN DEBUG ${timestamp}] isAnimatingRef: ${isAnimatingRef.current}`);
-
             isDraggingRef.current = true;
             setIsDragging(true);
             setIsLoadingAddress(true);
@@ -227,10 +220,6 @@ export default function Home() {
     }, [isFirstHint]);
 
     const handleRegionChangeComplete = useCallback((region: Region) => {
-        const timestamp = Date.now();
-        console.log(`[PIN DEBUG ${timestamp}] ========== DROPPING PIN (REGION COMPLETE) ==========`);
-        console.log(`[PIN DEBUG ${timestamp}] isDraggingRef was: ${isDraggingRef.current} | isAnimatingRef: ${isAnimatingRef.current}`);
-
         // Always reset dragging state when gesture ends
         isDraggingRef.current = false;
         setIsDragging(false);
@@ -554,7 +543,7 @@ export default function Home() {
             )}
 
             {/* Bottom Sheet */}
-            <View style={[styles.bottomSheet, { paddingBottom: insets.bottom + 4 }]}>
+            <View style={[styles.bottomSheet, { paddingBottom: insets.bottom }]}>
                 {/* Address Bar with Radius Chip */}
                 <View style={styles.addressRow}>
                     <View style={styles.addressBarWrapper}>
@@ -837,8 +826,8 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: radius.lg,
         borderTopRightRadius: radius.lg,
         paddingHorizontal: spacing.sm,
-        paddingTop: spacing.sm,
-        gap: spacing.xs,
+        paddingTop: 12,
+        gap: 8,
         ...shadows.card,
     },
     addressRow: {
@@ -908,7 +897,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: colors.primary,
         borderRadius: radius.md,
-        paddingVertical: spacing.sm,
+        paddingVertical: 12,
         gap: spacing.xs,
     },
     createButtonPressed: {
@@ -924,14 +913,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: spacing.xs,
-        marginTop: spacing.xs,
+        marginTop: 0,
     },
     quickChip: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
         paddingHorizontal: spacing.sm,
-        paddingVertical: 6,
+        paddingVertical: 4,
         backgroundColor: colors.background,
         borderRadius: radius.lg,
         borderWidth: 1,
@@ -947,7 +936,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 4,
         paddingHorizontal: spacing.sm,
-        paddingVertical: 6,
+        paddingVertical: 4,
         backgroundColor: colors.background,
         borderRadius: radius.lg,
         borderWidth: 1,
