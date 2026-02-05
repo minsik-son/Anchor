@@ -4,10 +4,11 @@
  * Using React Native's built-in Animated API for Expo Go compatibility
  */
 
+import { useMemo } from 'react';
 import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius, shadows } from '../../styles/theme';
+import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../styles/theme';
 
 interface AddressBarProps {
     address: string;
@@ -17,6 +18,8 @@ interface AddressBarProps {
 
 export default function AddressBar({ address, detail, isLoading }: AddressBarProps) {
     const shimmerOpacity = useRef(new Animated.Value(0.3)).current;
+    const colors = useThemeColors();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     useEffect(() => {
         if (isLoading) {
@@ -72,7 +75,7 @@ export default function AddressBar({ address, detail, isLoading }: AddressBarPro
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -86,7 +89,7 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: radius.sm,
-        backgroundColor: `${colors.primary}15`,
+        backgroundColor: colors.background, // Using background for icon bg
         alignItems: 'center',
         justifyContent: 'center',
     },

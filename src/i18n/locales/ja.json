@@ -83,7 +83,10 @@
             "loading": "住所検索中...",
             "radius": "半径 {{radius}}m",
             "createdAt": "作成日時",
-            "deleteAlarm": "アラーム削除"
+            "deleteAlarm": "アラーム削除",
+            "title": "アラーム詳細",
+            "addressNotFound": "住所が見つかりません",
+            "activated": "有効化済み"
         },
         "time": {
             "justNow": "たった今",
@@ -113,7 +116,14 @@
             "batterySaving": "バッテリー節約モード",
             "smartVolume": "スマートボリューム",
             "shakeToOff": "振ってアラーム停止",
-            "mapEngine": "地図エンジン"
+            "mapEngine": "地図エンジン",
+            "theme": "画面テーマ"
+        },
+        "theme": {
+            "title": "画面テーマ",
+            "light": "ライトモード",
+            "dark": "ダークモード",
+            "system": "システム設定"
         }
     },
     "favoriteSetup": {

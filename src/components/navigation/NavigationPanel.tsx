@@ -8,8 +8,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
+import { useMemo } from 'react';
 import { useLocationStore } from '../../stores/locationStore';
-import { colors, typography, spacing, radius, shadows } from '../../styles/theme';
+import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../styles/theme';
 
 interface NavigationPanelProps {
     onStopNavigation: () => void;
@@ -18,6 +19,8 @@ interface NavigationPanelProps {
 export default function NavigationPanel({ onStopNavigation }: NavigationPanelProps) {
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
+    const colors = useThemeColors();
+    const styles = useMemo(() => createStyles(colors), [colors]);
     const {
         distanceToTarget,
         speed,
@@ -105,7 +108,7 @@ export default function NavigationPanel({ onStopNavigation }: NavigationPanelPro
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         position: 'absolute',
         bottom: 0,

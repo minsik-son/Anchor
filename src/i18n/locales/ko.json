@@ -83,7 +83,10 @@
             "loading": "주소 검색 중...",
             "radius": "반경 {{radius}}m",
             "createdAt": "생성 시간",
-            "deleteAlarm": "알람 삭제"
+            "deleteAlarm": "알람 삭제",
+            "title": "알람 상세정보",
+            "addressNotFound": "주소를 찾을 수 없습니다",
+            "activated": "활성화됨"
         },
         "time": {
             "justNow": "방금 전",
@@ -112,7 +115,14 @@
             "batterySaving": "배터리 세이빙 모드",
             "smartVolume": "스마트 볼륨",
             "shakeToOff": "흔들어서 끄기",
-            "mapEngine": "지도 엔진"
+            "mapEngine": "지도 엔진",
+            "theme": "화면 테마"
+        },
+        "theme": {
+            "title": "화면 테마",
+            "light": "밝은 모드",
+            "dark": "어두운 모드",
+            "system": "시스템 설정"
         }
     },
     "favoriteSetup": {

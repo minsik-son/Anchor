@@ -4,16 +4,18 @@
  * Using React Native's built-in Animated API for Expo Go compatibility
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, shadows } from '../../styles/theme';
+import { colors as defaultColors, shadows, useThemeColors, ThemeColors } from '../../styles/theme';
 
 interface CenterPinMarkerProps {
     isDragging: boolean;
 }
 
 export default function CenterPinMarker({ isDragging }: CenterPinMarkerProps) {
+    const colors = useThemeColors();
+    const styles = useMemo(() => createStyles(colors), [colors]);
     const translateY = useRef(new Animated.Value(0)).current;
     const scale = useRef(new Animated.Value(1)).current;
     const shadowOpacity = useRef(new Animated.Value(0.15)).current;
@@ -108,7 +110,7 @@ export default function CenterPinMarker({ isDragging }: CenterPinMarkerProps) {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         position: 'absolute',
         top: '50%',

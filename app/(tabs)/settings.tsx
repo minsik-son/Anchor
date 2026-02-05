@@ -3,18 +3,24 @@
  * App settings and preferences
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Switch, ScrollView, ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius, shadows } from '../../src/styles/theme';
+import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
+import { useThemeStore, ThemeMode } from '../../src/stores/themeStore';
 
 export default function Settings() {
     const insets = useSafeAreaInsets();
     const { t, i18n } = useTranslation();
+    const colors = useThemeColors();
+    const styles = useMemo(() => createStyles(colors), [colors]);
+    const { mode, setMode } = useThemeStore();
+
     const [isLoading, setIsLoading] = useState(false);
     const [showLanguageModal, setShowLanguageModal] = useState(false);
+    const [showThemeModal, setShowThemeModal] = useState(false);
 
     const currentLanguage = i18n.language;
 
@@ -39,6 +45,20 @@ export default function Settings() {
             case 'ja': return '日本語';
             default: return '한국어';
         }
+    };
+
+    const getThemeLabel = (m: ThemeMode) => {
+        switch (m) {
+            case 'light': return t('settings.theme.light');
+            case 'dark': return t('settings.theme.dark');
+            case 'system': return t('settings.theme.system');
+            default: return t('settings.theme.system');
+        }
+    };
+
+    const handleThemeChange = (newMode: ThemeMode) => {
+        setMode(newMode);
+        setShowThemeModal(false);
     };
 
     return (
@@ -76,6 +96,18 @@ export default function Settings() {
                         rightElement={
                             <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
                         }
+                        colors={colors}
+                    />
+
+                    <SettingItem
+                        icon="color-palette"
+                        label={t('settings.items.theme')}
+                        description={getThemeLabel(mode)}
+                        onPress={() => setShowThemeModal(true)}
+                        rightElement={
+                            <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
+                        }
+                        colors={colors}
                     />
                 </View>
 
@@ -87,12 +119,14 @@ export default function Settings() {
                         icon="navigate"
                         label={t('settings.items.backgroundLocation') || '백그라운드 위치 추적'}
                         rightElement={<Switch value={true} trackColor={{ false: colors.textWeak, true: colors.primary }} />}
+                        colors={colors}
                     />
 
                     <SettingItem
                         icon="battery-charging"
                         label={t('settings.items.batterySaving') || '배터리 세이빙 모드'}
                         rightElement={<Switch value={true} trackColor={{ false: colors.textWeak, true: colors.primary }} />}
+                        colors={colors}
                     />
                 </View>
 
@@ -104,18 +138,21 @@ export default function Settings() {
                         icon="volume-high"
                         label={t('settings.items.smartVolume') || '스마트 볼륨'}
                         rightElement={<Switch value={true} trackColor={{ false: colors.textWeak, true: colors.primary }} />}
+                        colors={colors}
                     />
 
                     <SettingItem
                         icon="vibrate"
                         label={t('settings.items.vibration')}
                         rightElement={<Switch value={true} trackColor={{ false: colors.textWeak, true: colors.primary }} />}
+                        colors={colors}
                     />
 
                     <SettingItem
                         icon="phone-portrait"
                         label={t('settings.items.shakeToOff') || '흔들어서 끄기'}
                         rightElement={<Switch value={false} trackColor={{ false: colors.textWeak, true: colors.primary }} />}
+                        colors={colors}
                     />
                 </View>
 
@@ -130,6 +167,7 @@ export default function Settings() {
                         rightElement={
                             <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
                         }
+                        colors={colors}
                     />
                 </View>
 
@@ -143,6 +181,7 @@ export default function Settings() {
                         rightElement={
                             <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
                         }
+                        colors={colors}
                     />
 
                     <SettingItem
@@ -151,6 +190,7 @@ export default function Settings() {
                         rightElement={
                             <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
                         }
+                        colors={colors}
                     />
 
                     <SettingItem
@@ -159,6 +199,7 @@ export default function Settings() {
                         rightElement={
                             <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
                         }
+                        colors={colors}
                     />
                 </View>
 
@@ -169,6 +210,43 @@ export default function Settings() {
                     </Text>
                 </View>
             </ScrollView>
+
+            {/* Theme Selection Modal */}
+            {showThemeModal && (
+                <Pressable style={styles.modalOverlay} onPress={() => setShowThemeModal(false)}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>{t('settings.theme.title')}</Text>
+
+                        {[
+                            { code: 'light', label: t('settings.theme.light'), icon: 'sunny' },
+                            { code: 'dark', label: t('settings.theme.dark'), icon: 'moon' },
+                            { code: 'system', label: t('settings.theme.system'), icon: 'settings-sharp' }
+                        ].map((item) => (
+                            <Pressable
+                                key={item.code}
+                                style={[
+                                    styles.languageOption,
+                                    mode === item.code && styles.languageOptionSelected
+                                ]}
+                                onPress={() => handleThemeChange(item.code as ThemeMode)}
+                            >
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                    <Ionicons name={item.icon as any} size={20} color={mode === item.code ? colors.primary : colors.textMedium} />
+                                    <Text style={[
+                                        styles.languageOptionText,
+                                        mode === item.code && styles.languageOptionTextSelected
+                                    ]}>
+                                        {item.label}
+                                    </Text>
+                                </View>
+                                {mode === item.code && (
+                                    <Ionicons name="checkmark" size={20} color={colors.primary} />
+                                )}
+                            </Pressable>
+                        ))}
+                    </View>
+                </Pressable>
+            )}
 
             {/* Language Selection Modal */}
             {showLanguageModal && (
@@ -221,13 +299,17 @@ function SettingItem({
     description,
     rightElement,
     onPress,
+    colors
 }: {
     icon: string;
     label: string;
     description?: string;
     rightElement?: React.ReactNode;
     onPress?: () => void;
+    colors: ThemeColors;
 }) {
+    const styles = useMemo(() => createStyles(colors), [colors]);
+
     return (
         <Pressable style={styles.settingItem} onPress={onPress}>
             <View style={styles.settingLeft}>
@@ -244,7 +326,7 @@ function SettingItem({
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,

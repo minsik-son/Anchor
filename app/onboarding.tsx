@@ -3,14 +3,14 @@
  * Permission request with persuasive UI (Toss style)
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors, typography, spacing, radius, shadows } from '../src/styles/theme';
+import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../src/styles/theme';
 import { useTranslation } from 'react-i18next';
 
 const ONBOARDING_COMPLETE_KEY = 'onboarding_complete';
@@ -19,6 +19,8 @@ export default function Onboarding() {
     const insets = useSafeAreaInsets();
     const [isLoading, setIsLoading] = useState(false);
     const { t } = useTranslation();
+    const colors = useThemeColors();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     const handleStart = async () => {
         setIsLoading(true);
@@ -97,9 +99,9 @@ export default function Onboarding() {
 
             {/* Features */}
             <View style={styles.features}>
-                <FeatureItem icon="🔋" text="스마트 배터리 절약" />
-                <FeatureItem icon="🎯" text="정확한 위치 기반 알람" />
-                <FeatureItem icon="📝" text="할 일 체크리스트" />
+                <FeatureItem icon="🔋" text="스마트 배터리 절약" styles={styles} />
+                <FeatureItem icon="🎯" text="정확한 위치 기반 알람" styles={styles} />
+                <FeatureItem icon="📝" text="할 일 체크리스트" styles={styles} />
             </View>
 
             {/* CTA Button */}
@@ -128,7 +130,7 @@ export default function Onboarding() {
     );
 }
 
-function FeatureItem({ icon, text }: { icon: string; text: string }) {
+function FeatureItem({ icon, text, styles }: { icon: string; text: string; styles: any }) {
     return (
         <View style={styles.featureItem}>
             <Text style={styles.featureIcon}>{icon}</Text>
@@ -137,7 +139,7 @@ function FeatureItem({ icon, text }: { icon: string; text: string }) {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,

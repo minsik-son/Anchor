@@ -3,33 +3,25 @@
  * Recent alarms history with swipe-to-delete and detail view
  */
 
-import { useEffect, useState, useRef } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    FlatList,
-    Pressable,
-    Modal,
-    Animated,
-    PanResponder,
-    Dimensions
-} from 'react-native';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList, Pressable, Animated, PanResponder, Dimensions, Alert, Modal } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useTranslation } from 'react-i18next';
 import { useAlarmStore } from '../../src/stores/alarmStore';
-import { colors, typography, spacing, radius, shadows } from '../../src/styles/theme';
 import { Alarm } from '../../src/db/schema';
+import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
 import { reverseGeocode } from '../../src/services/geocoding';
+
+const currentColors = defaultColors; // Fallback for utility constants if needed outside component
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DELETE_THRESHOLD = 80;
 const DELETE_CONFIRM_THRESHOLD = 160;
 
-// Format relative time (당일이면 "X분 전", 24시간 이상이면 날짜)
-function formatRelativeTime(dateString: string): string {
+// Format relative time
+function formatRelativeTime(dateString: string, t: any, i18n: any): string {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -37,15 +29,15 @@ function formatRelativeTime(dateString: string): string {
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    // 24시간 이내
+    // Less than 24 hours
     if (diffDays < 1) {
-        if (diffMinutes < 1) return '방금 전';
-        if (diffMinutes < 60) return `${diffMinutes}분 전`;
-        return `${diffHours}시간 전`;
+        if (diffMinutes < 1) return t('history.time.justNow');
+        if (diffMinutes < 60) return t('history.time.minutesAgo', { minutes: diffMinutes });
+        return t('history.time.hoursAgo', { hours: diffHours });
     }
 
-    // 24시간 이상이면 날짜 표시
-    return date.toLocaleDateString('ko-KR', {
+    // More than 24 hours
+    return date.toLocaleDateString(i18n.language, {
         month: 'short',
         day: 'numeric',
     });
@@ -54,7 +46,10 @@ function formatRelativeTime(dateString: string): string {
 export default function History() {
     const insets = useSafeAreaInsets();
     const { t, i18n } = useTranslation();
-    const { alarms, loadAlarms, deleteAlarm, activeAlarm } = useAlarmStore();
+    const { alarms, loadAlarms, deleteAlarm } = useAlarmStore();
+    const colors = useThemeColors();
+    const styles = useMemo(() => createStyles(colors), [colors]);
+
     const [selectedAlarm, setSelectedAlarm] = useState<Alarm | null>(null);
     const [showDetail, setShowDetail] = useState(false);
     const [locationAddress, setLocationAddress] = useState('');
@@ -71,7 +66,7 @@ export default function History() {
             setLocationAddress('');
 
             reverseGeocode(selectedAlarm.latitude, selectedAlarm.longitude).then((result) => {
-                setLocationAddress(result.address || '주소를 찾을 수 없습니다');
+                setLocationAddress(result.address || t('history.detail.addressNotFound'));
                 setIsLoadingAddress(false);
             });
         }
@@ -87,15 +82,6 @@ export default function History() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         deleteAlarm(alarm.id);
     };
-
-    const renderAlarmItem = ({ item }: { item: Alarm }) => (
-        <SwipeableAlarmCard
-            alarm={item}
-            isActive={activeAlarm?.id === item.id}
-            onPress={() => handleAlarmPress(item)}
-            onDelete={() => handleDeleteAlarm(item)}
-        />
-    );
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -115,20 +101,29 @@ export default function History() {
                 <Text style={styles.headerSubtitle}>{t('history.total', { count: alarms.length })}</Text>
             </View>
 
-            {alarms.length === 0 ? (
-                <View style={styles.emptyState}>
-                    <Ionicons name="file-tray-outline" size={64} color={colors.textWeak} />
-                    <Text style={styles.emptyText}>{t('history.empty')}</Text>
-                    <Text style={styles.emptySubtext}>{t('history.emptyHint')}</Text>
-                </View>
-            ) : (
-                <FlatList
-                    data={alarms}
-                    renderItem={renderAlarmItem}
-                    keyExtractor={(item) => item.id.toString()}
-                    contentContainerStyle={styles.list}
-                />
-            )}
+            <FlatList
+                data={alarms}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                    <SwipeableAlarmCard
+                        alarm={item}
+                        isActive={item.is_active}
+                        onPress={() => handleAlarmPress(item)}
+                        onDelete={() => handleDeleteAlarm(item)}
+                        colors={colors}
+                    />
+                )}
+                contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 20 }]}
+                ListEmptyComponent={
+                    <View style={styles.emptyState}>
+                        <Ionicons name="time-outline" size={64} color={colors.textWeak} />
+                        <Text style={styles.emptyText}>{t('history.empty')}</Text>
+                        <Text style={styles.emptySubtext}>
+                            {t('history.emptyHint')}
+                        </Text>
+                    </View>
+                }
+            />
 
             {/* Detail Modal */}
             <Modal
@@ -142,7 +137,7 @@ export default function History() {
                         {/* Modal Header */}
                         <View style={styles.modalHeader}>
                             <View style={styles.modalHandle} />
-                            <Text style={styles.modalTitle}>알람 상세정보</Text>
+                            <Text style={styles.modalTitle}>{t('history.detail.title')}</Text>
                             <Pressable
                                 style={styles.modalCloseButton}
                                 onPress={() => setShowDetail(false)}
@@ -165,7 +160,7 @@ export default function History() {
                                             <Text style={styles.detailTitle}>{selectedAlarm.title}</Text>
                                             {selectedAlarm.is_active && (
                                                 <View style={styles.activeBadgeLarge}>
-                                                    <Text style={styles.activeBadgeTextLarge}>활성화됨</Text>
+                                                    <Text style={styles.activeBadgeTextLarge}>{t('history.detail.activated')}</Text>
                                                 </View>
                                             )}
                                         </View>
@@ -174,14 +169,14 @@ export default function History() {
 
                                 {/* Location Section */}
                                 <View style={styles.detailSection}>
-                                    <Text style={styles.detailLabel}>위치 정보</Text>
+                                    <Text style={styles.detailLabel}>{t('history.detail.locationInfo')}</Text>
                                     <View style={styles.detailCard}>
                                         {/* Address */}
                                         {isLoadingAddress ? (
                                             <View style={styles.detailCardRow}>
                                                 <Ionicons name="location" size={20} color={colors.primary} />
                                                 <Text style={[styles.detailCardText, { color: colors.textWeak }]}>
-                                                    주소를 불러오는 중...
+                                                    {t('history.detail.loading')}
                                                 </Text>
                                             </View>
                                         ) : locationAddress ? (
@@ -246,13 +241,17 @@ function SwipeableAlarmCard({
     alarm,
     isActive,
     onPress,
-    onDelete
+    onDelete,
+    colors
 }: {
     alarm: Alarm;
     isActive: boolean;
     onPress: () => void;
     onDelete: () => void;
+    colors: ThemeColors;
 }) {
+    const { t, i18n } = useTranslation();
+    const styles = useMemo(() => createStyles(colors), [colors]);
     const translateX = useRef(new Animated.Value(0)).current;
     const [isDeleteVisible, setIsDeleteVisible] = useState(false);
 
@@ -313,7 +312,7 @@ function SwipeableAlarmCard({
             >
                 <Pressable style={styles.deleteBackgroundButton} onPress={handleDeletePress}>
                     <Ionicons name="trash" size={24} color={colors.surface} />
-                    <Text style={styles.deleteBackgroundText}>삭제</Text>
+                    <Text style={styles.deleteBackgroundText}>{t('common.delete')}</Text>
                 </Pressable>
             </View>
 
@@ -344,13 +343,13 @@ function SwipeableAlarmCard({
                         </Text>
                         <Text style={styles.alarmDetail}>•</Text>
                         <Text style={styles.alarmDetail}>
-                            {formatRelativeTime(alarm.created_at)}
+                            {formatRelativeTime(alarm.created_at, t, i18n)}
                         </Text>
                     </View>
 
                     {isActive && (
                         <View style={styles.activeBadge}>
-                            <Text style={styles.activeBadgeText}>활성화</Text>
+                            <Text style={styles.activeBadgeText}>{t('history.active')}</Text>
                         </View>
                     )}
                 </Pressable>
@@ -359,7 +358,7 @@ function SwipeableAlarmCard({
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
@@ -475,7 +474,7 @@ const styles = StyleSheet.create({
     // Modal Styles
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: colors.overlay,
         justifyContent: 'flex-end',
     },
     modalContent: {
@@ -483,12 +482,13 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: radius.lg,
         borderTopRightRadius: radius.lg,
         maxHeight: '80%',
+        paddingBottom: 40,
     },
     modalHeader: {
         alignItems: 'center',
         paddingVertical: spacing.sm,
         borderBottomWidth: 1,
-        borderBottomColor: colors.background,
+        borderBottomColor: colors.border,
     },
     modalHandle: {
         width: 40,

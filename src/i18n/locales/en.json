@@ -83,7 +83,10 @@
             "loading": "Searching address...",
             "radius": "Radius {{radius}}m",
             "createdAt": "Created At",
-            "deleteAlarm": "Delete Alarm"
+            "deleteAlarm": "Delete Alarm",
+            "title": "Alarm Details",
+            "addressNotFound": "Address not found",
+            "activated": "Activated"
         },
         "time": {
             "justNow": "Just now",
@@ -112,7 +115,14 @@
             "batterySaving": "Battery Saving Mode",
             "smartVolume": "Smart Volume",
             "shakeToOff": "Shake to Turn Off",
-            "mapEngine": "Map Engine"
+            "mapEngine": "Map Engine",
+            "theme": "Screen Theme"
+        },
+        "theme": {
+            "title": "Screen Theme",
+            "light": "Light Mode",
+            "dark": "Dark Mode",
+            "system": "System Default"
         }
     },
     "favoriteSetup": {

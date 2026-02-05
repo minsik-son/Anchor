@@ -3,20 +3,57 @@
  * Design Philosophy: "Extreme Simplicity"
  */
 
-// Color Palette
-export const colors = {
+import { useThemeStore } from '../stores/themeStore';
+import { useColorScheme } from 'react-native';
+
+export interface ThemePalette {
+    primary: string;
+    background: string;
+    surface: string;
+    textStrong: string;
+    textMedium: string;
+    textWeak: string;
+    error: string;
+    success: string;
+    warning: string;
+    border: string;
+    overlay: string;
+}
+
+// Light Theme Palette
+export const lightColors: ThemePalette = {
     primary: '#3182F6',      // Toss Blue
     background: '#F2F4F6',   // Light Warm Grey
     surface: '#FFFFFF',      // White
-    textStrong: '#191F28',   // Strong text
-    textMedium: '#4E5968',   // Medium text
-    textWeak: '#8B95A1',     // Weak text
+    textStrong: '#191F28',   // Strong text (Dark Grey)
+    textMedium: '#4E5968',   // Medium text (Grey)
+    textWeak: '#8B95A1',     // Weak text (Light Grey)
     error: '#F04452',        // Error/Alert
     success: '#00C853',      // Success
     warning: '#FF9800',      // Warning
-} as const;
+    border: '#E5E8EB',
+    overlay: 'rgba(0,0,0,0.5)',
+};
 
-// Typography (Pretendard font family)
+// Dark Theme Palette
+export const darkColors: ThemePalette = {
+    primary: '#3182F6',      // Toss Blue (Same or slightly adjusted)
+    background: '#101012',   // Very Dark Grey (not full black)
+    surface: '#202027',      // Dark Surface
+    textStrong: '#F9FAFB',   // White/Light Grey
+    textMedium: '#B0B8C1',   // Light Grey
+    textWeak: '#6B7684',     // Darker Grey
+    error: '#F25D69',        // Lighter Red for dark mode
+    success: '#26D07C',      // Lighter Green
+    warning: '#FFA726',      // Lighter Orange
+    border: '#333D4B',
+    overlay: 'rgba(0,0,0,0.7)',
+};
+
+// Defualt colors for backward compatibility (defaults to light)
+export const colors = lightColors;
+
+// Typography (Pretendard font family) - Shared across themes for now
 export const typography = {
     display: {
         fontSize: 26,
@@ -81,7 +118,7 @@ export const animation = {
     slow: 500,
 } as const;
 
-// Smart Interval Constants (Battery Saving Algorithm)
+// Smart Interval Constants
 export const smartInterval = {
     restPhase: {
         distance: 10000,  // > 10km
@@ -99,7 +136,7 @@ export const smartInterval = {
         distance: 1000,   // <= 1km
         distanceFilter: 10, // 10m
     },
-    highSpeedThreshold: 100, // km/h (KTX etc.)
+    highSpeedThreshold: 100, // km/h
     highSpeedMultiplier: 1.5,
 } as const;
 
@@ -110,6 +147,16 @@ export const alarmDefaults = {
     maxRadius: 5000,
 } as const;
 
-export type ThemeColors = typeof colors;
+// Hook to get current theme colors
+export const useThemeColors = (): ThemePalette => {
+    const mode = useThemeStore((state) => state.mode);
+    const systemScheme = useColorScheme();
+
+    const effectiveMode = mode === 'system' ? (systemScheme || 'light') : mode;
+
+    return effectiveMode === 'dark' ? darkColors : lightColors;
+};
+
+export type ThemeColors = ThemePalette;
 export type ThemeTypography = typeof typography;
 export type ThemeSpacing = typeof spacing;

@@ -8,13 +8,21 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useColorScheme } from 'react-native';
 import { initDatabase } from '../src/db/database';
-import { colors } from '../src/styles/theme';
+import { colors as defaultColors, useThemeColors } from '../src/styles/theme';
+import { useThemeStore } from '../src/stores/themeStore';
 import '../src/i18n'; // Initialize i18n
 
 export default function RootLayout() {
     const [isReady, setIsReady] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const colors = useThemeColors();
+    const mode = useThemeStore((state) => state.mode);
+    const systemScheme = useColorScheme();
+
+    // Determine status bar style based on theme
+    const statusBarStyle = mode === 'system' ? 'auto' : (mode === 'dark' ? 'light' : 'dark');
 
     useEffect(() => {
         async function initialize() {
@@ -31,9 +39,9 @@ export default function RootLayout() {
 
     if (!isReady) {
         return (
-            <View style={styles.loading}>
+            <View style={[styles.loading, { backgroundColor: colors.background }]}>
                 <ActivityIndicator size="large" color={colors.primary} />
-                <StatusBar style="dark" />
+                <StatusBar style={statusBarStyle} />
             </View>
         );
     }
@@ -59,7 +67,7 @@ export default function RootLayout() {
                 />
                 <Stack.Screen name="alarm-setup" />
             </Stack>
-            <StatusBar style="dark" />
+            <StatusBar style={statusBarStyle} />
         </GestureHandlerRootView>
     );
 }
@@ -72,6 +80,5 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: colors.background,
     },
 });

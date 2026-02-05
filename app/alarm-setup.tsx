@@ -13,7 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore, TransportMode, RouteInfo } from '../src/stores/locationStore';
 import { useTranslation } from 'react-i18next';
-import { colors, typography, spacing, radius, shadows, alarmDefaults } from '../src/styles/theme';
+import { colors as defaultColors, typography, spacing, radius, shadows, alarmDefaults, useThemeColors, ThemeColors } from '../src/styles/theme';
 
 // Mock route data
 const MOCK_ROUTES: RouteInfo[] = [
@@ -74,6 +74,8 @@ export default function AlarmSetup() {
     }>();
 
     const { t } = useTranslation();
+    const colors = useThemeColors();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     // Mock route data with translations
     const routes = useMemo<RouteInfo[]>(() => [
@@ -377,7 +379,7 @@ export default function AlarmSetup() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,

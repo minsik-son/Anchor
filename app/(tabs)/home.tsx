@@ -3,7 +3,7 @@
  * Map-First UI with Center Pin Location Picker
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator, Alert, Platform } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Circle, Marker, Region, UrlTile, Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,7 +15,7 @@ import Slider from '@react-native-community/slider';
 import { useAlarmStore } from '../../src/stores/alarmStore';
 import { useLocationStore } from '../../src/stores/locationStore';
 import { useFavoritePlaceStore } from '../../src/stores/favoritePlaceStore';
-import { colors, typography, spacing, radius, shadows } from '../../src/styles/theme';
+import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
 import CenterPinMarker from '../../src/components/map/CenterPinMarker';
 import AddressBar from '../../src/components/map/AddressBar';
 import NavigationPanel from '../../src/components/navigation/NavigationPanel';
@@ -32,6 +32,8 @@ import {
 export default function Home() {
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
+    const colors = useThemeColors();
+    const styles = useMemo(() => createStyles(colors), [colors]);
     const mapRef = useRef<MapView>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isDragging, setIsDragging] = useState(false);
@@ -755,9 +757,7 @@ export default function Home() {
     );
 }
 
-
-
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
@@ -807,17 +807,17 @@ const styles = StyleSheet.create({
         backgroundColor: colors.surface,
         borderRadius: radius.md,
         ...shadows.card,
+        zIndex: 1000,
         overflow: 'hidden',
     },
     searchLoadingContainer: {
         padding: spacing.md,
         alignItems: 'center',
-        flexDirection: 'row',
         justifyContent: 'center',
-        gap: spacing.xs,
+        gap: spacing.sm,
     },
     searchLoadingText: {
-        ...typography.body,
+        ...typography.caption,
         color: colors.textMedium,
     },
     searchResultItem: {
@@ -826,18 +826,19 @@ const styles = StyleSheet.create({
         padding: spacing.sm,
         gap: spacing.sm,
         borderBottomWidth: 1,
-        borderBottomColor: colors.background,
+        borderBottomColor: colors.border,
     },
     searchResultIconContainer: {
         width: 32,
         height: 32,
-        borderRadius: 16,
-        backgroundColor: `${colors.primary}15`,
+        borderRadius: radius.full,
+        backgroundColor: colors.background,
         justifyContent: 'center',
         alignItems: 'center',
     },
     searchResultTextContainer: {
         flex: 1,
+        gap: 2,
     },
     searchResultName: {
         ...typography.body,
@@ -849,63 +850,69 @@ const styles = StyleSheet.create({
         color: colors.textMedium,
     },
     searchResultSource: {
-        fontSize: 14,
+        fontSize: 12,
     },
     activeAlarmCard: {
         position: 'absolute',
         left: spacing.sm,
         right: spacing.sm,
         backgroundColor: colors.surface,
-        borderRadius: radius.lg,
-        padding: spacing.sm,
+        borderRadius: radius.md,
+        padding: spacing.md,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         ...shadows.card,
+        borderLeftWidth: 4,
+        borderLeftColor: colors.primary,
     },
     activeAlarmContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: spacing.xs,
-        marginBottom: 4,
+        gap: spacing.sm,
     },
     activeAlarmTitle: {
         ...typography.body,
         color: colors.textStrong,
-        fontWeight: '700',
+        fontWeight: '600',
     },
     activeAlarmDistance: {
         ...typography.caption,
-        color: colors.textMedium,
+        color: colors.primary,
+        fontWeight: '700',
     },
     hintToast: {
         position: 'absolute',
+        alignSelf: 'center',
         top: '40%',
-        left: spacing.md,
-        right: spacing.md,
-        backgroundColor: 'rgba(0,0,0,0.75)',
-        paddingHorizontal: spacing.sm,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        paddingHorizontal: spacing.md,
         paddingVertical: spacing.xs,
-        borderRadius: radius.md,
-        alignItems: 'center',
+        borderRadius: radius.full,
+        zIndex: 900,
     },
     hintText: {
-        ...typography.body,
-        color: colors.surface,
-        fontWeight: '500',
+        color: '#FFF',
+        ...typography.caption,
+        fontWeight: '600',
     },
     bottomSheet: {
+        backgroundColor: colors.surface,
+        borderTopLeftRadius: radius.lg,
+        borderTopRightRadius: radius.lg,
+        padding: spacing.md,
+        paddingTop: spacing.lg,
+        ...shadows.card,
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: colors.surface,
-        borderTopLeftRadius: radius.lg,
-        borderTopRightRadius: radius.lg,
-        paddingHorizontal: spacing.sm,
-        paddingTop: 12,
-        ...shadows.card,
     },
     addressRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: spacing.md,
         gap: spacing.sm,
     },
     addressBarWrapper: {
@@ -914,19 +921,22 @@ const styles = StyleSheet.create({
     radiusChip: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: `${colors.primary}15`,
+        backgroundColor: colors.background,
         paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs,
-        borderRadius: radius.md,
-        gap: 4,
+        paddingVertical: 8,
+        borderRadius: radius.full,
+        gap: 6,
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     radiusChipActive: {
         backgroundColor: colors.primary,
+        borderColor: colors.primary,
     },
     radiusChipText: {
         ...typography.caption,
         color: colors.primary,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     radiusChipTextActive: {
         color: colors.surface,
@@ -934,8 +944,8 @@ const styles = StyleSheet.create({
     radiusSliderContainer: {
         backgroundColor: colors.background,
         borderRadius: radius.md,
-        padding: spacing.sm,
-        marginTop: 8,
+        padding: spacing.md,
+        marginBottom: spacing.md,
     },
     radiusSliderHeader: {
         flexDirection: 'row',
@@ -944,14 +954,14 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xs,
     },
     radiusSliderLabel: {
-        ...typography.body,
-        color: colors.textStrong,
+        ...typography.caption,
+        color: colors.textMedium,
         fontWeight: '600',
     },
     radiusSliderValue: {
-        ...typography.body,
+        ...typography.heading,
         color: colors.primary,
-        fontWeight: '700',
+        fontSize: 18,
     },
     radiusSlider: {
         width: '100%',
@@ -960,20 +970,24 @@ const styles = StyleSheet.create({
     radiusSliderLabels: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        paddingHorizontal: 10,
     },
     radiusSliderMinMax: {
         ...typography.caption,
         color: colors.textWeak,
+        fontSize: 10,
     },
     createButton: {
+        backgroundColor: colors.primary,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: colors.primary,
+        paddingVertical: spacing.sm,
         borderRadius: radius.md,
-        paddingVertical: 12,
         gap: spacing.xs,
-        marginTop: 8,
+        height: 52,
+        marginBottom: spacing.lg,
+        ...shadows.button,
     },
     createButtonPressed: {
         opacity: 0.9,
@@ -983,40 +997,40 @@ const styles = StyleSheet.create({
         ...typography.body,
         color: colors.surface,
         fontWeight: '700',
+        fontSize: 16,
     },
     quickActionsCompact: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: spacing.xs,
-        marginTop: 4,
+        gap: spacing.sm,
     },
     quickChip: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: 4,
         backgroundColor: colors.background,
-        borderRadius: radius.lg,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 8,
+        borderRadius: radius.md,
+        gap: 6,
         borderWidth: 1,
-        borderColor: colors.primary,
-    },
-    quickChipLabel: {
-        ...typography.caption,
-        color: colors.primary,
-        fontWeight: '600',
+        borderColor: colors.border,
     },
     quickChipAdd: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: 4,
         backgroundColor: colors.background,
-        borderRadius: radius.lg,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 8,
+        borderRadius: radius.md,
+        gap: 6,
+        borderStyle: 'dashed',
         borderWidth: 1,
         borderColor: colors.textWeak,
-        borderStyle: 'dashed',
+    },
+    quickChipLabel: {
+        ...typography.caption,
+        color: colors.textStrong,
+        fontWeight: '600',
     },
     quickChipLabelAdd: {
         ...typography.caption,

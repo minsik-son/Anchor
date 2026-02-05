@@ -3,7 +3,7 @@
  * Full-screen alarm when user arrives at destination
  */
 
-import { useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -11,13 +11,15 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
-import { colors, typography, spacing, radius } from '../src/styles/theme';
+import { colors as defaultColors, typography, spacing, radius, useThemeColors, ThemeColors } from '../src/styles/theme';
 
 export default function AlarmTrigger() {
     const params = useLocalSearchParams<{ alarmId: string }>();
     const [slideValue] = useState(new Animated.Value(0));
     const { activeAlarm, deactivateAlarm } = useAlarmStore();
     const { stopTracking } = useLocationStore();
+    const colors = useThemeColors();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     useEffect(() => {
         // Trigger haptic feedback
@@ -96,7 +98,7 @@ export default function AlarmTrigger() {
     );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.error,
