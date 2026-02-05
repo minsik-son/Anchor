@@ -52,10 +52,23 @@ export default function Onboarding() {
             }
 
             await completeOnboarding();
-        } catch (error) {
+        } catch (error: any) {
             console.error('[Onboarding] Permission request failed:', error);
-            Alert.alert('오류', '권한 요청 중 문제가 발생했습니다.');
-            setIsLoading(false);
+
+            // Handle Expo Go environment where Info.plist keys may not be available
+            if (error?.message?.includes('NSLocation') || error?.message?.includes('Info.plist')) {
+                Alert.alert(
+                    'Expo Go 제한',
+                    '실제 기기에서 위치 권한을 테스트하려면 Development Build가 필요합니다. 지금은 권한 없이 계속할까요?',
+                    [
+                        { text: '취소', onPress: () => setIsLoading(false) },
+                        { text: '계속하기', onPress: () => completeOnboarding() },
+                    ]
+                );
+            } else {
+                Alert.alert('오류', '권한 요청 중 문제가 발생했습니다.');
+                setIsLoading(false);
+            }
         }
     };
 

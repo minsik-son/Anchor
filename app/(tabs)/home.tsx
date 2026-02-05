@@ -4,11 +4,12 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Circle, Marker, Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useAlarmStore } from '../../src/stores/alarmStore';
 import { useLocationStore } from '../../src/stores/locationStore';
@@ -16,6 +17,14 @@ import { colors, typography, spacing, radius, shadows } from '../../src/styles/t
 import CenterPinMarker from '../../src/components/map/CenterPinMarker';
 import AddressBar from '../../src/components/map/AddressBar';
 import { debouncedReverseGeocode, GeocodingResult } from '../../src/services/geocoding';
+
+interface SearchResult {
+    id: string;
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+}
 
 export default function Home() {
     const insets = useSafeAreaInsets();
@@ -30,8 +39,16 @@ export default function Home() {
     const [addressInfo, setAddressInfo] = useState<GeocodingResult>({ address: '' });
     const [isLoadingAddress, setIsLoadingAddress] = useState(false);
 
+    // Search state
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showSearchResults, setShowSearchResults] = useState(false);
+
     // Animation values (using React Native Animated API)
     const searchBarOpacity = useRef(new Animated.Value(1)).current;
+
+    // Ref to track if map is being dragged
+    const isDraggingRef = useRef(false);
 
     const { activeAlarm } = useAlarmStore();
     const { currentLocation, requestPermissions } = useLocationStore();
@@ -69,18 +86,114 @@ export default function Home() {
         }).start();
     }, [isDragging]);
 
+    // Search for places using geocoding
+    const handleSearch = useCallback(async (query: string) => {
+        setSearchQuery(query);
+
+        if (query.length < 2) {
+            setSearchResults([]);
+            setShowSearchResults(false);
+            return;
+        }
+
+        setIsSearching(true);
+        setShowSearchResults(true);
+
+        try {
+            // Use expo-location geocoding
+            const results = await Location.geocodeAsync(query);
+
+            const searchResults: SearchResult[] = results.slice(0, 5).map((result, index) => ({
+                id: `${index}`,
+                name: query,
+                address: `${result.latitude.toFixed(4)}, ${result.longitude.toFixed(4)}`,
+                latitude: result.latitude,
+                longitude: result.longitude,
+            }));
+
+            // Also reverse geocode to get proper addresses
+            const enrichedResults = await Promise.all(
+                searchResults.map(async (result) => {
+                    try {
+                        const reverseResults = await Location.reverseGeocodeAsync({
+                            latitude: result.latitude,
+                            longitude: result.longitude,
+                        });
+                        if (reverseResults.length > 0) {
+                            const r = reverseResults[0];
+                            return {
+                                ...result,
+                                name: r.name || r.street || query,
+                                address: [r.city, r.district, r.street, r.streetNumber]
+                                    .filter(Boolean)
+                                    .join(' ') || result.address,
+                            };
+                        }
+                    } catch (e) {
+                        // Ignore individual reverse geocode errors
+                    }
+                    return result;
+                })
+            );
+
+            setSearchResults(enrichedResults);
+        } catch (error) {
+            console.error('[Search] Failed to geocode:', error);
+            setSearchResults([]);
+        } finally {
+            setIsSearching(false);
+        }
+    }, []);
+
+    const handleSelectSearchResult = useCallback((result: SearchResult) => {
+        setShowSearchResults(false);
+        setSearchQuery('');
+        Keyboard.dismiss();
+
+        // Move map to selected location
+        if (mapRef.current) {
+            mapRef.current.animateToRegion({
+                latitude: result.latitude,
+                longitude: result.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+            });
+        }
+
+        // Update center location
+        setCenterLocation({
+            latitude: result.latitude,
+            longitude: result.longitude,
+        });
+
+        // Update address
+        setAddressInfo({
+            address: result.address,
+            detail: result.name,
+        });
+
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }, []);
+
     const handleRegionChange = useCallback(() => {
-        if (!isDragging) {
+        // Only set dragging if not already dragging (prevent repeated calls)
+        if (!isDraggingRef.current) {
+            isDraggingRef.current = true;
             setIsDragging(true);
             setIsLoadingAddress(true);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             // Hide first-time hint
             if (isFirstHint) setIsFirstHint(false);
+            // Hide search results when dragging
+            setShowSearchResults(false);
         }
-    }, [isDragging, isFirstHint]);
+    }, [isFirstHint]);
 
     const handleRegionChangeComplete = useCallback((region: Region) => {
+        // Always reset dragging state when gesture ends
+        isDraggingRef.current = false;
         setIsDragging(false);
+
         setCenterLocation({
             latitude: region.latitude,
             longitude: region.longitude,
@@ -165,42 +278,92 @@ export default function Home() {
                 </View>
             )}
 
-            {/* Search Bar (fades during drag) */}
-            <Animated.View style={[styles.searchBar, { top: insets.top + spacing.sm, opacity: searchBarOpacity }]}>
-                <Ionicons name="search" size={20} color={colors.textWeak} />
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="어디로 갈까요?"
-                    placeholderTextColor={colors.textWeak}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    onSubmitEditing={() => {
-                        // TODO: Implement place search
-                        Keyboard.dismiss();
-                    }}
-                />
-            </Animated.View>
+            {/* Top Bar Container - Search + Location Button aligned */}
+            <View style={[styles.topBarContainer, { top: insets.top + spacing.sm }]}>
+                {/* Search Bar (fades during drag) */}
+                <Animated.View style={[styles.searchBar, { opacity: searchBarOpacity }]}>
+                    <Ionicons name="search" size={20} color={colors.textWeak} />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="어디로 갈까요?"
+                        placeholderTextColor={colors.textWeak}
+                        value={searchQuery}
+                        onChangeText={handleSearch}
+                        onFocus={() => searchQuery.length >= 2 && setShowSearchResults(true)}
+                        onSubmitEditing={() => {
+                            Keyboard.dismiss();
+                        }}
+                        returnKeyType="search"
+                    />
+                    {searchQuery.length > 0 && (
+                        <Pressable onPress={() => {
+                            setSearchQuery('');
+                            setSearchResults([]);
+                            setShowSearchResults(false);
+                        }}>
+                            <Ionicons name="close-circle" size={20} color={colors.textWeak} />
+                        </Pressable>
+                    )}
+                </Animated.View>
 
-            {/* My Location Button */}
-            <Pressable
-                style={[styles.myLocationButton, { top: insets.top + spacing.sm + 56 }]}
-                onPress={() => {
-                    if (mapRef.current && currentLocation) {
-                        mapRef.current.animateToRegion({
-                            latitude: currentLocation.coords.latitude,
-                            longitude: currentLocation.coords.longitude,
-                            latitudeDelta: 0.01,
-                            longitudeDelta: 0.01,
-                        });
-                    }
-                }}
-            >
-                <Ionicons name="locate" size={24} color={colors.primary} />
-            </Pressable>
+                {/* My Location Button - Same height as search bar */}
+                <Pressable
+                    style={styles.myLocationButton}
+                    onPress={() => {
+                        if (mapRef.current && currentLocation) {
+                            mapRef.current.animateToRegion({
+                                latitude: currentLocation.coords.latitude,
+                                longitude: currentLocation.coords.longitude,
+                                latitudeDelta: 0.01,
+                                longitudeDelta: 0.01,
+                            });
+                        }
+                    }}
+                >
+                    <Ionicons name="locate" size={24} color={colors.primary} />
+                </Pressable>
+            </View>
+
+            {/* Search Results Dropdown */}
+            {showSearchResults && (
+                <View style={[styles.searchResultsContainer, { top: insets.top + spacing.sm + 56 }]}>
+                    {isSearching ? (
+                        <View style={styles.searchLoadingContainer}>
+                            <Text style={styles.searchLoadingText}>검색 중...</Text>
+                        </View>
+                    ) : searchResults.length > 0 ? (
+                        <FlatList
+                            data={searchResults}
+                            keyExtractor={(item) => item.id}
+                            keyboardShouldPersistTaps="handled"
+                            renderItem={({ item }) => (
+                                <Pressable
+                                    style={styles.searchResultItem}
+                                    onPress={() => handleSelectSearchResult(item)}
+                                >
+                                    <Ionicons name="location-outline" size={20} color={colors.textMedium} />
+                                    <View style={styles.searchResultTextContainer}>
+                                        <Text style={styles.searchResultName} numberOfLines={1}>
+                                            {item.name}
+                                        </Text>
+                                        <Text style={styles.searchResultAddress} numberOfLines={1}>
+                                            {item.address}
+                                        </Text>
+                                    </View>
+                                </Pressable>
+                            )}
+                        />
+                    ) : searchQuery.length >= 2 ? (
+                        <View style={styles.searchLoadingContainer}>
+                            <Text style={styles.searchLoadingText}>검색 결과가 없습니다</Text>
+                        </View>
+                    ) : null}
+                </View>
+            )}
 
             {/* Active Alarm Card */}
-            {activeAlarm && (
-                <View style={[styles.activeAlarmCard, { top: insets.top + spacing.sm + 56 + 56 }]}>
+            {activeAlarm && !showSearchResults && (
+                <View style={[styles.activeAlarmCard, { top: insets.top + spacing.sm + 56 }]}>
                     <View style={styles.activeAlarmContent}>
                         <Ionicons name="navigate" size={20} color={colors.primary} />
                         <Text style={styles.activeAlarmTitle}>{activeAlarm.title}</Text>
@@ -272,16 +435,22 @@ const styles = StyleSheet.create({
     map: {
         flex: 1,
     },
-    searchBar: {
+    topBarContainer: {
         position: 'absolute',
         left: spacing.sm,
-        right: 56 + spacing.sm + spacing.xs,
+        right: spacing.sm,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+    },
+    searchBar: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: colors.surface,
         borderRadius: radius.md,
         paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.sm,
+        height: 48,
         gap: spacing.xs,
         ...shadows.card,
     },
@@ -289,17 +458,54 @@ const styles = StyleSheet.create({
         flex: 1,
         ...typography.body,
         color: colors.textStrong,
+        height: '100%',
     },
     myLocationButton: {
-        position: 'absolute',
-        right: spacing.sm,
         width: 48,
         height: 48,
-        borderRadius: radius.lg,
+        borderRadius: radius.md,
         backgroundColor: colors.surface,
         justifyContent: 'center',
         alignItems: 'center',
         ...shadows.button,
+    },
+    searchResultsContainer: {
+        position: 'absolute',
+        left: spacing.sm,
+        right: spacing.sm,
+        maxHeight: 250,
+        backgroundColor: colors.surface,
+        borderRadius: radius.md,
+        ...shadows.card,
+        overflow: 'hidden',
+    },
+    searchLoadingContainer: {
+        padding: spacing.md,
+        alignItems: 'center',
+    },
+    searchLoadingText: {
+        ...typography.body,
+        color: colors.textMedium,
+    },
+    searchResultItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: spacing.sm,
+        gap: spacing.sm,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.background,
+    },
+    searchResultTextContainer: {
+        flex: 1,
+    },
+    searchResultName: {
+        ...typography.body,
+        color: colors.textStrong,
+        fontWeight: '600',
+    },
+    searchResultAddress: {
+        ...typography.caption,
+        color: colors.textMedium,
     },
     activeAlarmCard: {
         position: 'absolute',

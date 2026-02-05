@@ -86,8 +86,16 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             });
 
             return backgroundStatus === 'granted';
-        } catch (error) {
+        } catch (error: any) {
             console.error('[LocationStore] Permission request failed:', error);
+
+            // Handle Expo Go environment where Info.plist keys may not be available
+            if (error?.message?.includes('NSLocation') || error?.message?.includes('Info.plist')) {
+                console.warn('[LocationStore] Running in Expo Go - permissions not available');
+                // Set hasPermission to true to allow testing other features
+                set({ hasPermission: false, permissionStatus: Location.PermissionStatus.UNDETERMINED });
+            }
+
             return false;
         }
     },
