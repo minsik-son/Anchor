@@ -12,6 +12,7 @@ import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore, TransportMode, RouteInfo } from '../src/stores/locationStore';
+import { useTranslation } from 'react-i18next';
 import { colors, typography, spacing, radius, shadows, alarmDefaults } from '../src/styles/theme';
 
 // Mock route data
@@ -54,11 +55,12 @@ const MOCK_ROUTES: RouteInfo[] = [
     },
 ];
 
-const TRANSPORT_MODES: { mode: TransportMode; icon: string; label: string }[] = [
-    { mode: 'driving', icon: 'car', label: '운전' },
-    { mode: 'transit', icon: 'bus', label: '대중교통' },
-    { mode: 'walking', icon: 'walk', label: '도보' },
-    { mode: 'cycling', icon: 'bicycle', label: '자전거' },
+// Moved inside component or translated dynamically
+const getTransportModes = (t: any) => [
+    { mode: 'driving', icon: 'car', label: t('alarmSetup.driving') },
+    { mode: 'transit', icon: 'bus', label: t('alarmSetup.transit') },
+    { mode: 'walking', icon: 'walk', label: t('alarmSetup.walking') },
+    { mode: 'cycling', icon: 'bicycle', label: t('alarmSetup.cycling') },
 ];
 
 export default function AlarmSetup() {
@@ -71,6 +73,49 @@ export default function AlarmSetup() {
         locationName?: string;
     }>();
 
+    const { t } = useTranslation();
+
+    // Mock route data with translations
+    const routes = useMemo<RouteInfo[]>(() => [
+        {
+            id: '1',
+            name: t('routes.recommended'),
+            duration: 25,
+            distance: 8500,
+            eta: '14:25',
+            coordinates: [
+                { latitude: 37.5665, longitude: 126.9780 },
+                { latitude: 37.5600, longitude: 126.9850 },
+                { latitude: 37.5550, longitude: 126.9900 },
+            ],
+        },
+        {
+            id: '2',
+            name: t('routes.shortest'),
+            duration: 22,
+            distance: 9200,
+            eta: '14:22',
+            coordinates: [
+                { latitude: 37.5665, longitude: 126.9780 },
+                { latitude: 37.5700, longitude: 126.9900 },
+                { latitude: 37.5550, longitude: 126.9900 },
+            ],
+        },
+        {
+            id: '3',
+            name: t('routes.shortestDistance'),
+            duration: 28,
+            distance: 7800,
+            eta: '14:28',
+            coordinates: [
+                { latitude: 37.5665, longitude: 126.9780 },
+                { latitude: 37.5580, longitude: 126.9820 },
+                { latitude: 37.5550, longitude: 126.9900 },
+            ],
+        },
+    ], [t]);
+
+    const transportModes = useMemo(() => getTransportModes(t), [t]);
     const [title, setTitle] = useState('');
     const [alarmRadius, setAlarmRadius] = useState(
         params.radius ? parseInt(params.radius) : alarmDefaults.radius
@@ -91,7 +136,7 @@ export default function AlarmSetup() {
 
     // Calculate alarm preview text
     const alarmPreview = useMemo(() => {
-        const selectedRoute = MOCK_ROUTES.find(r => r.id === selectedRouteId);
+        const selectedRoute = routes.find(r => r.id === selectedRouteId);
         if (!selectedRoute) return null;
 
         // Calculate time to reach alarm radius
@@ -103,53 +148,38 @@ export default function AlarmSetup() {
 
         return {
             text: `목적지 반경 ${alarmRadius}m 전`,
-            time: `약 ${minutesToAlarm}분 뒤에 알람이 울립니다`,
+            alarmTime: minutesToAlarm,
         };
     }, [selectedRouteId, alarmRadius, transportMode]);
 
     const handleCreateAlarm = async () => {
         if (!title.trim()) {
-            Alert.alert('알람 제목 필요', '알람 제목을 입력해주세요.');
+            Alert.alert(t('alarmSetup.noTitle'), t('alarmSetup.pleaseEnterTitle'));
             return;
         }
 
         if (!params.latitude || !params.longitude) {
-            Alert.alert('오류', '위치 정보가 없습니다.');
+            Alert.alert(t('common.error'), t('alarmSetup.locationError'));
             return;
         }
 
+        const alarm = {
+            id: Date.now().toString(),
+            title,
+            latitude: parseFloat(params.latitude),
+            longitude: parseFloat(params.longitude),
+            radius: alarmRadius,
+            isActive: true,
+            address: params.address || `${params.latitude}, ${params.longitude}`, // Use raw coordinates if address missing
+            created_at: new Date().toISOString(),
+        };
+
         try {
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-            await createAlarm({
-                title: title.trim(),
-                latitude: parseFloat(params.latitude),
-                longitude: parseFloat(params.longitude),
-                radius: alarmRadius,
-            });
-
-            // Set routes and selected route
-            setRoutes(MOCK_ROUTES);
-            if (selectedRouteId) {
-                selectRoute(selectedRouteId);
-            }
-
-            // Start location tracking
-            await startTracking(
-                {
-                    latitude: parseFloat(params.latitude),
-                    longitude: parseFloat(params.longitude),
-                },
-                alarmRadius
-            );
-
-            // Start navigation mode
-            startNavigation();
-
-            router.back();
+            await createAlarm(alarm);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            router.replace('/(tabs)/history');
         } catch (error) {
-            console.error('[AlarmSetup] Failed to create alarm:', error);
-            Alert.alert('오류', '알람 생성에 실패했습니다.');
+            Alert.alert(t('common.error'), t('alarmSetup.createFailed'));
         }
     };
 
@@ -165,109 +195,75 @@ export default function AlarmSetup() {
             {/* Header */}
             <View style={styles.header}>
                 <Pressable onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color={colors.textStrong} />
+                    <Ionicons name="close" size={24} color={colors.textStrong} />
                 </Pressable>
-                <Text style={styles.headerTitle}>알람 만들기</Text>
-                <View style={{ width: 24 }} />
+                <Text style={styles.headerTitle}>{t('alarmSetup.title')}</Text>
+                <View style={{ width: 40 }} />
             </View>
 
             <ScrollView style={styles.content}>
                 {/* Title Input */}
                 <View style={styles.section}>
-                    <Text style={styles.label}>제목</Text>
-                    <View style={styles.inputRow}>
-                        <TextInput
-                            style={[styles.input, styles.inputWithButton]}
-                            placeholder="예: 강남역, 회사, 집"
-                            placeholderTextColor={colors.textWeak}
-                            value={title}
-                            onChangeText={setTitle}
-                        />
-                        <Pressable
-                            style={styles.autoFillButton}
-                            onPress={() => {
-                                const autoTitle = params.locationName || params.address || '내 위치';
-                                setTitle(autoTitle);
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            }}
-                        >
-                            <Ionicons name="sparkles" size={20} color={colors.primary} />
-                        </Pressable>
-                    </View>
+                    <Text style={styles.label}>{t('alarmSetup.titleLabel')}</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={title}
+                        onChangeText={setTitle}
+                        placeholder={t('alarmSetup.titlePlaceholder')}
+                        placeholderTextColor={colors.textWeak}
+                        autoFocus
+                    />
                 </View>
 
-                {/* Start Location */}
+                {/* Location Info */}
                 <View style={styles.section}>
-                    <Text style={styles.label}>출발지</Text>
-                    <View style={styles.startLocationRow}>
-                        <Pressable
-                            style={[
-                                styles.startLocationOption,
-                                startLocationType === 'current' && styles.startLocationOptionActive,
-                            ]}
-                            onPress={() => {
-                                setStartLocationType('current');
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            }}
-                        >
-                            <Ionicons
-                                name="navigate"
-                                size={18}
-                                color={startLocationType === 'current' ? colors.primary : colors.textMedium}
-                            />
-                            <Text style={[
-                                styles.startLocationText,
-                                startLocationType === 'current' && styles.startLocationTextActive,
-                            ]}>현재 위치</Text>
-                        </Pressable>
-                        <Pressable
-                            style={[
-                                styles.startLocationOption,
-                                startLocationType === 'custom' && styles.startLocationOptionActive,
-                            ]}
-                            onPress={() => {
-                                setStartLocationType('custom');
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            }}
-                        >
-                            <Ionicons
-                                name="map"
-                                size={18}
-                                color={startLocationType === 'custom' ? colors.primary : colors.textMedium}
-                            />
-                            <Text style={[
-                                styles.startLocationText,
-                                startLocationType === 'custom' && styles.startLocationTextActive,
-                            ]}>지도에서 선택</Text>
-                        </Pressable>
+                    <View style={styles.row}>
+                        <View style={styles.locationItem}>
+                            <Text style={styles.locationLabel}>{t('alarmSetup.startLocation')}</Text>
+                            <View style={styles.locationValue}>
+                                <View style={[styles.dot, { backgroundColor: colors.textMedium }]} />
+                                <Text style={styles.locationText}>{t('alarmSetup.currentLocation')}</Text>
+                            </View>
+                        </View>
+                        <Ionicons name="arrow-forward" size={20} color={colors.textWeak} />
+                        <View style={styles.locationItem}>
+                            <Text style={styles.locationLabel}>{params.locationName || t('alarmSetup.selectFromMap')}</Text>
+                            <View style={styles.locationValue}>
+                                <View style={[styles.dot, { backgroundColor: colors.primary }]} />
+                                <Text style={styles.locationText} numberOfLines={1}>
+                                    {params.address || `${params.latitude}, ${params.longitude}`}
+                                </Text>
+                            </View>
+                        </View>
                     </View>
                 </View>
 
                 {/* Transport Mode */}
                 <View style={styles.section}>
-                    <Text style={styles.label}>이동 수단</Text>
-                    <View style={styles.transportModeRow}>
-                        {TRANSPORT_MODES.map(({ mode, icon, label }) => (
+                    <Text style={styles.label}>{t('alarmSetup.transportMode')}</Text>
+                    <View style={styles.transportGrid}>
+                        {transportModes.map((item) => (
                             <Pressable
-                                key={mode}
+                                key={item.mode}
                                 style={[
-                                    styles.transportModeButton,
-                                    transportMode === mode && styles.transportModeButtonActive,
+                                    styles.transportItem,
+                                    transportMode === item.mode && styles.transportItemSelected,
                                 ]}
-                                onPress={() => {
-                                    setTransportMode(mode);
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                }}
+                                onPress={() => setTransportMode(item.mode as any)}
                             >
                                 <Ionicons
-                                    name={icon as any}
-                                    size={22}
-                                    color={transportMode === mode ? colors.surface : colors.textMedium}
+                                    name={item.icon as any}
+                                    size={24}
+                                    color={transportMode === item.mode ? colors.primary : colors.textWeak}
                                 />
-                                <Text style={[
-                                    styles.transportModeLabel,
-                                    transportMode === mode && styles.transportModeLabelActive,
-                                ]}>{label}</Text>
+                                <Text
+                                    style={[
+                                        styles.transportLabel,
+                                        transportMode === item.mode && styles.transportLabelSelected,
+                                    ]}
+                                >
+                                    {item.label}
+                                </Text>
                             </Pressable>
                         ))}
                     </View>
@@ -275,33 +271,26 @@ export default function AlarmSetup() {
 
                 {/* Route Options */}
                 <View style={styles.section}>
-                    <Text style={styles.label}>경로 옵션</Text>
-                    <View style={styles.routeCards}>
-                        {MOCK_ROUTES.map((route) => (
+                    <Text style={styles.label}>{t('alarmSetup.routeOptions')}</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.routeList}>
+                        {routes.map((route) => (
                             <Pressable
                                 key={route.id}
                                 style={[
                                     styles.routeCard,
                                     selectedRouteId === route.id && styles.routeCardSelected,
                                 ]}
-                                onPress={() => {
-                                    setSelectedRouteId(route.id);
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                }}
+                                onPress={() => setSelectedRouteId(route.id)}
                             >
-                                <View style={styles.routeCardHeader}>
-                                    <View style={[
-                                        styles.routeRadio,
-                                        selectedRouteId === route.id && styles.routeRadioSelected,
-                                    ]}>
-                                        {selectedRouteId === route.id && (
-                                            <View style={styles.routeRadioInner} />
-                                        )}
-                                    </View>
-                                    <Text style={[
-                                        styles.routeName,
-                                        selectedRouteId === route.id && styles.routeNameSelected,
-                                    ]}>{route.name}</Text>
+                                <View style={styles.routeHeader}>
+                                    <Text
+                                        style={[
+                                            styles.routeName,
+                                            selectedRouteId === route.id && styles.routeNameSelected,
+                                        ]}
+                                    >
+                                        {route.name}
+                                    </Text>
                                 </View>
                                 <View style={styles.routeInfo}>
                                     <View style={styles.routeInfoItem}>
@@ -312,82 +301,76 @@ export default function AlarmSetup() {
                                         <Ionicons name="navigate-outline" size={14} color={colors.textWeak} />
                                         <Text style={styles.routeInfoText}>{formatDistance(route.distance)}</Text>
                                     </View>
-                                    <View style={styles.routeInfoItem}>
-                                        <Ionicons name="flag-outline" size={14} color={colors.textWeak} />
-                                        <Text style={styles.routeInfoText}>도착 {route.eta}</Text>
-                                    </View>
                                 </View>
+                                <Text
+                                    style={[
+                                        styles.routeEta,
+                                        selectedRouteId === route.id && styles.routeEtaSelected,
+                                    ]}
+                                >
+                                    {t('routes.arrival', { time: route.eta })}
+                                </Text>
                             </Pressable>
                         ))}
-                    </View>
+                    </ScrollView>
                 </View>
 
-                {/* Radius Slider */}
+                {/* Alarm Radius */}
                 <View style={styles.section}>
-                    <View style={styles.labelRow}>
-                        <Text style={styles.label}>알람 반경</Text>
-                        <Text style={styles.radiusValue}>{alarmRadius}m</Text>
+                    <View style={styles.row}>
+                        <Text style={styles.label}>{t('alarmSetup.radius')}</Text>
+                        <Text style={styles.radiusValue}>{t('alarmSetup.radiusValue', { radius: alarmRadius })}</Text>
                     </View>
-
                     <Slider
                         style={styles.slider}
-                        minimumValue={alarmDefaults.minRadius}
-                        maximumValue={alarmDefaults.maxRadius}
+                        minimumValue={100}
+                        maximumValue={2000}
+                        step={100}
                         value={alarmRadius}
-                        onValueChange={(value) => {
-                            setAlarmRadius(Math.round(value / 50) * 50);
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        }}
+                        onValueChange={setAlarmRadius}
                         minimumTrackTintColor={colors.primary}
                         maximumTrackTintColor={colors.background}
-                        thumbTintColor={colors.primary}
-                        step={50}
                     />
-
-                    <View style={styles.radiusLabels}>
-                        <Text style={styles.radiusLabel}>{alarmDefaults.minRadius}m</Text>
-                        <Text style={styles.radiusLabel}>{alarmDefaults.maxRadius}m</Text>
-                    </View>
                 </View>
 
                 {/* Alarm Preview */}
                 {alarmPreview && (
-                    <View style={styles.alarmPreviewCard}>
-                        <Ionicons name="notifications" size={24} color={colors.primary} />
-                        <View style={styles.alarmPreviewContent}>
-                            <Text style={styles.alarmPreviewTitle}>{alarmPreview.text}</Text>
-                            <Text style={styles.alarmPreviewTime}>{alarmPreview.time}</Text>
+                    <View style={styles.previewCard}>
+                        <View style={styles.previewHeader}>
+                            <Ionicons name="notifications" size={20} color={colors.primary} />
+                            <Text style={styles.previewTitle}>
+                                {t('alarmSetup.alarmPreview.beforeRadius', { radius: alarmRadius })}
+                            </Text>
                         </View>
+                        <Text style={styles.previewText}>
+                            {t('alarmSetup.alarmPreview.estimatedTime', { minutes: alarmPreview.alarmTime })}
+                        </Text>
                     </View>
                 )}
 
-                {/* Memo Input */}
+                {/* Memo */}
                 <View style={styles.section}>
-                    <Text style={styles.label}>메모 (선택사항)</Text>
+                    <Text style={styles.label}>{t('alarmSetup.memo')}</Text>
                     <TextInput
-                        style={[styles.input, styles.memoInput]}
-                        placeholder="예: 우산 챙기기, 3번 출구"
-                        placeholderTextColor={colors.textWeak}
+                        style={[styles.input, styles.textArea]}
                         value={memo}
                         onChangeText={setMemo}
+                        placeholder={t('alarmSetup.memoPlaceholder')}
+                        placeholderTextColor={colors.textWeak}
                         multiline
-                        numberOfLines={3}
                     />
                 </View>
             </ScrollView>
 
-            {/* Create Button */}
-            <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.sm }]}>
+            <View style={styles.footer}>
                 <Pressable
                     style={({ pressed }) => [
                         styles.createButton,
                         pressed && styles.createButtonPressed,
-                        !title.trim() && styles.createButtonDisabled,
                     ]}
                     onPress={handleCreateAlarm}
-                    disabled={!title.trim()}
                 >
-                    <Text style={styles.createButtonText}>알람 시작</Text>
+                    <Text style={styles.createButtonText}>{t('alarmSetup.startAlarm')}</Text>
                 </Pressable>
             </View>
         </View>
@@ -463,40 +446,46 @@ const styles = StyleSheet.create({
         ...shadows.button,
     },
     // Start Location Styles
-    startLocationRow: {
-        flexDirection: 'row',
-        gap: spacing.xs,
-    },
-    startLocationOption: {
-        flex: 1,
+    row: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
+        gap: spacing.sm,
+    },
+    locationItem: {
+        flex: 1,
         gap: 6,
-        paddingVertical: spacing.sm,
-        backgroundColor: colors.surface,
-        borderRadius: radius.md,
-        borderWidth: 2,
-        borderColor: 'transparent',
     },
-    startLocationOptionActive: {
-        borderColor: colors.primary,
-        backgroundColor: `${colors.primary}10`,
-    },
-    startLocationText: {
-        ...typography.body,
+    locationLabel: {
+        ...typography.caption,
         color: colors.textMedium,
     },
-    startLocationTextActive: {
-        color: colors.primary,
-        fontWeight: '600',
+    locationValue: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        padding: spacing.sm,
+        backgroundColor: colors.surface,
+        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: colors.background,
+    },
+    dot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+    },
+    locationText: {
+        ...typography.body,
+        color: colors.textStrong,
+        flex: 1,
     },
     // Transport Mode Styles
-    transportModeRow: {
+    transportGrid: {
         flexDirection: 'row',
         gap: spacing.xs,
     },
-    transportModeButton: {
+    transportItem: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
@@ -504,26 +493,32 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.sm,
         backgroundColor: colors.surface,
         borderRadius: radius.md,
+        borderWidth: 2,
+        borderColor: 'transparent',
     },
-    transportModeButtonActive: {
-        backgroundColor: colors.primary,
+    transportItemSelected: {
+        borderColor: colors.primary,
+        backgroundColor: `${colors.primary}08`,
     },
-    transportModeLabel: {
+    transportLabel: {
         ...typography.caption,
         color: colors.textMedium,
     },
-    transportModeLabelActive: {
-        color: colors.surface,
+    transportLabelSelected: {
+        color: colors.primary,
         fontWeight: '600',
     },
     // Route Card Styles
-    routeCards: {
-        gap: spacing.xs,
+    routeList: {
+        marginHorizontal: -spacing.md,
+        paddingHorizontal: spacing.md,
     },
     routeCard: {
         backgroundColor: colors.surface,
         borderRadius: radius.md,
-        padding: spacing.sm,
+        padding: spacing.md,
+        marginRight: spacing.sm,
+        width: 140,
         borderWidth: 2,
         borderColor: 'transparent',
     },
@@ -531,43 +526,29 @@ const styles = StyleSheet.create({
         borderColor: colors.primary,
         backgroundColor: `${colors.primary}08`,
     },
-    routeCardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.xs,
-        marginBottom: 8,
-    },
-    routeRadio: {
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        borderWidth: 2,
-        borderColor: colors.textWeak,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    routeRadioSelected: {
-        borderColor: colors.primary,
-    },
-    routeRadioInner: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: colors.primary,
+    routeHeader: {
+        marginBottom: spacing.sm,
     },
     routeName: {
         ...typography.body,
         color: colors.textStrong,
-        fontWeight: '500',
+        fontWeight: '600',
     },
     routeNameSelected: {
         color: colors.primary,
-        fontWeight: '600',
+    },
+    routeEta: {
+        ...typography.caption,
+        color: colors.textMedium,
+    },
+    routeEtaSelected: {
+        color: colors.primary,
+        fontWeight: '500',
     },
     routeInfo: {
         flexDirection: 'row',
         gap: spacing.sm,
-        marginLeft: 28,
+        marginTop: 4,
     },
     routeInfoItem: {
         flexDirection: 'row',
@@ -577,30 +558,32 @@ const styles = StyleSheet.create({
     routeInfoText: {
         ...typography.caption,
         color: colors.textWeak,
+        fontSize: 11,
     },
     // Alarm Preview Styles
-    alarmPreviewCard: {
-        flexDirection: 'row',
-        backgroundColor: `${colors.primary}15`,
+    previewCard: {
+        backgroundColor: `${colors.primary}10`,
         borderRadius: radius.md,
-        padding: spacing.sm,
-        gap: spacing.xs,
+        padding: spacing.md,
         marginBottom: spacing.md,
     },
-    alarmPreviewContent: {
-        flex: 1,
+    previewHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+        marginBottom: 4,
     },
-    alarmPreviewTitle: {
+    previewTitle: {
         ...typography.body,
         color: colors.primary,
         fontWeight: '600',
     },
-    alarmPreviewTime: {
+    previewText: {
         ...typography.caption,
         color: colors.textMedium,
-        marginTop: 2,
+        marginLeft: 26,
     },
-    memoInput: {
+    textArea: {
         minHeight: 80,
         textAlignVertical: 'top',
     },
@@ -608,17 +591,10 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 40,
     },
-    radiusLabels: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    radiusLabel: {
-        ...typography.caption,
-        color: colors.textWeak,
-    },
     footer: {
         paddingHorizontal: spacing.md,
         paddingTop: spacing.sm,
+        paddingBottom: spacing.lg,
         backgroundColor: colors.surface,
         borderTopWidth: 1,
         borderTopColor: colors.background,
@@ -626,17 +602,13 @@ const styles = StyleSheet.create({
     createButton: {
         backgroundColor: colors.primary,
         borderRadius: radius.md,
-        paddingVertical: spacing.sm,
+        paddingVertical: spacing.md,
         alignItems: 'center',
         ...shadows.button,
     },
     createButtonPressed: {
         opacity: 0.9,
         transform: [{ scale: 0.98 }],
-    },
-    createButtonDisabled: {
-        backgroundColor: colors.textWeak,
-        opacity: 0.5,
     },
     createButtonText: {
         ...typography.body,

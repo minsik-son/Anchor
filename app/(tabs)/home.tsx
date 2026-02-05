@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import Slider from '@react-native-community/slider';
 import { useAlarmStore } from '../../src/stores/alarmStore';
 import { useLocationStore } from '../../src/stores/locationStore';
@@ -30,6 +31,7 @@ import {
 
 export default function Home() {
     const insets = useSafeAreaInsets();
+    const { t } = useTranslation();
     const mapRef = useRef<MapView>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isDragging, setIsDragging] = useState(false);
@@ -56,7 +58,7 @@ export default function Home() {
     // Ref to track programmatic map animations (to prevent pin lift)
     const isAnimatingRef = useRef(false);
 
-    const { activeAlarm } = useAlarmStore();
+    const { activeAlarm, deactivateAlarm } = useAlarmStore();
     const {
         currentLocation,
         requestPermissions,
@@ -499,7 +501,7 @@ export default function Home() {
                     <Ionicons name="search" size={20} color={colors.textWeak} />
                     <TextInput
                         style={styles.searchInput}
-                        placeholder={`어디로 갈까요? ${searchSourceLabel}`}
+                        placeholder={`${t('home.searchPlaceholder')} ${searchSourceLabel}`}
                         placeholderTextColor={colors.textWeak}
                         value={searchQuery}
                         onChangeText={handleSearch}
@@ -575,7 +577,7 @@ export default function Home() {
                     ) : searchQuery.length >= 2 ? (
                         <View style={styles.searchLoadingContainer}>
                             <Ionicons name="search-outline" size={24} color={colors.textWeak} />
-                            <Text style={styles.searchLoadingText}>검색 결과가 없습니다</Text>
+                            <Text style={styles.searchLoadingText}>{t('common.noResults', '검색 결과가 없습니다')}</Text>
                         </View>
                     ) : null}
                 </View>
@@ -588,14 +590,14 @@ export default function Home() {
                         <Ionicons name="navigate" size={20} color={colors.primary} />
                         <Text style={styles.activeAlarmTitle}>{activeAlarm.title}</Text>
                     </View>
-                    <Text style={styles.activeAlarmDistance}>목적지까지 계산 중...</Text>
+                    <Text style={styles.activeAlarmDistance}>{t('home.activeAlarm.calculating')}</Text>
                 </View>
             )}
 
             {/* First time hint toast */}
             {isFirstHint && !isDragging && centerLocation && !isNavigating && (
                 <View style={styles.hintToast}>
-                    <Text style={styles.hintText}>지도를 움직여 위치를 정해보세요</Text>
+                    <Text style={styles.hintText}>{t('home.hint')}</Text>
                 </View>
             )}
 
@@ -603,6 +605,10 @@ export default function Home() {
             {isNavigating ? (
                 <NavigationPanel
                     onStopNavigation={() => {
+                        // Deactivate alarm to remove red pin
+                        if (activeAlarm) {
+                            deactivateAlarm(activeAlarm.id);
+                        }
                         stopNavigation();
                         stopTracking();
                     }}
@@ -663,7 +669,7 @@ export default function Home() {
                             ]}
                         >
                             <View style={styles.radiusSliderHeader}>
-                                <Text style={styles.radiusSliderLabel}>알림 반경</Text>
+                                <Text style={styles.radiusSliderLabel}>{t('alarmSetup.radius')}</Text>
                                 <Text style={styles.radiusSliderValue}>{formatRadius(selectedRadius)}</Text>
                             </View>
                             <Slider
@@ -693,7 +699,7 @@ export default function Home() {
                             ]}
                             onPress={handleCreateAlarm}
                         >
-                            <Text style={styles.createButtonText}>여기로 알람 설정</Text>
+                            <Text style={styles.createButtonText}>{t('home.createAlarm')}</Text>
                             <Ionicons name="arrow-forward" size={20} color={colors.surface} />
                         </Pressable>
                     )}
@@ -708,11 +714,11 @@ export default function Home() {
                                 onLongPress={() => {
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                                     Alert.alert(
-                                        '즐겨찾기 삭제',
-                                        `"${fav.label}"을(를) 삭제하시겠습니까?`,
+                                        t('home.deleteFavorite.title'),
+                                        t('home.deleteFavorite.message', { name: fav.label }),
                                         [
-                                            { text: '취소', style: 'cancel' },
-                                            { text: '삭제', style: 'destructive', onPress: () => deleteFavorite(fav.id) },
+                                            { text: t('common.cancel'), style: 'cancel' },
+                                            { text: t('home.deleteFavorite.confirm'), style: 'destructive', onPress: () => deleteFavorite(fav.id) },
                                         ]
                                     );
                                 }}
@@ -739,7 +745,7 @@ export default function Home() {
                                 }}
                             >
                                 <Ionicons name="add" size={16} color={colors.textWeak} />
-                                <Text style={styles.quickChipLabelAdd}>즐겨찾기</Text>
+                                <Text style={styles.quickChipLabelAdd}>{t('home.favorites')}</Text>
                             </Pressable>
                         )}
                     </View>

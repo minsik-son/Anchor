@@ -5,9 +5,11 @@
 
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { colors } from '../../src/styles/theme';
 
 export default function TabsLayout() {
+    const { t } = useTranslation();
     return (
         <Tabs
             screenOptions={{
@@ -34,7 +36,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="home"
                 options={{
-                    title: '홈',
+                    title: t('tabs.home'),
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="map" size={size} color={color} />
                     ),
@@ -43,7 +45,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="history"
                 options={{
-                    title: '히스토리',
+                    title: t('tabs.history'),
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="time" size={size} color={color} />
                     ),
@@ -52,7 +54,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="settings"
                 options={{
-                    title: '설정',
+                    title: t('tabs.settings'),
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="settings" size={size} color={color} />
                     ),

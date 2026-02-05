@@ -1,0 +1,155 @@
+{
+    "common": {
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "delete": "Delete",
+        "save": "Save",
+        "edit": "Edit",
+        "close": "Close",
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success",
+        "retry": "Retry",
+        "saveFailed": "Failed to save",
+        "noResults": "No results found"
+    },
+    "tabs": {
+        "home": "Home",
+        "history": "History",
+        "settings": "Settings"
+    },
+    "home": {
+        "searchPlaceholder": "Where are you going?",
+        "searchSource": {
+            "google": "(Google)",
+            "kakao": "(Kakao)"
+        },
+        "radius": "Radius {{radius}}m",
+        "createAlarm": "Create Alarm",
+        "favorites": "Favorites",
+        "addFavorite": "Add Favorite",
+        "hint": "Move the map to set a location",
+        "activeAlarm": {
+            "calculating": "Calculating distance..."
+        },
+        "deleteFavorite": {
+            "title": "Delete Favorite",
+            "message": "Delete '{{name}}' from favorites?",
+            "confirm": "Delete"
+        }
+    },
+    "alarmSetup": {
+        "title": "Create Alarm",
+        "titleLabel": "Title",
+        "titlePlaceholder": "e.g. Station, Office, Home",
+        "startLocation": "Start Location",
+        "currentLocation": "Current Location",
+        "selectFromMap": "Select from Map",
+        "transportMode": "Transport Mode",
+        "driving": "Driving",
+        "transit": "Transit",
+        "walking": "Walking",
+        "cycling": "Cycling",
+        "routeOptions": "Route Options",
+        "radius": "Alarm Radius",
+        "radiusValue": "{{radius}}m",
+        "alarmPreview": {
+            "beforeRadius": "{{radius}}m before destination",
+            "estimatedTime": "Alarm will ring in about {{minutes}} minutes"
+        },
+        "memo": "Memo (Optional)",
+        "memoPlaceholder": "e.g. Bring umbrella, Exit 3",
+        "startAlarm": "Start Alarm",
+        "noTitle": "Title Required",
+        "pleaseEnterTitle": "Please enter an alarm title.",
+        "locationError": "Location information is missing.",
+        "createFailed": "Failed to create alarm."
+    },
+    "navigation": {
+        "eta": "ETA {{time}}",
+        "distance": "Distance",
+        "speed": "Speed",
+        "toAlarm": "To Alarm",
+        "stopAlarm": "Cancel Alarm"
+    },
+    "history": {
+        "title": "Alarm History",
+        "total": "{{count}} total",
+        "empty": "No alarms yet",
+        "emptyHint": "Create an alarm from the home screen!",
+        "active": "Active",
+        "detail": {
+            "locationInfo": "Location Info",
+            "loading": "Searching address...",
+            "radius": "Radius {{radius}}m",
+            "createdAt": "Created At",
+            "deleteAlarm": "Delete Alarm"
+        },
+        "time": {
+            "justNow": "Just now",
+            "minutesAgo": "{{minutes}}m ago",
+            "hoursAgo": "{{hours}}h ago"
+        }
+    },
+    "settings": {
+        "title": "Settings",
+        "sections": {
+            "notification": "Notification Settings",
+            "app": "App Info"
+        },
+        "items": {
+            "language": "Language",
+            "sound": "Alarm Sound",
+            "vibration": "Vibration",
+            "preview": "Preview Alarm",
+            "battery": "Battery Optimization",
+            "help": "Help",
+            "privacy": "Privacy Policy",
+            "terms": "Terms of Service",
+            "version": "Version",
+            "licenses": "Open Source Licenses",
+            "backgroundLocation": "Background Location",
+            "batterySaving": "Battery Saving Mode",
+            "smartVolume": "Smart Volume",
+            "shakeToOff": "Shake to Turn Off",
+            "mapEngine": "Map Engine"
+        }
+    },
+    "favoriteSetup": {
+        "title": "Add Favorite",
+        "nameLabel": "Name",
+        "namePlaceholder": "e.g. Home, Office, Cafe",
+        "iconLabel": "Icon",
+        "locationLabel": "Location",
+        "save": "Save",
+        "noName": "Name Required",
+        "pleaseEnterName": "Please enter a favorite name."
+    },
+    "onboarding": {
+        "welcome": "We'll wake you up\n1km before arrival",
+        "subtitle": "Whether by subway, bus, or train\nGet notified before you reach your destination",
+        "permissions": {
+            "location": "Location Permission Required",
+            "locationDesc": "Location access is required for arrival alarms. Please allow in settings.",
+            "background": "Background Permission Required",
+            "backgroundDesc": "Select \"Always Allow\" to receive alarms even when the app is closed.",
+            "notification": "Notification Permission Required",
+            "notificationDesc": "Receive alerts before arrival"
+        },
+        "start": "Get Started",
+        "later": "Later",
+        "toSettings": "To Settings",
+        "expoGo": {
+            "title": "Expo Go Limitation",
+            "message": "Development Build is required to test location permissions on real devices. Continue without permission for now?",
+            "cancel": "Cancel",
+            "continue": "Continue"
+        }
+    },
+    "routes": {
+        "recommended": "Recommended",
+        "shortest": "Shortest Time",
+        "shortestDistance": "Shortest Distance",
+        "arrival": "Arrive at {{time}}"
+    }
+}

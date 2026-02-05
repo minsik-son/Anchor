@@ -9,6 +9,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useFavoritePlaceStore } from '../src/stores/favoritePlaceStore';
 import { colors, typography, spacing, radius, shadows } from '../src/styles/theme';
 
@@ -32,21 +33,22 @@ export default function FavoritePlaceSetup() {
     const [selectedIcon, setSelectedIcon] = useState('home');
     const savedRadius = params.radius ? parseInt(params.radius) : 500;
 
+    const { t } = useTranslation();
     const { addFavorite, favorites } = useFavoritePlaceStore();
 
     const handleSave = async () => {
         if (!label.trim()) {
-            Alert.alert('이름 필요', '즐겨찾기 이름을 입력해주세요.');
+            Alert.alert(t('favoriteSetup.noName'), t('favoriteSetup.pleaseEnterName'));
             return;
         }
 
         if (!params.latitude || !params.longitude) {
-            Alert.alert('오류', '위치 정보가 없습니다.');
+            Alert.alert(t('common.error'), t('alarmSetup.locationError'));
             return;
         }
 
         if (favorites.length >= 3) {
-            Alert.alert('최대 등록', '즐겨찾기는 최대 3개까지 등록할 수 있습니다.');
+            Alert.alert(t('common.error'), '즐겨찾기는 최대 3개까지 등록할 수 있습니다.'); // TODO: Add translation key if missing
             return;
         }
 
@@ -64,7 +66,7 @@ export default function FavoritePlaceSetup() {
             router.back();
         } catch (error) {
             console.error('[FavoritePlaceSetup] Failed to save:', error);
-            Alert.alert('오류', '저장에 실패했습니다.');
+            Alert.alert(t('common.error'), t('common.saveFailed'));
         }
     };
 
@@ -72,29 +74,33 @@ export default function FavoritePlaceSetup() {
         <View style={[styles.container, { paddingTop: insets.top }]}>
             {/* Header */}
             <View style={styles.header}>
-                <Pressable onPress={() => router.back()}>
+                <Pressable
+                    style={styles.closeButton}
+                    onPress={() => router.back()}
+                >
                     <Ionicons name="close" size={24} color={colors.textStrong} />
                 </Pressable>
-                <Text style={styles.headerTitle}>즐겨찾기 추가</Text>
-                <View style={{ width: 24 }} />
+                <Text style={styles.headerTitle}>{t('favoriteSetup.title')}</Text>
+                <View style={{ width: 40 }} />
             </View>
 
             <ScrollView style={styles.content}>
-                {/* Name Input - First */}
+                {/* Name Input */}
                 <View style={styles.section}>
-                    <Text style={styles.label}>이름</Text>
+                    <Text style={styles.label}>{t('favoriteSetup.nameLabel')}</Text>
                     <TextInput
                         style={styles.input}
-                        placeholder="예: 집, 회사, 카페"
-                        placeholderTextColor={colors.textWeak}
                         value={label}
                         onChangeText={setLabel}
+                        placeholder={t('favoriteSetup.namePlaceholder')}
+                        placeholderTextColor={colors.textWeak}
+                        autoFocus
                     />
                 </View>
 
-                {/* Icon Selection - Second */}
+                {/* Icon Selection */}
                 <View style={styles.section}>
-                    <Text style={styles.label}>아이콘</Text>
+                    <Text style={styles.label}>{t('favoriteSetup.iconLabel')}</Text>
                     <View style={styles.iconGrid}>
                         {ICONS.map((icon) => (
                             <Pressable
@@ -118,14 +124,20 @@ export default function FavoritePlaceSetup() {
                     </View>
                 </View>
 
-                {/* Location Info */}
+                {/* Details Display (Read-only) */}
                 <View style={styles.section}>
-                    <Text style={styles.label}>위치</Text>
-                    <View style={styles.infoCard}>
-                        <Ionicons name="location" size={18} color={colors.primary} />
-                        <Text style={styles.infoText} numberOfLines={1}>
-                            {params.address || `${params.latitude}, ${params.longitude}`}
-                        </Text>
+                    <Text style={styles.label}>{t('favoriteSetup.locationLabel')}</Text>
+                    <View style={styles.detailsCard}>
+                        <View style={styles.detailRow}>
+                            <Ionicons name="location-outline" size={20} color={colors.primary} />
+                            <Text style={styles.detailText} numberOfLines={1}>
+                                {params.address || `${params.latitude}, ${params.longitude}`}
+                            </Text>
+                        </View>
+                        <View style={styles.detailRow}>
+                            <Ionicons name="radio-button-on-outline" size={20} color={colors.primary} />
+                            <Text style={styles.detailText}>{t('home.radius', { radius: savedRadius })}</Text>
+                        </View>
                     </View>
                 </View>
             </ScrollView>
@@ -141,7 +153,7 @@ export default function FavoritePlaceSetup() {
                     onPress={handleSave}
                     disabled={!label.trim()}
                 >
-                    <Text style={styles.saveButtonText}>저장하기</Text>
+                    <Text style={styles.saveButtonText}>{t('favoriteSetup.save')}</Text>
                 </Pressable>
             </View>
         </View>
@@ -254,6 +266,28 @@ const styles = StyleSheet.create({
     saveButtonText: {
         ...typography.body,
         color: colors.surface,
-        fontWeight: '700',
+        fontWeight: '600',
+    },
+    closeButton: {
+        padding: spacing.xs,
+        marginLeft: -spacing.xs,
+    },
+    detailsCard: {
+        backgroundColor: colors.surface,
+        padding: spacing.md,
+        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: colors.background,
+        gap: spacing.sm,
+    },
+    detailRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+    },
+    detailText: {
+        ...typography.body,
+        color: colors.textMedium,
+        flex: 1,
     },
 });

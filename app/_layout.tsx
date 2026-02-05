@@ -10,6 +10,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { initDatabase } from '../src/db/database';
 import { colors } from '../src/styles/theme';
+import '../src/i18n'; // Initialize i18n
 
 export default function RootLayout() {
     const [isReady, setIsReady] = useState(false);

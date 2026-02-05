@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useAlarmStore } from '../../src/stores/alarmStore';
 import { colors, typography, spacing, radius, shadows } from '../../src/styles/theme';
 import { Alarm } from '../../src/db/schema';
@@ -52,6 +53,7 @@ function formatRelativeTime(dateString: string): string {
 
 export default function History() {
     const insets = useSafeAreaInsets();
+    const { t, i18n } = useTranslation();
     const { alarms, loadAlarms, deleteAlarm, activeAlarm } = useAlarmStore();
     const [selectedAlarm, setSelectedAlarm] = useState<Alarm | null>(null);
     const [showDetail, setShowDetail] = useState(false);
@@ -97,7 +99,7 @@ export default function History() {
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('ko-KR', {
+        return date.toLocaleDateString(i18n.language, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -109,15 +111,15 @@ export default function History() {
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>알람 히스토리</Text>
-                <Text style={styles.headerSubtitle}>총 {alarms.length}개</Text>
+                <Text style={styles.headerTitle}>{t('history.title')}</Text>
+                <Text style={styles.headerSubtitle}>{t('history.total', { count: alarms.length })}</Text>
             </View>
 
             {alarms.length === 0 ? (
                 <View style={styles.emptyState}>
                     <Ionicons name="file-tray-outline" size={64} color={colors.textWeak} />
-                    <Text style={styles.emptyText}>아직 생성된 알람이 없습니다</Text>
-                    <Text style={styles.emptySubtext}>홈 화면에서 알람을 만들어보세요!</Text>
+                    <Text style={styles.emptyText}>{t('history.empty')}</Text>
+                    <Text style={styles.emptySubtext}>{t('history.emptyHint')}</Text>
                 </View>
             ) : (
                 <FlatList
@@ -201,14 +203,14 @@ export default function History() {
 
                                         <View style={styles.detailCardRow}>
                                             <Ionicons name="radio-button-on-outline" size={20} color={colors.primary} />
-                                            <Text style={styles.detailCardText}>반경 {selectedAlarm.radius}m</Text>
+                                            <Text style={styles.detailCardText}>{t('history.detail.radius', { radius: selectedAlarm.radius })}</Text>
                                         </View>
                                     </View>
                                 </View>
 
                                 {/* Date Section */}
                                 <View style={styles.detailSection}>
-                                    <Text style={styles.detailLabel}>생성 시간</Text>
+                                    <Text style={styles.detailLabel}>{t('history.detail.createdAt')}</Text>
                                     <View style={styles.detailCard}>
                                         <View style={styles.detailCardRow}>
                                             <Ionicons name="calendar-outline" size={20} color={colors.primary} />
@@ -228,7 +230,7 @@ export default function History() {
                                     }}
                                 >
                                     <Ionicons name="trash-outline" size={20} color={colors.surface} />
-                                    <Text style={styles.deleteButtonText}>알람 삭제</Text>
+                                    <Text style={styles.deleteButtonText}>{t('history.detail.deleteAlarm')}</Text>
                                 </Pressable>
                             </View>
                         )}

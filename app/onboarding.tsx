@@ -11,12 +11,14 @@ import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, typography, spacing, radius, shadows } from '../src/styles/theme';
+import { useTranslation } from 'react-i18next';
 
 const ONBOARDING_COMPLETE_KEY = 'onboarding_complete';
 
 export default function Onboarding() {
     const insets = useSafeAreaInsets();
     const [isLoading, setIsLoading] = useState(false);
+    const { t } = useTranslation();
 
     const handleStart = async () => {
         setIsLoading(true);
@@ -28,9 +30,9 @@ export default function Onboarding() {
 
             if (foregroundStatus !== 'granted') {
                 Alert.alert(
-                    '위치 권한 필요',
-                    '목적지 도착 알람을 위해 위치 권한이 필요합니다. 설정에서 권한을 허용해주세요.',
-                    [{ text: '확인' }]
+                    t('onboarding.permissions.location'),
+                    t('onboarding.permissions.locationDesc'),
+                    [{ text: t('common.confirm') }]
                 );
                 setIsLoading(false);
                 return;
@@ -41,11 +43,11 @@ export default function Onboarding() {
 
             if (backgroundStatus !== 'granted') {
                 Alert.alert(
-                    '백그라운드 권한 필요',
-                    '앱이 꺼진 상태에서도 알람을 받으려면 "항상 허용"을 선택해주세요.',
+                    t('onboarding.permissions.background'),
+                    t('onboarding.permissions.backgroundDesc'),
                     [
-                        { text: '나중에', onPress: () => completeOnboarding() },
-                        { text: '설정으로', onPress: () => Location.enableNetworkProviderAsync() },
+                        { text: t('onboarding.later'), onPress: () => completeOnboarding() },
+                        { text: t('onboarding.toSettings'), onPress: () => Location.enableNetworkProviderAsync() },
                     ]
                 );
                 return;
@@ -58,15 +60,15 @@ export default function Onboarding() {
             // Handle Expo Go environment where Info.plist keys may not be available
             if (error?.message?.includes('NSLocation') || error?.message?.includes('Info.plist')) {
                 Alert.alert(
-                    'Expo Go 제한',
-                    '실제 기기에서 위치 권한을 테스트하려면 Development Build가 필요합니다. 지금은 권한 없이 계속할까요?',
+                    t('onboarding.expoGo.title'),
+                    t('onboarding.expoGo.message'),
                     [
-                        { text: '취소', onPress: () => setIsLoading(false) },
-                        { text: '계속하기', onPress: () => completeOnboarding() },
+                        { text: t('onboarding.expoGo.cancel'), onPress: () => setIsLoading(false) },
+                        { text: t('onboarding.expoGo.continue'), onPress: () => completeOnboarding() },
                     ]
                 );
             } else {
-                Alert.alert('오류', '권한 요청 중 문제가 발생했습니다.');
+                Alert.alert(t('common.error'), t('common.error'));
                 setIsLoading(false);
             }
         }
@@ -89,11 +91,8 @@ export default function Onboarding() {
 
             {/* Content */}
             <View style={styles.content}>
-                <Text style={styles.title}>도착 1km 전,{'\n'}미리 깨워드릴게요</Text>
-                <Text style={styles.subtitle}>
-                    지하철, 버스, 기차 어디서든{'\n'}
-                    목적지에 도착하기 전 알람을 받아보세요
-                </Text>
+                <Text style={styles.title}>{t('onboarding.welcome')}</Text>
+                <Text style={styles.subtitle}>{t('onboarding.subtitle')}</Text>
             </View>
 
             {/* Features */}
@@ -122,6 +121,9 @@ export default function Onboarding() {
                     위치 권한 허용이 필요합니다
                 </Text>
             </View>
+            <Text style={styles.permissionNote}>
+                {t('onboarding.permissions.locationDesc')}
+            </Text>
         </View>
     );
 }

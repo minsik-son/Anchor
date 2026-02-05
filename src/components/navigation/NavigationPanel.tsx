@@ -7,6 +7,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useLocationStore } from '../../stores/locationStore';
 import { colors, typography, spacing, radius, shadows } from '../../styles/theme';
 
@@ -16,6 +17,7 @@ interface NavigationPanelProps {
 
 export default function NavigationPanel({ onStopNavigation }: NavigationPanelProps) {
     const insets = useSafeAreaInsets();
+    const { t } = useTranslation();
     const {
         distanceToTarget,
         speed,
@@ -51,7 +53,7 @@ export default function NavigationPanel({ onStopNavigation }: NavigationPanelPro
             {selectedRoute && (
                 <View style={styles.routeHeader}>
                     <Text style={styles.routeName}>{selectedRoute.name}</Text>
-                    <Text style={styles.eta}>도착 예정 {selectedRoute.eta}</Text>
+                    <Text style={styles.eta}>{t('navigation.eta', { time: selectedRoute.eta })}</Text>
                 </View>
             )}
 
@@ -60,7 +62,7 @@ export default function NavigationPanel({ onStopNavigation }: NavigationPanelPro
                 <View style={styles.statItem}>
                     <Ionicons name="navigate" size={20} color={colors.primary} />
                     <View>
-                        <Text style={styles.statLabel}>남은 거리</Text>
+                        <Text style={styles.statLabel}>{t('navigation.distance')}</Text>
                         <Text style={styles.statValue}>{formatDistance(distanceToTarget)}</Text>
                     </View>
                 </View>
@@ -70,7 +72,7 @@ export default function NavigationPanel({ onStopNavigation }: NavigationPanelPro
                 <View style={styles.statItem}>
                     <Ionicons name="speedometer" size={20} color={colors.primary} />
                     <View>
-                        <Text style={styles.statLabel}>현재 속도</Text>
+                        <Text style={styles.statLabel}>{t('navigation.speed')}</Text>
                         <Text style={styles.statValue}>{formatSpeed(speed)} <Text style={styles.statUnit}>km/h</Text></Text>
                     </View>
                 </View>
@@ -80,7 +82,7 @@ export default function NavigationPanel({ onStopNavigation }: NavigationPanelPro
                 <View style={styles.statItem}>
                     <Ionicons name="notifications" size={20} color={colors.warning} />
                     <View>
-                        <Text style={styles.statLabel}>알람까지</Text>
+                        <Text style={styles.statLabel}>{t('navigation.toAlarm')}</Text>
                         <Text style={[styles.statValue, distanceToAlarm !== null && distanceToAlarm < 500 && styles.statValueWarning]}>
                             {formatDistance(distanceToAlarm)}
                         </Text>
@@ -97,7 +99,7 @@ export default function NavigationPanel({ onStopNavigation }: NavigationPanelPro
                 onPress={handleStop}
             >
                 <Ionicons name="close-circle" size={20} color={colors.surface} />
-                <Text style={styles.stopButtonText}>알람 취소</Text>
+                <Text style={styles.stopButtonText}>{t('navigation.stopAlarm')}</Text>
             </Pressable>
         </View>
     );
