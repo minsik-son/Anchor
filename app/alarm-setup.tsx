@@ -16,7 +16,13 @@ import { colors, typography, spacing, radius, shadows, alarmDefaults } from '../
 
 export default function AlarmSetup() {
     const insets = useSafeAreaInsets();
-    const params = useLocalSearchParams<{ latitude: string; longitude: string; radius: string }>();
+    const params = useLocalSearchParams<{
+        latitude: string;
+        longitude: string;
+        radius: string;
+        address?: string;
+        locationName?: string;
+    }>();
 
     const [title, setTitle] = useState('');
     const [alarmRadius, setAlarmRadius] = useState(
@@ -81,14 +87,25 @@ export default function AlarmSetup() {
                 {/* Title Input */}
                 <View style={styles.section}>
                     <Text style={styles.label}>제목</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="예: 강남역, 회사, 집"
-                        placeholderTextColor={colors.textWeak}
-                        value={title}
-                        onChangeText={setTitle}
-                        autoFocus
-                    />
+                    <View style={styles.inputRow}>
+                        <TextInput
+                            style={[styles.input, styles.inputWithButton]}
+                            placeholder="예: 강남역, 회사, 집"
+                            placeholderTextColor={colors.textWeak}
+                            value={title}
+                            onChangeText={setTitle}
+                        />
+                        <Pressable
+                            style={styles.autoFillButton}
+                            onPress={() => {
+                                const autoTitle = params.locationName || params.address || '내 위치';
+                                setTitle(autoTitle);
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            }}
+                        >
+                            <Ionicons name="sparkles" size={20} color={colors.primary} />
+                        </Pressable>
+                    </View>
                 </View>
 
                 {/* Radius Slider */}
@@ -213,6 +230,23 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.sm,
         ...typography.body,
         color: colors.textStrong,
+    },
+    inputRow: {
+        flexDirection: 'row',
+        gap: spacing.xs,
+        alignItems: 'center',
+    },
+    inputWithButton: {
+        flex: 1,
+    },
+    autoFillButton: {
+        backgroundColor: colors.surface,
+        borderRadius: radius.md,
+        width: 48,
+        height: 48,
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...shadows.button,
     },
     memoInput: {
         minHeight: 80,

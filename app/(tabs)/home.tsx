@@ -47,6 +47,7 @@ export default function Home() {
 
     // Animation values (using React Native Animated API)
     const searchBarOpacity = useRef(new Animated.Value(1)).current;
+    const sliderHeight = useRef(new Animated.Value(0)).current;
 
     // Ref to track if map is being dragged by user
     const isDraggingRef = useRef(false);
@@ -90,6 +91,15 @@ export default function Home() {
             useNativeDriver: true,
         }).start();
     }, [isDragging]);
+
+    // Animate radius slider height (fast and responsive)
+    useEffect(() => {
+        Animated.timing(sliderHeight, {
+            toValue: showRadiusSlider ? 1 : 0,
+            duration: 150, // Faster for better responsiveness
+            useNativeDriver: false, // Height animation needs JS thread
+        }).start();
+    }, [showRadiusSlider]);
 
     // Default location for search (Seoul if no current location)
     const defaultLocation = currentLocation
@@ -293,6 +303,8 @@ export default function Home() {
                 latitude: centerLocation.latitude,
                 longitude: centerLocation.longitude,
                 radius: selectedRadius,
+                address: addressInfo.address || '',
+                locationName: addressInfo.detail || addressInfo.district || '',
             },
         });
     };
@@ -334,6 +346,13 @@ export default function Home() {
                 }}
                 showsUserLocation
                 showsMyLocationButton={false}
+                onPress={(e) => {
+                    // Instant close without waiting for animation
+                    if (showRadiusSlider) {
+                        setShowRadiusSlider(false);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
+                }}
                 onPanDrag={handlePanDrag}
                 onRegionChangeComplete={handleRegionChangeComplete}
             >
@@ -371,6 +390,17 @@ export default function Home() {
                     </>
                 )}
             </MapView>
+
+            {/* Invisible overlay to close radius slider - INSTANT response */}
+            {showRadiusSlider && (
+                <Pressable
+                    style={StyleSheet.absoluteFill}
+                    onPress={() => {
+                        setShowRadiusSlider(false);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }}
+                />
+            )}
 
             {/* Center Pin (Fixed at screen center) */}
             <CenterPinMarker isDragging={isDragging} />
@@ -522,8 +552,20 @@ export default function Home() {
                 </View>
 
                 {/* Radius Slider (shown when chip is tapped) */}
-                {showRadiusSlider && centerLocation && (
-                    <View style={styles.radiusSliderContainer}>
+                {centerLocation && (
+                    <Animated.View
+                        style={[
+                            styles.radiusSliderContainer,
+                            {
+                                maxHeight: sliderHeight.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0, 120], // 0 to full height
+                                }),
+                                opacity: sliderHeight,
+                                overflow: 'hidden',
+                            }
+                        ]}
+                    >
                         <View style={styles.radiusSliderHeader}>
                             <Text style={styles.radiusSliderLabel}>알림 반경</Text>
                             <Text style={styles.radiusSliderValue}>{formatRadius(selectedRadius)}</Text>
@@ -543,7 +585,7 @@ export default function Home() {
                             <Text style={styles.radiusSliderMinMax}>100m</Text>
                             <Text style={styles.radiusSliderMinMax}>2km</Text>
                         </View>
-                    </View>
+                    </Animated.View>
                 )}
 
                 {/* Create Alarm Button */}

@@ -21,6 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { useAlarmStore } from '../../src/stores/alarmStore';
 import { colors, typography, spacing, radius, shadows } from '../../src/styles/theme';
 import { Alarm } from '../../src/db/schema';
+import { reverseGeocode } from '../../src/services/geocoding';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DELETE_THRESHOLD = 80;
@@ -31,10 +32,25 @@ export default function History() {
     const { alarms, loadAlarms, deleteAlarm } = useAlarmStore();
     const [selectedAlarm, setSelectedAlarm] = useState<Alarm | null>(null);
     const [showDetail, setShowDetail] = useState(false);
+    const [locationAddress, setLocationAddress] = useState('');
+    const [isLoadingAddress, setIsLoadingAddress] = useState(false);
 
     useEffect(() => {
         loadAlarms();
     }, []);
+
+    // Fetch address when alarm is selected
+    useEffect(() => {
+        if (selectedAlarm && showDetail) {
+            setIsLoadingAddress(true);
+            setLocationAddress('');
+
+            reverseGeocode(selectedAlarm.latitude, selectedAlarm.longitude).then((result) => {
+                setLocationAddress(result.address || '주소를 찾을 수 없습니다');
+                setIsLoadingAddress(false);
+            });
+        }
+    }, [selectedAlarm, showDetail]);
 
     const handleAlarmPress = (alarm: Alarm) => {
         setSelectedAlarm(alarm);
@@ -134,12 +150,31 @@ export default function History() {
                                 <View style={styles.detailSection}>
                                     <Text style={styles.detailLabel}>위치 정보</Text>
                                     <View style={styles.detailCard}>
+                                        {/* Address */}
+                                        {isLoadingAddress ? (
+                                            <View style={styles.detailCardRow}>
+                                                <Ionicons name="location" size={20} color={colors.primary} />
+                                                <Text style={[styles.detailCardText, { color: colors.textWeak }]}>
+                                                    주소를 불러오는 중...
+                                                </Text>
+                                            </View>
+                                        ) : locationAddress ? (
+                                            <View style={[styles.detailCardRow, { marginBottom: spacing.xs }]}>
+                                                <Ionicons name="location" size={20} color={colors.primary} />
+                                                <Text style={[styles.detailCardText, { fontWeight: '600', flex: 1 }]}>
+                                                    {locationAddress}
+                                                </Text>
+                                            </View>
+                                        ) : null}
+
+                                        {/* Coordinates */}
                                         <View style={styles.detailCardRow}>
-                                            <Ionicons name="location-outline" size={20} color={colors.primary} />
-                                            <Text style={styles.detailCardText}>
+                                            <Ionicons name="location-outline" size={20} color={colors.textWeak} />
+                                            <Text style={[styles.detailCardText, { color: colors.textMedium, fontSize: 12 }]}>
                                                 {selectedAlarm.latitude.toFixed(6)}, {selectedAlarm.longitude.toFixed(6)}
                                             </Text>
                                         </View>
+
                                         <View style={styles.detailCardRow}>
                                             <Ionicons name="radio-button-on-outline" size={20} color={colors.primary} />
                                             <Text style={styles.detailCardText}>반경 {selectedAlarm.radius}m</Text>
@@ -191,7 +226,7 @@ function SwipeableAlarmCard({
     onDelete: () => void;
 }) {
     const translateX = useRef(new Animated.Value(0)).current;
-    const [isDeleteRevealed, setIsDeleteRevealed] = useState(false);
+    const [isDeleteVisible, setIsDeleteVisible] = useState(false);
 
     const panResponder = useRef(
         PanResponder.create({
@@ -206,7 +241,7 @@ function SwipeableAlarmCard({
                 // Only allow left swipe (negative dx)
                 if (gestureState.dx < 0) {
                     translateX.setValue(Math.max(gestureState.dx, -DELETE_CONFIRM_THRESHOLD));
-                } else if (isDeleteRevealed) {
+                } else if (isDeleteVisible) {
                     // Allow swipe back to close
                     translateX.setValue(Math.min(gestureState.dx - DELETE_THRESHOLD, 0));
                 }
@@ -219,22 +254,14 @@ function SwipeableAlarmCard({
                         duration: 200,
                         useNativeDriver: true,
                     }).start(() => onDelete());
-                } else if (gestureState.dx < -DELETE_THRESHOLD || (isDeleteRevealed && gestureState.dx < 0)) {
-                    // Show delete button
-                    Animated.spring(translateX, {
-                        toValue: -DELETE_THRESHOLD,
-                        useNativeDriver: true,
-                        friction: 8,
-                    }).start();
-                    setIsDeleteRevealed(true);
+                } else if (gestureState.dx < -DELETE_THRESHOLD || (isDeleteVisible && gestureState.dx < 0)) {
+                    // Show delete button - NO ANIMATION, just snap to position
+                    translateX.setValue(-DELETE_THRESHOLD);
+                    setIsDeleteVisible(true);
                 } else {
-                    // Reset position
-                    Animated.spring(translateX, {
-                        toValue: 0,
-                        useNativeDriver: true,
-                        friction: 8,
-                    }).start();
-                    setIsDeleteRevealed(false);
+                    // Reset position - NO ANIMATION, just snap back
+                    translateX.setValue(0);
+                    setIsDeleteVisible(false);
                 }
             },
         })
@@ -251,7 +278,11 @@ function SwipeableAlarmCard({
     return (
         <View style={styles.swipeContainer}>
             {/* Delete Button Background */}
-            <View style={styles.deleteBackground}>
+            <View
+                style={[
+                    styles.deleteBackground,
+                ]}
+            >
                 <Pressable style={styles.deleteBackgroundButton} onPress={handleDeletePress}>
                     <Ionicons name="trash" size={24} color={colors.surface} />
                     <Text style={styles.deleteBackgroundText}>삭제</Text>
