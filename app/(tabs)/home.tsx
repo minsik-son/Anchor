@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator, Alert } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Circle, Marker, Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,7 @@ import { router } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import { useAlarmStore } from '../../src/stores/alarmStore';
 import { useLocationStore } from '../../src/stores/locationStore';
+import { useFavoritePlaceStore } from '../../src/stores/favoritePlaceStore';
 import { colors, typography, spacing, radius, shadows } from '../../src/styles/theme';
 import CenterPinMarker from '../../src/components/map/CenterPinMarker';
 import AddressBar from '../../src/components/map/AddressBar';
@@ -56,12 +57,13 @@ export default function Home() {
 
     const { activeAlarm } = useAlarmStore();
     const { currentLocation, requestPermissions, getCurrentLocation } = useLocationStore();
+    const { favorites, loadFavorites, deleteFavorite } = useFavoritePlaceStore();
 
     useEffect(() => {
         const init = async () => {
             await requestPermissions();
-            // Try to get initial location
             await getCurrentLocation();
+            await loadFavorites();
         };
         init();
     }, []);
@@ -315,6 +317,43 @@ export default function Home() {
         setSelectedRadius(roundedValue);
     };
 
+    // Jump to favorite location
+    const handleJumpToFavorite = (favorite: { latitude: number; longitude: number; radius: number; label: string }) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        Keyboard.dismiss();
+        setShowSearchResults(false);
+
+        isAnimatingRef.current = true;
+
+        const newLocation = {
+            latitude: favorite.latitude,
+            longitude: favorite.longitude,
+        };
+
+        // Animate map to location
+        mapRef.current?.animateToRegion({
+            ...newLocation,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+        }, 500);
+
+        // Update state
+        setCenterLocation(newLocation);
+        setSelectedRadius(favorite.radius);
+
+        // Reverse geocode the location
+        setIsLoadingAddress(true);
+        debouncedReverseGeocode(newLocation.latitude, newLocation.longitude, (result) => {
+            setAddressInfo(result);
+            setIsLoadingAddress(false);
+        });
+
+        // Reset animation flag after animation completes
+        setTimeout(() => {
+            isAnimatingRef.current = false;
+        }, 600);
+    };
+
     const userLocation = currentLocation
         ? { latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude }
         : { latitude: 37.5665, longitude: 126.9780 }; // Default to Seoul
@@ -391,12 +430,14 @@ export default function Home() {
                 )}
             </MapView>
 
-            {/* Invisible overlay to close radius slider - INSTANT response */}
-            {showRadiusSlider && (
+            {/* Invisible overlay to close radius slider and keyboard - INSTANT response */}
+            {(showRadiusSlider || showSearchResults) && (
                 <Pressable
                     style={StyleSheet.absoluteFill}
                     onPress={() => {
+                        Keyboard.dismiss();
                         setShowRadiusSlider(false);
+                        setShowSearchResults(false);
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }}
                 />
@@ -513,7 +554,7 @@ export default function Home() {
             )}
 
             {/* Bottom Sheet */}
-            <View style={[styles.bottomSheet, { paddingBottom: insets.bottom + spacing.md }]}>
+            <View style={[styles.bottomSheet, { paddingBottom: insets.bottom + 4 }]}>
                 {/* Address Bar with Radius Chip */}
                 <View style={styles.addressRow}>
                     <View style={styles.addressBarWrapper}>
@@ -602,30 +643,56 @@ export default function Home() {
                     </Pressable>
                 )}
 
-                {/* Quick Actions */}
-                {!centerLocation && (
-                    <View style={styles.quickActions}>
-                        <Text style={styles.quickActionsTitle}>빠른 설정</Text>
-                        <View style={styles.quickActionButtons}>
-                            <QuickActionButton icon="business" label="회사" />
-                            <QuickActionButton icon="home" label="집" />
-                            <QuickActionButton icon="cafe" label="카페" />
-                        </View>
-                    </View>
-                )}
+                {/* Quick Actions - Favorite Places (Compact) */}
+                <View style={styles.quickActionsCompact}>
+                    {favorites.map((fav) => (
+                        <Pressable
+                            key={fav.id}
+                            style={styles.quickChip}
+                            onPress={() => handleJumpToFavorite(fav)}
+                            onLongPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                                Alert.alert(
+                                    '즐겨찾기 삭제',
+                                    `"${fav.label}"을(를) 삭제하시겠습니까?`,
+                                    [
+                                        { text: '취소', style: 'cancel' },
+                                        { text: '삭제', style: 'destructive', onPress: () => deleteFavorite(fav.id) },
+                                    ]
+                                );
+                            }}
+                        >
+                            <Ionicons name={fav.icon as any} size={16} color={colors.primary} />
+                            <Text style={styles.quickChipLabel}>{fav.label}</Text>
+                        </Pressable>
+                    ))}
+                    {favorites.length < 3 && (
+                        <Pressable
+                            style={styles.quickChipAdd}
+                            onPress={() => {
+                                if (centerLocation) {
+                                    router.push({
+                                        pathname: '/favorite-place-setup',
+                                        params: {
+                                            latitude: centerLocation.latitude,
+                                            longitude: centerLocation.longitude,
+                                            address: addressInfo.address || '',
+                                        },
+                                    });
+                                }
+                            }}
+                        >
+                            <Ionicons name="add" size={16} color={colors.textWeak} />
+                            <Text style={styles.quickChipLabelAdd}>즐겨찾기</Text>
+                        </Pressable>
+                    )}
+                </View>
             </View>
         </View>
     );
 }
 
-function QuickActionButton({ icon, label }: { icon: string; label: string }) {
-    return (
-        <Pressable style={styles.quickActionButton}>
-            <Ionicons name={icon as any} size={24} color={colors.primary} />
-            <Text style={styles.quickActionLabel}>{label}</Text>
-        </Pressable>
-    );
-}
+
 
 const styles = StyleSheet.create({
     container: {
@@ -769,9 +836,9 @@ const styles = StyleSheet.create({
         backgroundColor: colors.surface,
         borderTopLeftRadius: radius.lg,
         borderTopRightRadius: radius.lg,
-        paddingHorizontal: spacing.md,
-        paddingTop: spacing.md,
-        gap: spacing.sm,
+        paddingHorizontal: spacing.sm,
+        paddingTop: spacing.sm,
+        gap: spacing.xs,
         ...shadows.card,
     },
     addressRow: {
@@ -853,28 +920,42 @@ const styles = StyleSheet.create({
         color: colors.surface,
         fontWeight: '700',
     },
-    quickActions: {
+    quickActionsCompact: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: spacing.xs,
         marginTop: spacing.xs,
     },
-    quickActionsTitle: {
+    quickChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 6,
+        backgroundColor: colors.background,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.primary,
+    },
+    quickChipLabel: {
+        ...typography.caption,
+        color: colors.primary,
+        fontWeight: '600',
+    },
+    quickChipAdd: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 6,
+        backgroundColor: colors.background,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.textWeak,
+        borderStyle: 'dashed',
+    },
+    quickChipLabelAdd: {
         ...typography.caption,
         color: colors.textWeak,
-        marginBottom: spacing.xs,
-    },
-    quickActionButtons: {
-        flexDirection: 'row',
-        gap: spacing.sm,
-    },
-    quickActionButton: {
-        flex: 1,
-        alignItems: 'center',
-        backgroundColor: colors.background,
-        borderRadius: radius.md,
-        paddingVertical: spacing.sm,
-        gap: 4,
-    },
-    quickActionLabel: {
-        ...typography.caption,
-        color: colors.textMedium,
     },
 });
