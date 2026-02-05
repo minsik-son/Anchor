@@ -29,6 +29,7 @@ interface LocationState {
 
     // Actions
     requestPermissions: () => Promise<boolean>;
+    getCurrentLocation: () => Promise<Location.LocationObject | null>;
     startTracking: (target: { latitude: number; longitude: number }, radius: number) => Promise<void>;
     stopTracking: () => void;
     updateLocation: (location: Location.LocationObject) => void;
@@ -87,16 +88,45 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
             return backgroundStatus === 'granted';
         } catch (error: any) {
-            console.error('[LocationStore] Permission request failed:', error);
-
             // Handle Expo Go environment where Info.plist keys may not be available
             if (error?.message?.includes('NSLocation') || error?.message?.includes('Info.plist')) {
-                console.warn('[LocationStore] Running in Expo Go - permissions not available');
-                // Set hasPermission to true to allow testing other features
+                console.warn('[LocationStore] Running in Expo Go - location permissions not available. This is expected.');
+                // Set hasPermission to false but allow testing other features
                 set({ hasPermission: false, permissionStatus: Location.PermissionStatus.UNDETERMINED });
+            } else {
+                console.error('[LocationStore] Permission request failed:', error);
             }
 
             return false;
+        }
+    },
+
+    getCurrentLocation: async () => {
+        try {
+            // Try to get current position
+            const location = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced,
+            });
+
+            // Update store with this location
+            set({ currentLocation: location });
+
+            return location;
+        } catch (error: any) {
+            console.warn('[LocationStore] getCurrentPositionAsync failed, trying last known position:', error?.message);
+
+            try {
+                // Fallback to last known position
+                const lastKnown = await Location.getLastKnownPositionAsync();
+                if (lastKnown) {
+                    set({ currentLocation: lastKnown });
+                    return lastKnown;
+                }
+            } catch (fallbackError) {
+                console.warn('[LocationStore] getLastKnownPositionAsync also failed');
+            }
+
+            return null;
         }
     },
 

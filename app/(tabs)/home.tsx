@@ -4,27 +4,27 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Circle, Marker, Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import * as Location from 'expo-location';
 import { router } from 'expo-router';
+import Slider from '@react-native-community/slider';
 import { useAlarmStore } from '../../src/stores/alarmStore';
 import { useLocationStore } from '../../src/stores/locationStore';
 import { colors, typography, spacing, radius, shadows } from '../../src/styles/theme';
 import CenterPinMarker from '../../src/components/map/CenterPinMarker';
 import AddressBar from '../../src/components/map/AddressBar';
 import { debouncedReverseGeocode, GeocodingResult } from '../../src/services/geocoding';
-
-interface SearchResult {
-    id: string;
-    name: string;
-    address: string;
-    latitude: number;
-    longitude: number;
-}
+import {
+    PlaceResult,
+    debouncedSearchPlaces,
+    cancelPendingSearch,
+    getGooglePlaceDetails,
+    resetSessionToken,
+    isInKorea
+} from '../../src/services/placeSearch';
 
 export default function Home() {
     const insets = useSafeAreaInsets();
@@ -32,30 +32,35 @@ export default function Home() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isDragging, setIsDragging] = useState(false);
     const [centerLocation, setCenterLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-    const [selectedRadius] = useState(500);
+    const [selectedRadius, setSelectedRadius] = useState(500);
     const [isFirstHint, setIsFirstHint] = useState(true);
+    const [showRadiusSlider, setShowRadiusSlider] = useState(false);
 
     // Address state
     const [addressInfo, setAddressInfo] = useState<GeocodingResult>({ address: '' });
     const [isLoadingAddress, setIsLoadingAddress] = useState(false);
 
     // Search state
-    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
 
     // Animation values (using React Native Animated API)
     const searchBarOpacity = useRef(new Animated.Value(1)).current;
 
-    // Ref to track if map is being dragged
+    // Ref to track if map is being dragged by user
     const isDraggingRef = useRef(false);
+    // Ref to track programmatic map animations (to prevent pin lift)
+    const isAnimatingRef = useRef(false);
 
     const { activeAlarm } = useAlarmStore();
-    const { currentLocation, requestPermissions } = useLocationStore();
+    const { currentLocation, requestPermissions, getCurrentLocation } = useLocationStore();
 
     useEffect(() => {
         const init = async () => {
             await requestPermissions();
+            // Try to get initial location
+            await getCurrentLocation();
         };
         init();
     }, []);
@@ -86,96 +91,105 @@ export default function Home() {
         }).start();
     }, [isDragging]);
 
-    // Search for places using geocoding
-    const handleSearch = useCallback(async (query: string) => {
+    // Default location for search (Seoul if no current location)
+    const defaultLocation = currentLocation
+        ? { latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude }
+        : { latitude: 37.5665, longitude: 126.9780 };
+
+    // Search for places using hybrid search
+    const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
 
         if (query.length < 2) {
             setSearchResults([]);
             setShowSearchResults(false);
+            cancelPendingSearch();
             return;
         }
 
         setIsSearching(true);
         setShowSearchResults(true);
 
-        try {
-            // Use expo-location geocoding
-            const results = await Location.geocodeAsync(query);
+        debouncedSearchPlaces(
+            {
+                query,
+                currentLocation: centerLocation || defaultLocation,
+                language: 'ko',
+            },
+            (results) => {
+                setSearchResults(results);
+                setIsSearching(false);
+            },
+            350
+        );
+    }, [centerLocation, defaultLocation]);
 
-            const searchResults: SearchResult[] = results.slice(0, 5).map((result, index) => ({
-                id: `${index}`,
-                name: query,
-                address: `${result.latitude.toFixed(4)}, ${result.longitude.toFixed(4)}`,
-                latitude: result.latitude,
-                longitude: result.longitude,
-            }));
-
-            // Also reverse geocode to get proper addresses
-            const enrichedResults = await Promise.all(
-                searchResults.map(async (result) => {
-                    try {
-                        const reverseResults = await Location.reverseGeocodeAsync({
-                            latitude: result.latitude,
-                            longitude: result.longitude,
-                        });
-                        if (reverseResults.length > 0) {
-                            const r = reverseResults[0];
-                            return {
-                                ...result,
-                                name: r.name || r.street || query,
-                                address: [r.city, r.district, r.street, r.streetNumber]
-                                    .filter(Boolean)
-                                    .join(' ') || result.address,
-                            };
-                        }
-                    } catch (e) {
-                        // Ignore individual reverse geocode errors
-                    }
-                    return result;
-                })
-            );
-
-            setSearchResults(enrichedResults);
-        } catch (error) {
-            console.error('[Search] Failed to geocode:', error);
-            setSearchResults([]);
-        } finally {
-            setIsSearching(false);
-        }
-    }, []);
-
-    const handleSelectSearchResult = useCallback((result: SearchResult) => {
+    const handleSelectSearchResult = useCallback(async (result: PlaceResult) => {
         setShowSearchResults(false);
         setSearchQuery('');
         Keyboard.dismiss();
 
-        // Move map to selected location
-        if (mapRef.current) {
-            mapRef.current.animateToRegion({
+        let finalLocation: { latitude: number; longitude: number } | null = null;
+
+        // Kakao and Expo results have coordinates directly
+        if (result.latitude !== undefined && result.longitude !== undefined) {
+            finalLocation = {
                 latitude: result.latitude,
                 longitude: result.longitude,
+            };
+        }
+        // Google results need an additional API call
+        else if (result.source === 'GOOGLE' && result.placeId) {
+            setIsLoadingAddress(true);
+            const coords = await getGooglePlaceDetails(result.placeId, '');
+            if (coords) {
+                finalLocation = coords;
+            }
+        }
+
+        if (!finalLocation) {
+            console.error('[Home] Could not get coordinates for selected place');
+            setIsLoadingAddress(false);
+            return;
+        }
+
+        // Move map to selected location (prevent pin lift during animation)
+        if (mapRef.current) {
+            isAnimatingRef.current = true;
+            mapRef.current.animateToRegion({
+                latitude: finalLocation.latitude,
+                longitude: finalLocation.longitude,
                 latitudeDelta: 0.01,
                 longitudeDelta: 0.01,
-            });
+            }, 400);
+            // Reset animation flag after animation completes
+            setTimeout(() => {
+                isAnimatingRef.current = false;
+            }, 450);
         }
 
         // Update center location
-        setCenterLocation({
-            latitude: result.latitude,
-            longitude: result.longitude,
-        });
+        setCenterLocation(finalLocation);
 
         // Update address
         setAddressInfo({
             address: result.address,
             detail: result.name,
         });
+        setIsLoadingAddress(false);
+
+        // Reset session token after selection (for Google billing optimization)
+        resetSessionToken();
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }, []);
 
     const handleRegionChange = useCallback(() => {
+        // Skip if programmatic animation is in progress
+        if (isAnimatingRef.current) {
+            return;
+        }
+
         // Only set dragging if not already dragging (prevent repeated calls)
         if (!isDraggingRef.current) {
             isDraggingRef.current = true;
@@ -186,6 +200,8 @@ export default function Home() {
             if (isFirstHint) setIsFirstHint(false);
             // Hide search results when dragging
             setShowSearchResults(false);
+            // Hide radius slider when dragging
+            setShowRadiusSlider(false);
         }
     }, [isFirstHint]);
 
@@ -209,6 +225,51 @@ export default function Home() {
         });
     }, []);
 
+    // Handle My Location button press
+    const handleMyLocationPress = useCallback(async () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+        // Get current location (this will update the store and return the location)
+        const location = await getCurrentLocation();
+
+        if (!location) {
+            console.log('[Home] Could not get current location');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            return;
+        }
+
+        const myLocation = {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+        };
+
+        // Animate map to current location (prevent pin lift during animation)
+        if (mapRef.current) {
+            isAnimatingRef.current = true;
+            mapRef.current.animateToRegion({
+                ...myLocation,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+            }, 500);
+            // Reset animation flag after animation completes
+            setTimeout(() => {
+                isAnimatingRef.current = false;
+            }, 550);
+        }
+
+        // Update center location
+        setCenterLocation(myLocation);
+
+        // Trigger reverse geocoding for this location
+        setIsLoadingAddress(true);
+        debouncedReverseGeocode(myLocation.latitude, myLocation.longitude, (result) => {
+            setAddressInfo(result);
+            setIsLoadingAddress(false);
+        });
+
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }, [getCurrentLocation]);
+
     const handleCreateAlarm = () => {
         if (!centerLocation) return;
 
@@ -223,9 +284,28 @@ export default function Home() {
         });
     };
 
+    const handleRadiusChange = (value: number) => {
+        // Round to nearest 50m
+        const roundedValue = Math.round(value / 50) * 50;
+        setSelectedRadius(roundedValue);
+    };
+
     const userLocation = currentLocation
         ? { latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude }
         : { latitude: 37.5665, longitude: 126.9780 }; // Default to Seoul
+
+    // Determine search source indicator
+    const searchSourceLabel = centerLocation && isInKorea(centerLocation.latitude, centerLocation.longitude)
+        ? '🇰🇷'
+        : '🌍';
+
+    // Format radius for display
+    const formatRadius = (meters: number) => {
+        if (meters >= 1000) {
+            return `${(meters / 1000).toFixed(1)}km`;
+        }
+        return `${meters}m`;
+    };
 
     return (
         <View style={styles.container}>
@@ -244,6 +324,17 @@ export default function Home() {
                 onRegionChange={handleRegionChange}
                 onRegionChangeComplete={handleRegionChangeComplete}
             >
+                {/* Radius preview circle */}
+                {centerLocation && !isDragging && (
+                    <Circle
+                        center={centerLocation}
+                        radius={selectedRadius}
+                        strokeColor={colors.primary}
+                        strokeWidth={2}
+                        fillColor={`${colors.primary}20`}
+                    />
+                )}
+
                 {/* Active alarm marker */}
                 {activeAlarm && (
                     <>
@@ -271,13 +362,6 @@ export default function Home() {
             {/* Center Pin (Fixed at screen center) */}
             <CenterPinMarker isDragging={isDragging} />
 
-            {/* Radius preview circle overlay hint */}
-            {centerLocation && !isDragging && (
-                <View style={styles.radiusHint} pointerEvents="none">
-                    <Text style={styles.radiusHintText}>반경 {selectedRadius}m</Text>
-                </View>
-            )}
-
             {/* Top Bar Container - Search + Location Button aligned */}
             <View style={[styles.topBarContainer, { top: insets.top + spacing.sm }]}>
                 {/* Search Bar (fades during drag) */}
@@ -285,11 +369,14 @@ export default function Home() {
                     <Ionicons name="search" size={20} color={colors.textWeak} />
                     <TextInput
                         style={styles.searchInput}
-                        placeholder="어디로 갈까요?"
+                        placeholder={`어디로 갈까요? ${searchSourceLabel}`}
                         placeholderTextColor={colors.textWeak}
                         value={searchQuery}
                         onChangeText={handleSearch}
-                        onFocus={() => searchQuery.length >= 2 && setShowSearchResults(true)}
+                        onFocus={() => {
+                            searchQuery.length >= 2 && setShowSearchResults(true);
+                            setShowRadiusSlider(false);
+                        }}
                         onSubmitEditing={() => {
                             Keyboard.dismiss();
                         }}
@@ -300,6 +387,7 @@ export default function Home() {
                             setSearchQuery('');
                             setSearchResults([]);
                             setShowSearchResults(false);
+                            cancelPendingSearch();
                         }}>
                             <Ionicons name="close-circle" size={20} color={colors.textWeak} />
                         </Pressable>
@@ -309,16 +397,7 @@ export default function Home() {
                 {/* My Location Button - Same height as search bar */}
                 <Pressable
                     style={styles.myLocationButton}
-                    onPress={() => {
-                        if (mapRef.current && currentLocation) {
-                            mapRef.current.animateToRegion({
-                                latitude: currentLocation.coords.latitude,
-                                longitude: currentLocation.coords.longitude,
-                                latitudeDelta: 0.01,
-                                longitudeDelta: 0.01,
-                            });
-                        }
-                    }}
+                    onPress={handleMyLocationPress}
                 >
                     <Ionicons name="locate" size={24} color={colors.primary} />
                 </Pressable>
@@ -329,6 +408,7 @@ export default function Home() {
                 <View style={[styles.searchResultsContainer, { top: insets.top + spacing.sm + 56 }]}>
                     {isSearching ? (
                         <View style={styles.searchLoadingContainer}>
+                            <ActivityIndicator size="small" color={colors.primary} />
                             <Text style={styles.searchLoadingText}>검색 중...</Text>
                         </View>
                     ) : searchResults.length > 0 ? (
@@ -341,7 +421,13 @@ export default function Home() {
                                     style={styles.searchResultItem}
                                     onPress={() => handleSelectSearchResult(item)}
                                 >
-                                    <Ionicons name="location-outline" size={20} color={colors.textMedium} />
+                                    <View style={styles.searchResultIconContainer}>
+                                        <Ionicons
+                                            name={item.source === 'KAKAO' ? 'location' : 'location-outline'}
+                                            size={20}
+                                            color={item.source === 'KAKAO' ? colors.primary : colors.textMedium}
+                                        />
+                                    </View>
                                     <View style={styles.searchResultTextContainer}>
                                         <Text style={styles.searchResultName} numberOfLines={1}>
                                             {item.name}
@@ -350,11 +436,15 @@ export default function Home() {
                                             {item.address}
                                         </Text>
                                     </View>
+                                    <Text style={styles.searchResultSource}>
+                                        {item.source === 'KAKAO' ? '🇰🇷' : item.source === 'GOOGLE' ? '🌍' : '📍'}
+                                    </Text>
                                 </Pressable>
                             )}
                         />
                     ) : searchQuery.length >= 2 ? (
                         <View style={styles.searchLoadingContainer}>
+                            <Ionicons name="search-outline" size={24} color={colors.textWeak} />
                             <Text style={styles.searchLoadingText}>검색 결과가 없습니다</Text>
                         </View>
                     ) : null}
@@ -381,12 +471,67 @@ export default function Home() {
 
             {/* Bottom Sheet */}
             <View style={[styles.bottomSheet, { paddingBottom: insets.bottom + spacing.md }]}>
-                {/* Address Bar */}
-                <AddressBar
-                    address={addressInfo.address}
-                    detail={addressInfo.detail}
-                    isLoading={isLoadingAddress}
-                />
+                {/* Address Bar with Radius Chip */}
+                <View style={styles.addressRow}>
+                    <View style={styles.addressBarWrapper}>
+                        <AddressBar
+                            address={addressInfo.address}
+                            detail={addressInfo.detail}
+                            isLoading={isLoadingAddress}
+                        />
+                    </View>
+
+                    {/* Radius Chip - Tappable to show slider */}
+                    {centerLocation && (
+                        <Pressable
+                            style={[
+                                styles.radiusChip,
+                                showRadiusSlider && styles.radiusChipActive
+                            ]}
+                            onPress={() => {
+                                setShowRadiusSlider(!showRadiusSlider);
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            }}
+                        >
+                            <Ionicons
+                                name="radio-button-on"
+                                size={14}
+                                color={showRadiusSlider ? colors.surface : colors.primary}
+                            />
+                            <Text style={[
+                                styles.radiusChipText,
+                                showRadiusSlider && styles.radiusChipTextActive
+                            ]}>
+                                {formatRadius(selectedRadius)}
+                            </Text>
+                        </Pressable>
+                    )}
+                </View>
+
+                {/* Radius Slider (shown when chip is tapped) */}
+                {showRadiusSlider && centerLocation && (
+                    <View style={styles.radiusSliderContainer}>
+                        <View style={styles.radiusSliderHeader}>
+                            <Text style={styles.radiusSliderLabel}>알림 반경</Text>
+                            <Text style={styles.radiusSliderValue}>{formatRadius(selectedRadius)}</Text>
+                        </View>
+                        <Slider
+                            style={styles.radiusSlider}
+                            minimumValue={100}
+                            maximumValue={2000}
+                            step={50}
+                            value={selectedRadius}
+                            onValueChange={handleRadiusChange}
+                            minimumTrackTintColor={colors.primary}
+                            maximumTrackTintColor={`${colors.textWeak}50`}
+                            thumbTintColor={colors.primary}
+                        />
+                        <View style={styles.radiusSliderLabels}>
+                            <Text style={styles.radiusSliderMinMax}>100m</Text>
+                            <Text style={styles.radiusSliderMinMax}>2km</Text>
+                        </View>
+                    </View>
+                )}
 
                 {/* Create Alarm Button */}
                 {centerLocation && (
@@ -473,7 +618,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         left: spacing.sm,
         right: spacing.sm,
-        maxHeight: 250,
+        maxHeight: 300,
         backgroundColor: colors.surface,
         borderRadius: radius.md,
         ...shadows.card,
@@ -482,6 +627,9 @@ const styles = StyleSheet.create({
     searchLoadingContainer: {
         padding: spacing.md,
         alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: spacing.xs,
     },
     searchLoadingText: {
         ...typography.body,
@@ -495,6 +643,14 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: colors.background,
     },
+    searchResultIconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: `${colors.primary}15`,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     searchResultTextContainer: {
         flex: 1,
     },
@@ -506,6 +662,9 @@ const styles = StyleSheet.create({
     searchResultAddress: {
         ...typography.caption,
         color: colors.textMedium,
+    },
+    searchResultSource: {
+        fontSize: 14,
     },
     activeAlarmCard: {
         position: 'absolute',
@@ -530,22 +689,6 @@ const styles = StyleSheet.create({
     activeAlarmDistance: {
         ...typography.caption,
         color: colors.textMedium,
-    },
-    radiusHint: {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        marginTop: 20,
-        marginLeft: -40,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        paddingHorizontal: 12,
-        paddingVertical: 4,
-        borderRadius: 12,
-    },
-    radiusHintText: {
-        ...typography.caption,
-        color: colors.surface,
-        fontWeight: '600',
     },
     hintToast: {
         position: 'absolute',
@@ -575,6 +718,67 @@ const styles = StyleSheet.create({
         paddingTop: spacing.md,
         gap: spacing.sm,
         ...shadows.card,
+    },
+    addressRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+    },
+    addressBarWrapper: {
+        flex: 1,
+    },
+    radiusChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: `${colors.primary}15`,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
+        borderRadius: radius.md,
+        gap: 4,
+    },
+    radiusChipActive: {
+        backgroundColor: colors.primary,
+    },
+    radiusChipText: {
+        ...typography.caption,
+        color: colors.primary,
+        fontWeight: '600',
+    },
+    radiusChipTextActive: {
+        color: colors.surface,
+    },
+    radiusSliderContainer: {
+        backgroundColor: colors.background,
+        borderRadius: radius.md,
+        padding: spacing.sm,
+    },
+    radiusSliderHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: spacing.xs,
+    },
+    radiusSliderLabel: {
+        ...typography.body,
+        color: colors.textStrong,
+        fontWeight: '600',
+    },
+    radiusSliderValue: {
+        ...typography.body,
+        color: colors.primary,
+        fontWeight: '700',
+    },
+    radiusSlider: {
+        width: '100%',
+        height: 40,
+    },
+    radiusSliderLabels: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    radiusSliderMinMax: {
+        ...typography.caption,
+        color: colors.textWeak,
     },
     createButton: {
         flexDirection: 'row',
