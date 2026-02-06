@@ -130,6 +130,7 @@
         "sections": {
             "notification": "Notification Settings",
             "app": "App Info",
+            "location": "Location Settings",
             "map": "Map Settings"
         },
         "items": {
@@ -193,11 +194,19 @@
         "locationLabel": "Location",
         "save": "Save",
         "noName": "Name Required",
-        "pleaseEnterName": "Please enter a favorite name."
+        "pleaseEnterName": "Please enter a favorite name.",
+        "maxFavorites": "You can save up to 3 favorites."
     },
     "onboarding": {
         "welcome": "We'll wake you up\n1km before arrival",
         "subtitle": "Whether by subway, bus, or train\nGet notified before you reach your destination",
+        "features": {
+            "smartBattery": "Smart Battery Saving",
+            "locationAlarm": "Precise Location Alarms",
+            "checklist": "To-do Checklist"
+        },
+        "requesting": "Requesting permissions...",
+        "permissionNote": "Location permission is required",
         "permissions": {
             "location": "Location Permission Required",
             "locationDesc": "Location access is required for arrival alarms. Please allow in settings.",
@@ -297,7 +306,8 @@
         "noName": "Name Required",
         "pleaseEnterName": "Please enter a routine name.",
         "noLocation": "Location Required",
-        "pleaseSelectLocation": "Please select a destination."
+        "pleaseSelectLocation": "Please select a destination.",
+        "defaultLocation": "Seoul Station"
     },
     "days": {
         "sun": "Sun",
@@ -322,5 +332,25 @@
         "title": "Select Time",
         "hour": "Hour",
         "minute": "Min"
+    },
+    "address": {
+        "selectLocation": "Select a location",
+        "notFound": "Address not found",
+        "loadFailed": "Failed to load address"
+    },
+    "directions": {
+        "N": "N",
+        "NE": "NE",
+        "E": "E",
+        "SE": "SE",
+        "S": "S",
+        "SW": "SW",
+        "W": "W",
+        "NW": "NW"
+    },
+    "notification": {
+        "trackingTitle": "LocaAlert Active",
+        "trackingBody": "We'll notify you when you arrive",
+        "nearingBody": "Arriving soon"
     }
 }

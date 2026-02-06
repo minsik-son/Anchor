@@ -189,18 +189,18 @@ export default function Settings() {
 
                 {/* Location Settings */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{t('settings.items.backgroundLocation') || '위치 설정'}</Text>
+                    <Text style={styles.sectionTitle}>{t('settings.sections.location')}</Text>
 
                     <SettingItem
                         icon="navigate"
-                        label={t('settings.items.backgroundLocation') || '백그라운드 위치 추적'}
+                        label={t('settings.items.backgroundLocation')}
                         rightElement={<Switch value={true} trackColor={{ false: colors.textWeak, true: colors.primary }} />}
                         colors={colors}
                     />
 
                     <SettingItem
                         icon="battery-charging"
-                        label={t('settings.items.batterySaving') || '배터리 세이빙 모드'}
+                        label={t('settings.items.batterySaving')}
                         rightElement={<Switch value={true} trackColor={{ false: colors.textWeak, true: colors.primary }} />}
                         colors={colors}
                     />
@@ -261,11 +261,11 @@ export default function Settings() {
 
                 {/* Map Settings */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{t('settings.sections.map') || '지도 설정'}</Text>
+                    <Text style={styles.sectionTitle}>{t('settings.sections.map')}</Text>
 
                     <SettingItem
                         icon="map"
-                        label={t('settings.items.mapEngine') || '지도 엔진'}
+                        label={t('settings.items.mapEngine')}
                         description="Google Maps"
                         rightElement={
                             <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />

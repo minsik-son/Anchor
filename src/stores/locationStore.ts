@@ -101,9 +101,10 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             });
 
             return backgroundStatus === 'granted';
-        } catch (error: any) {
+        } catch (error: unknown) {
             // Handle Expo Go environment where Info.plist keys may not be available
-            if (error?.message?.includes('NSLocation') || error?.message?.includes('Info.plist')) {
+            const message = error instanceof Error ? error.message : String(error);
+            if (message.includes('NSLocation') || message.includes('Info.plist')) {
                 console.warn('[LocationStore] Running in Expo Go - location permissions not available. This is expected.');
                 set({ hasPermission: false, permissionStatus: Location.PermissionStatus.UNDETERMINED });
             } else {
@@ -123,8 +124,9 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             set({ currentLocation: location });
 
             return location;
-        } catch (error: any) {
-            console.warn('[LocationStore] getCurrentPositionAsync failed, trying last known position:', error?.message);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            console.warn('[LocationStore] getCurrentPositionAsync failed, trying last known position:', message);
 
             try {
                 const lastKnown = await Location.getLastKnownPositionAsync();

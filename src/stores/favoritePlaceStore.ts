@@ -17,6 +17,14 @@ export interface FavoritePlace {
     radius: number;
 }
 
+async function persistFavorites(
+    updated: FavoritePlace[],
+    setFn: (state: Partial<{ favorites: FavoritePlace[] }>) => void,
+): Promise<void> {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    setFn({ favorites: updated });
+}
+
 interface FavoritePlaceStore {
     favorites: FavoritePlace[];
     isLoaded: boolean;
@@ -50,7 +58,6 @@ export const useFavoritePlaceStore = create<FavoritePlaceStore>((set, get) => ({
     addFavorite: async (place) => {
         const { favorites } = get();
 
-        // Max 3 favorites
         if (favorites.length >= 3) {
             throw new Error('Maximum 3 favorite places allowed');
         }
@@ -60,11 +67,8 @@ export const useFavoritePlaceStore = create<FavoritePlaceStore>((set, get) => ({
             id: Date.now().toString(),
         };
 
-        const updated = [...favorites, newPlace];
-
         try {
-            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-            set({ favorites: updated });
+            await persistFavorites([...favorites, newPlace], set);
         } catch (error) {
             console.error('[FavoritePlaceStore] Add error:', error);
             throw error;
@@ -78,8 +82,7 @@ export const useFavoritePlaceStore = create<FavoritePlaceStore>((set, get) => ({
         );
 
         try {
-            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-            set({ favorites: updated });
+            await persistFavorites(updated, set);
         } catch (error) {
             console.error('[FavoritePlaceStore] Update error:', error);
             throw error;
@@ -91,8 +94,7 @@ export const useFavoritePlaceStore = create<FavoritePlaceStore>((set, get) => ({
         const updated = favorites.filter(fav => fav.id !== id);
 
         try {
-            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-            set({ favorites: updated });
+            await persistFavorites(updated, set);
         } catch (error) {
             console.error('[FavoritePlaceStore] Delete error:', error);
             throw error;

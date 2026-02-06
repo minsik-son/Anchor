@@ -8,6 +8,7 @@ import { useMemo } from 'react';
 import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../styles/theme';
 
 interface AddressBarProps {
@@ -17,6 +18,7 @@ interface AddressBarProps {
 }
 
 export default function AddressBar({ address, detail, isLoading }: AddressBarProps) {
+    const { t } = useTranslation();
     const shimmerOpacity = useRef(new Animated.Value(0.3)).current;
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
@@ -63,7 +65,7 @@ export default function AddressBar({ address, detail, isLoading }: AddressBarPro
             </View>
             <View style={styles.contentContainer}>
                 <Text style={styles.address} numberOfLines={1}>
-                    {address || '위치를 선택해주세요'}
+                    {address || t('address.selectLocation')}
                 </Text>
                 {detail && (
                     <Text style={styles.detail} numberOfLines={1}>

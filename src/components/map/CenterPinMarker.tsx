@@ -149,6 +149,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         width: 20,
         height: 8,
         borderRadius: 10,
-        backgroundColor: '#000',
+        backgroundColor: colors.textStrong,
     },
 });

@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 import { useLocationStore } from '../../stores/locationStore';
 import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../styles/theme';
+import { formatDistanceOrFallback } from '../../utils/format';
 
 interface NavigationPanelProps {
     onStopNavigation: () => void;
@@ -27,14 +28,6 @@ export default function NavigationPanel({ onStopNavigation }: NavigationPanelPro
         selectedRoute,
         targetRadius
     } = useLocationStore();
-
-    const formatDistance = (meters: number | null) => {
-        if (meters === null) return '--';
-        if (meters >= 1000) {
-            return `${(meters / 1000).toFixed(1)}km`;
-        }
-        return `${Math.round(meters)}m`;
-    };
 
     const formatSpeed = (kmh: number | null) => {
         if (kmh === null || kmh < 0) return '--';
@@ -66,7 +59,7 @@ export default function NavigationPanel({ onStopNavigation }: NavigationPanelPro
                     <Ionicons name="navigate" size={20} color={colors.primary} />
                     <View>
                         <Text style={styles.statLabel}>{t('navigation.distance')}</Text>
-                        <Text style={styles.statValue}>{formatDistance(distanceToTarget)}</Text>
+                        <Text style={styles.statValue}>{formatDistanceOrFallback(distanceToTarget)}</Text>
                     </View>
                 </View>
 
@@ -87,7 +80,7 @@ export default function NavigationPanel({ onStopNavigation }: NavigationPanelPro
                     <View>
                         <Text style={styles.statLabel}>{t('navigation.toAlarm')}</Text>
                         <Text style={[styles.statValue, distanceToAlarm !== null && distanceToAlarm < 500 && styles.statValueWarning]}>
-                            {formatDistance(distanceToAlarm)}
+                            {formatDistanceOrFallback(distanceToAlarm)}
                         </Text>
                     </View>
                 </View>

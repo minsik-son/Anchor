@@ -62,9 +62,10 @@ async function runMigrations(database: SQLite.SQLiteDatabase): Promise<void> {
     for (const sql of newColumns) {
         try {
             await database.runAsync(sql);
-        } catch (e: any) {
-            if (!e.message?.includes('duplicate column')) {
-                console.warn('[DB Migration]', e.message);
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : String(e);
+            if (!message.includes('duplicate column')) {
+                console.warn('[DB Migration]', message);
             }
         }
     }
@@ -131,7 +132,7 @@ export async function updateAlarm(
 ): Promise<void> {
     const database = getDatabase();
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | null)[] = [];
 
     if (updates.title !== undefined) { fields.push('title = ?'); values.push(updates.title); }
     if (updates.latitude !== undefined) { fields.push('latitude = ?'); values.push(updates.latitude); }
@@ -283,7 +284,7 @@ export async function getRoutineById(id: number): Promise<RoutineRow | null> {
 export async function updateRoutine(id: number, updates: UpdateRoutineInput): Promise<void> {
     const database = getDatabase();
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | null)[] = [];
 
     if (updates.name !== undefined) { fields.push('name = ?'); values.push(updates.name); }
     if (updates.icon !== undefined) { fields.push('icon = ?'); values.push(updates.icon); }

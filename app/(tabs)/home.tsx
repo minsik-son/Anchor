@@ -16,23 +16,19 @@ import Slider from '@react-native-community/slider';
 import { useAlarmStore } from '../../src/stores/alarmStore';
 import { useLocationStore } from '../../src/stores/locationStore';
 import { useFavoritePlaceStore } from '../../src/stores/favoritePlaceStore';
-import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
+import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
 import CenterPinMarker from '../../src/components/map/CenterPinMarker';
 import AddressBar from '../../src/components/map/AddressBar';
 import NavigationPanel from '../../src/components/navigation/NavigationPanel';
+import AlarmDashboard from '../../src/components/alarm/AlarmDashboard';
 import { debouncedReverseGeocode, GeocodingResult } from '../../src/services/geocoding';
-import {
-    PlaceResult,
-    debouncedSearchPlaces,
-    cancelPendingSearch,
-    getGooglePlaceDetails,
-    resetSessionToken,
-    isInKorea
-} from '../../src/services/placeSearch';
+import { PlaceResult, isInKorea } from '../../src/services/placeSearch';
 import { formatDistance } from '../../src/services/location/geofence';
 import { mapDarkStyle } from '../../src/constants/mapDarkStyle';
 import { useThemeStore } from '../../src/stores/themeStore';
 import { useElapsedTime } from '../../src/hooks/useElapsedTime';
+import { useLocationSearch } from '../../src/hooks/useLocationSearch';
+import { useMapAnimation } from '../../src/hooks/useMapAnimation';
 
 export default function Home() {
     const insets = useSafeAreaInsets();
@@ -42,8 +38,9 @@ export default function Home() {
     const themeMode = useThemeStore((state) => state.mode);
     const systemScheme = useColorScheme();
     const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && systemScheme === 'dark');
-    const mapRef = useRef<MapView>(null);
-    const [searchQuery, setSearchQuery] = useState('');
+
+    const { mapRef, isAnimatingRef, animateToLocation } = useMapAnimation();
+
     const [isDragging, setIsDragging] = useState(false);
     const [centerLocation, setCenterLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const [selectedRadius, setSelectedRadius] = useState(100);
@@ -55,19 +52,12 @@ export default function Home() {
     const [addressInfo, setAddressInfo] = useState<GeocodingResult>({ address: '' });
     const [isLoadingAddress, setIsLoadingAddress] = useState(false);
 
-    // Search state
-    const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
-    const [isSearching, setIsSearching] = useState(false);
-    const [showSearchResults, setShowSearchResults] = useState(false);
-
     // Animation values (using React Native Animated API)
     const searchBarOpacity = useRef(new Animated.Value(1)).current;
     const sliderHeight = useRef(new Animated.Value(0)).current;
 
     // Ref to track if map is being dragged by user
     const isDraggingRef = useRef(false);
-    // Ref to track programmatic map animations (to prevent pin lift)
-    const isAnimatingRef = useRef(false);
 
     const { activeAlarm, deactivateAlarm, loadMemos, currentMemos } = useAlarmStore();
     const {
@@ -79,10 +69,25 @@ export default function Home() {
         stopNavigation,
         stopTracking,
         distanceToTarget,
-        isTracking,
     } = useLocationStore();
     const { favorites, loadFavorites, deleteFavorite } = useFavoritePlaceStore();
     const elapsedTime = useElapsedTime(activeAlarm?.started_at ?? null);
+
+    // Default location for search (Seoul if no current location)
+    const defaultLocation = currentLocation
+        ? { latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude }
+        : { latitude: 37.5665, longitude: 126.9780 };
+
+    const {
+        searchQuery,
+        searchResults,
+        isSearching,
+        showSearchResults,
+        setShowSearchResults,
+        handleSearch,
+        resolveSearchResult,
+        clearSearch,
+    } = useLocationSearch({ centerLocation, defaultLocation });
 
     useEffect(() => {
         const init = async () => {
@@ -90,20 +95,14 @@ export default function Home() {
             const location = await getCurrentLocation();
             await loadFavorites();
 
-            // Animate map to user's actual GPS position
-            if (location && mapRef.current) {
+            if (location) {
                 const userPos = {
                     latitude: location.coords.latitude,
                     longitude: location.coords.longitude,
                 };
                 setCenterLocation(userPos);
-                mapRef.current.animateToRegion({
-                    ...userPos,
-                    latitudeDelta: 0.01,
-                    longitudeDelta: 0.01,
-                }, 500);
+                animateToLocation(userPos);
 
-                // Initial geocoding
                 setIsLoadingAddress(true);
                 debouncedReverseGeocode(userPos.latitude, userPos.longitude, (result) => {
                     setAddressInfo(result);
@@ -146,7 +145,6 @@ export default function Home() {
     // Fit map to route when navigation starts
     useEffect(() => {
         if (isNavigating && selectedRoute && mapRef.current) {
-            // Add current user location to route coordinates for full path
             const allCoordinates = [...selectedRoute.coordinates];
             if (currentLocation) {
                 allCoordinates.unshift({
@@ -155,7 +153,6 @@ export default function Home() {
                 });
             }
 
-            // Fit map to show entire route
             setTimeout(() => {
                 mapRef.current?.fitToCoordinates(allCoordinates, {
                     edgePadding: { top: 100, right: 50, bottom: 200, left: 50 },
@@ -173,7 +170,6 @@ export default function Home() {
                 longitude: currentLocation.coords.longitude,
             };
             setCenterLocation(newCenter);
-            // Initial geocoding
             setIsLoadingAddress(true);
             debouncedReverseGeocode(newCenter.latitude, newCenter.longitude, (result) => {
                 setAddressInfo(result);
@@ -191,137 +187,54 @@ export default function Home() {
         }).start();
     }, [isDragging]);
 
-    // Animate radius slider height (fast and responsive)
+    // Animate radius slider height
     useEffect(() => {
         Animated.timing(sliderHeight, {
             toValue: showRadiusSlider ? 1 : 0,
-            duration: 150, // Faster for better responsiveness
-            useNativeDriver: false, // Height animation needs JS thread
+            duration: 150,
+            useNativeDriver: false,
         }).start();
     }, [showRadiusSlider]);
 
-    // Default location for search (Seoul if no current location)
-    const defaultLocation = currentLocation
-        ? { latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude }
-        : { latitude: 37.5665, longitude: 126.9780 };
-
-    // Search for places using hybrid search
-    const handleSearch = useCallback((query: string) => {
-        setSearchQuery(query);
-
-        if (query.length < 2) {
-            setSearchResults([]);
-            setShowSearchResults(false);
-            cancelPendingSearch();
-            return;
-        }
-
-        setIsSearching(true);
-        setShowSearchResults(true);
-
-        debouncedSearchPlaces(
-            {
-                query,
-                currentLocation: centerLocation || defaultLocation,
-                language: 'ko',
-            },
-            (results) => {
-                setSearchResults(results);
-                setIsSearching(false);
-            },
-            350
-        );
-    }, [centerLocation, defaultLocation]);
-
     const handleSelectSearchResult = useCallback(async (result: PlaceResult) => {
         setShowSearchResults(false);
-        setSearchQuery('');
         Keyboard.dismiss();
 
-        let finalLocation: { latitude: number; longitude: number } | null = null;
+        setIsLoadingAddress(true);
+        const resolved = await resolveSearchResult(result);
 
-        // Kakao and Expo results have coordinates directly
-        if (result.latitude !== undefined && result.longitude !== undefined) {
-            finalLocation = {
-                latitude: result.latitude,
-                longitude: result.longitude,
-            };
-        }
-        // Google results need an additional API call
-        else if (result.source === 'GOOGLE' && result.placeId) {
-            setIsLoadingAddress(true);
-            const coords = await getGooglePlaceDetails(result.placeId, '');
-            if (coords) {
-                finalLocation = coords;
-            }
-        }
-
-        if (!finalLocation) {
-            console.error('[Home] Could not get coordinates for selected place');
+        if (!resolved) {
             setIsLoadingAddress(false);
             return;
         }
 
-        // Move map to selected location (prevent pin lift during animation)
-        if (mapRef.current) {
-            isAnimatingRef.current = true;
-            mapRef.current.animateToRegion({
-                latitude: finalLocation.latitude,
-                longitude: finalLocation.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-            }, 400);
-            // Reset animation flag after animation completes
-            setTimeout(() => {
-                isAnimatingRef.current = false;
-            }, 450);
-        }
-
-        // Update center location
-        setCenterLocation(finalLocation);
-
-        // Update address
-        setAddressInfo({
-            address: result.address,
-            detail: result.name,
-        });
+        animateToLocation(resolved.location, 400);
+        setCenterLocation(resolved.location);
+        setAddressInfo({ address: resolved.address, detail: resolved.name });
         setIsLoadingAddress(false);
-
-        // Reset session token after selection (for Google billing optimization)
-        resetSessionToken();
-
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }, []);
+    }, [resolveSearchResult, animateToLocation]);
 
     // Handle user pan/drag gesture (NOT programmatic map changes)
-    // This prevents Circle rendering from triggering pin lifts
     const handlePanDrag = useCallback(() => {
-        // Skip if programmatic animation is in progress
-        if (isAnimatingRef.current) {
-            return;
-        }
+        if (isAnimatingRef.current) return;
 
-        // Only set dragging if not already dragging (prevent repeated calls)
         if (!isDraggingRef.current) {
             isDraggingRef.current = true;
             setIsDragging(true);
             setIsLoadingAddress(true);
             Keyboard.dismiss();
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            // Hide first-time hint immediately on drag
             if (isFirstHint) {
                 hintOpacity.setValue(0);
                 setIsFirstHint(false);
             }
-            // Hide search results when dragging
             setShowSearchResults(false);
-            // Hide radius slider when dragging
             setShowRadiusSlider(false);
         }
     }, [isFirstHint]);
 
     const handleRegionChangeComplete = useCallback((region: Region) => {
-        // Always reset dragging state when gesture ends
         isDraggingRef.current = false;
         setIsDragging(false);
 
@@ -330,25 +243,19 @@ export default function Home() {
             longitude: region.longitude,
         });
 
-        // Haptic feedback when pin drops
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        // Debounced reverse geocoding
         debouncedReverseGeocode(region.latitude, region.longitude, (result) => {
             setAddressInfo(result);
             setIsLoadingAddress(false);
         });
     }, []);
 
-    // Handle My Location button press
     const handleMyLocationPress = useCallback(async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-        // Get current location (this will update the store and return the location)
         const location = await getCurrentLocation();
 
         if (!location) {
-            console.log('[Home] Could not get current location');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             return;
         }
@@ -358,24 +265,9 @@ export default function Home() {
             longitude: location.coords.longitude,
         };
 
-        // Animate map to current location (prevent pin lift during animation)
-        if (mapRef.current) {
-            isAnimatingRef.current = true;
-            mapRef.current.animateToRegion({
-                ...myLocation,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-            }, 500);
-            // Reset animation flag after animation completes
-            setTimeout(() => {
-                isAnimatingRef.current = false;
-            }, 550);
-        }
-
-        // Update center location
+        animateToLocation(myLocation);
         setCenterLocation(myLocation);
 
-        // Trigger reverse geocoding for this location
         setIsLoadingAddress(true);
         debouncedReverseGeocode(myLocation.latitude, myLocation.longitude, (result) => {
             setAddressInfo(result);
@@ -383,7 +275,7 @@ export default function Home() {
         });
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }, [getCurrentLocation]);
+    }, [getCurrentLocation, animateToLocation]);
 
     const handleCreateAlarm = () => {
         if (!centerLocation) return;
@@ -402,7 +294,6 @@ export default function Home() {
     };
 
     const handleRadiusChange = (value: number) => {
-        // Round to nearest 50m
         const roundedValue = Math.round(value / 50) * 50;
         setSelectedRadius(roundedValue);
     };
@@ -428,54 +319,30 @@ export default function Home() {
         );
     };
 
-    // Jump to favorite location
     const handleJumpToFavorite = (favorite: { latitude: number; longitude: number; radius: number; label: string }) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         Keyboard.dismiss();
         setShowSearchResults(false);
-
-        isAnimatingRef.current = true;
 
         const newLocation = {
             latitude: favorite.latitude,
             longitude: favorite.longitude,
         };
 
-        // Animate map to location
-        mapRef.current?.animateToRegion({
-            ...newLocation,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-        }, 500);
-
-        // Update state
+        animateToLocation(newLocation);
         setCenterLocation(newLocation);
         setSelectedRadius(favorite.radius);
 
-        // Reverse geocode the location
         setIsLoadingAddress(true);
         debouncedReverseGeocode(newLocation.latitude, newLocation.longitude, (result) => {
             setAddressInfo(result);
             setIsLoadingAddress(false);
         });
-
-        // Reset animation flag after animation completes
-        setTimeout(() => {
-            isAnimatingRef.current = false;
-        }, 600);
     };
 
     const userLocation = currentLocation
         ? { latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude }
-        : { latitude: 37.5665, longitude: 126.9780 }; // Default to Seoul
-
-    // Format radius for display
-    const formatRadius = (meters: number) => {
-        if (meters >= 1000) {
-            return `${(meters / 1000).toFixed(1)}km`;
-        }
-        return `${meters}m`;
-    };
+        : { latitude: 37.5665, longitude: 126.9780 };
 
     return (
         <View style={styles.container}>
@@ -497,8 +364,7 @@ export default function Home() {
                 zoomEnabled={!isNavigating || true}
                 rotateEnabled={!isNavigating}
                 pitchEnabled={!isNavigating}
-                onPress={(e) => {
-                    // Disable interactions during navigation
+                onPress={() => {
                     if (isNavigating) return;
                     Keyboard.dismiss();
                     if (showSearchResults) setShowSearchResults(false);
@@ -608,7 +474,7 @@ export default function Home() {
                 )}
             </MapView>
 
-            {/* Invisible overlay to close radius slider and keyboard - INSTANT response */}
+            {/* Invisible overlay to close radius slider and keyboard */}
             {(showRadiusSlider || showSearchResults) && (
                 <Pressable
                     style={StyleSheet.absoluteFill}
@@ -626,7 +492,6 @@ export default function Home() {
 
             {/* Top Bar Container - Search + Location Button aligned */}
             <View style={[styles.topBarContainer, { top: insets.top + spacing.sm }]}>
-                {/* Search Bar (fades during drag) */}
                 <Animated.View style={[styles.searchBar, { opacity: searchBarOpacity }]}>
                     <Ionicons name="search" size={20} color={colors.textWeak} />
                     <TextInput
@@ -639,24 +504,16 @@ export default function Home() {
                             searchQuery.length >= 2 && setShowSearchResults(true);
                             setShowRadiusSlider(false);
                         }}
-                        onSubmitEditing={() => {
-                            Keyboard.dismiss();
-                        }}
+                        onSubmitEditing={() => Keyboard.dismiss()}
                         returnKeyType="search"
                     />
                     {searchQuery.length > 0 && (
-                        <Pressable onPress={() => {
-                            setSearchQuery('');
-                            setSearchResults([]);
-                            setShowSearchResults(false);
-                            cancelPendingSearch();
-                        }}>
+                        <Pressable onPress={clearSearch}>
                             <Ionicons name="close-circle" size={20} color={colors.textWeak} />
                         </Pressable>
                     )}
                 </Animated.View>
 
-                {/* My Location Button - Same height as search bar */}
                 <Pressable
                     style={styles.myLocationButton}
                     onPress={handleMyLocationPress}
@@ -671,7 +528,7 @@ export default function Home() {
                     {isSearching ? (
                         <View style={styles.searchLoadingContainer}>
                             <ActivityIndicator size="small" color={colors.primary} />
-                            <Text style={styles.searchLoadingText}>검색 중...</Text>
+                            <Text style={styles.searchLoadingText}>{t('common.loading')}</Text>
                         </View>
                     ) : searchResults.length > 0 ? (
                         <FlatList
@@ -704,7 +561,7 @@ export default function Home() {
                     ) : searchQuery.length >= 2 ? (
                         <View style={styles.searchLoadingContainer}>
                             <Ionicons name="search-outline" size={24} color={colors.textWeak} />
-                            <Text style={styles.searchLoadingText}>{t('common.noResults', '검색 결과가 없습니다')}</Text>
+                            <Text style={styles.searchLoadingText}>{t('common.noResults')}</Text>
                         </View>
                     ) : null}
                 </View>
@@ -721,7 +578,6 @@ export default function Home() {
             {isNavigating ? (
                 <NavigationPanel
                     onStopNavigation={() => {
-                        // Deactivate alarm to remove red pin
                         if (activeAlarm) {
                             deactivateAlarm(activeAlarm.id);
                         }
@@ -730,69 +586,14 @@ export default function Home() {
                     }}
                 />
             ) : activeAlarm ? (
-                /* Active Alarm Dashboard */
                 <View style={[styles.bottomSheet, { paddingBottom: insets.bottom }]}>
-                    {/* Alarm Title Row */}
-                    <View style={styles.dashboardHeader}>
-                        <View style={styles.dashboardTitleRow}>
-                            <Ionicons name="navigate" size={20} color={colors.primary} />
-                            <Text style={styles.dashboardTitle}>{activeAlarm.title}</Text>
-                        </View>
-                    </View>
-
-                    {/* Prominent Distance Display */}
-                    <View style={styles.distanceDisplayContainer}>
-                        <Text style={styles.distanceValue}>
-                            {distanceToTarget !== null ? formatDistance(distanceToTarget) : '--'}
-                        </Text>
-                        <Text style={styles.distanceLabel}>
-                            {distanceToTarget !== null
-                                ? t('alarmDashboard.distanceLabel')
-                                : t('home.activeAlarm.calculating')}
-                        </Text>
-                    </View>
-
-                    {/* Elapsed Time */}
-                    <View style={styles.elapsedTimeContainer}>
-                        <Ionicons name="time-outline" size={16} color={colors.textMedium} />
-                        <Text style={styles.elapsedTimeText}>{elapsedTime}</Text>
-                        <Text style={styles.elapsedTimeLabel}>{t('alarmDashboard.elapsedTime')}</Text>
-                    </View>
-
-                    {/* Checklist Preview */}
-                    {currentMemos.length > 0 && (
-                        <View style={styles.dashboardChecklist}>
-                            <Text style={styles.dashboardChecklistTitle}>
-                                {t('alarmDashboard.checklist')}
-                            </Text>
-                            {currentMemos.map((memo) => (
-                                <View key={memo.id} style={styles.dashboardCheckItem}>
-                                    <Ionicons
-                                        name={memo.is_checked ? 'checkbox' : 'square-outline'}
-                                        size={18}
-                                        color={memo.is_checked ? colors.primary : colors.textWeak}
-                                    />
-                                    <Text style={[
-                                        styles.dashboardCheckText,
-                                        memo.is_checked && styles.dashboardCheckTextDone,
-                                    ]}>
-                                        {memo.content}
-                                    </Text>
-                                </View>
-                            ))}
-                        </View>
-                    )}
-
-                    {/* Cancel Alarm Button */}
-                    <Pressable
-                        style={({ pressed }) => [
-                            styles.cancelAlarmButton,
-                            pressed && styles.cancelAlarmButtonPressed,
-                        ]}
-                        onPress={handleCancelAlarm}
-                    >
-                        <Text style={styles.cancelAlarmText}>{t('alarmDashboard.cancelAlarm')}</Text>
-                    </Pressable>
+                    <AlarmDashboard
+                        alarm={activeAlarm}
+                        memos={currentMemos}
+                        distanceToTarget={distanceToTarget}
+                        elapsedTime={elapsedTime}
+                        onCancel={handleCancelAlarm}
+                    />
                 </View>
             ) : (
                 /* Normal setup bottom sheet */
@@ -828,7 +629,7 @@ export default function Home() {
                                     styles.radiusChipText,
                                     showRadiusSlider && styles.radiusChipTextActive
                                 ]}>
-                                    {formatRadius(selectedRadius)}
+                                    {formatDistance(selectedRadius)}
                                 </Text>
                             </Pressable>
                         )}
@@ -855,7 +656,7 @@ export default function Home() {
                         >
                             <View style={styles.radiusSliderHeader}>
                                 <Text style={styles.radiusSliderLabel}>{t('alarmSetup.radius')}</Text>
-                                <Text style={styles.radiusSliderValue}>{formatRadius(selectedRadius)}</Text>
+                                <Text style={styles.radiusSliderValue}>{formatDistance(selectedRadius)}</Text>
                             </View>
                             <Slider
                                 style={styles.radiusSlider}
@@ -908,7 +709,7 @@ export default function Home() {
                                     );
                                 }}
                             >
-                                <Ionicons name={fav.icon as any} size={16} color={colors.primary} />
+                                <Ionicons name={fav.icon as keyof typeof Ionicons.glyphMap} size={16} color={colors.primary} />
                                 <Text style={styles.quickChipLabel}>{fav.label}</Text>
                             </Pressable>
                         ))}
@@ -1031,97 +832,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     searchResultAddress: {
         ...typography.caption,
         color: colors.textMedium,
-    },
-    // Active Alarm Dashboard styles
-    dashboardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: spacing.xs,
-    },
-    dashboardTitleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.xs,
-        flex: 1,
-    },
-    dashboardTitle: {
-        ...typography.heading,
-        color: colors.textStrong,
-    },
-    distanceDisplayContainer: {
-        alignItems: 'center',
-        paddingVertical: spacing.sm,
-        marginBottom: spacing.xs,
-    },
-    distanceValue: {
-        fontSize: 40,
-        fontWeight: '800',
-        color: colors.primary,
-        lineHeight: 48,
-    },
-    distanceLabel: {
-        ...typography.caption,
-        color: colors.textMedium,
-        marginTop: 4,
-    },
-    elapsedTimeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: spacing.xs,
-        marginBottom: spacing.sm,
-    },
-    elapsedTimeText: {
-        ...typography.body,
-        color: colors.textMedium,
-        fontWeight: '600',
-        fontVariant: ['tabular-nums'],
-    },
-    elapsedTimeLabel: {
-        ...typography.caption,
-        color: colors.textWeak,
-    },
-    dashboardChecklist: {
-        backgroundColor: colors.background,
-        borderRadius: radius.md,
-        padding: spacing.sm,
-        marginBottom: spacing.sm,
-    },
-    dashboardChecklistTitle: {
-        ...typography.caption,
-        color: colors.textMedium,
-        fontWeight: '600',
-        marginBottom: spacing.xs,
-    },
-    dashboardCheckItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.xs,
-        paddingVertical: 4,
-    },
-    dashboardCheckText: {
-        ...typography.body,
-        color: colors.textStrong,
-    },
-    dashboardCheckTextDone: {
-        color: colors.textWeak,
-        textDecorationLine: 'line-through',
-    },
-    cancelAlarmButton: {
-        borderWidth: 2,
-        borderColor: colors.error,
-        borderRadius: radius.md,
-        paddingVertical: spacing.sm,
-        alignItems: 'center',
-    },
-    cancelAlarmButtonPressed: {
-        opacity: 0.7,
-        backgroundColor: `${colors.error}10`,
-    },
-    cancelAlarmText: {
-        ...typography.body,
-        color: colors.error,
-        fontWeight: '700',
     },
     hintToast: {
         position: 'absolute',

@@ -12,28 +12,7 @@ import { useLocationStore } from '../stores/locationStore';
 import { useRoutineStore, Routine } from '../stores/routineStore';
 import { startTracking as startServiceTracking, stopAllTracking, getCurrentLocation } from './location/locationService';
 import { calculateDistance } from './location/geofence';
-
-// ---------------------------------------------------------------------------
-// Time Utilities
-// ---------------------------------------------------------------------------
-
-function parseTime(timeStr: string): { hours: number; minutes: number } {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return { hours, minutes };
-}
-
-function toMinutes(t: { hours: number; minutes: number }): number {
-    return t.hours * 60 + t.minutes;
-}
-
-function isWithinTimeWindow(nowMin: number, startMin: number, endMin: number): boolean {
-    if (startMin <= endMin) {
-        // Normal window (e.g., 08:00 → 18:00)
-        return nowMin >= startMin && nowMin < endMin;
-    }
-    // Cross-midnight window (e.g., 23:00 → 01:00)
-    return nowMin >= startMin || nowMin < endMin;
-}
+import { parseTime, toMinutes, isWithinTimeWindow } from '../utils/time';
 
 /**
  * Returns the relevant day(s) of the week to check for a routine.

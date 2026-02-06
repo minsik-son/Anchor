@@ -79,7 +79,7 @@ export function TimePicker({ visible, value, onConfirm, onCancel }: TimePickerPr
         );
     }, [styles]);
 
-    const getItemLayout = useCallback((_: any, index: number) => ({
+    const getItemLayout = useCallback((_: ArrayLike<string> | null | undefined, index: number) => ({
         length: ITEM_HEIGHT,
         offset: ITEM_HEIGHT * index,
         index,

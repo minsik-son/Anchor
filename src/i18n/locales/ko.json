@@ -130,6 +130,7 @@
         "sections": {
             "notification": "알림 설정",
             "app": "앱 정보",
+            "location": "위치 설정",
             "map": "지도 설정"
         },
         "items": {
@@ -193,11 +194,19 @@
         "locationLabel": "위치",
         "save": "저장하기",
         "noName": "이름 필요",
-        "pleaseEnterName": "즐겨찾기 이름을 입력해주세요."
+        "pleaseEnterName": "즐겨찾기 이름을 입력해주세요.",
+        "maxFavorites": "즐겨찾기는 최대 3개까지 등록할 수 있습니다."
     },
     "onboarding": {
         "welcome": "도착 1km 전,\n미리 깨워드릴게요",
         "subtitle": "지하철, 버스, 기차 어디서든\n목적지에 도착하기 전 알람을 받아보세요",
+        "features": {
+            "smartBattery": "스마트 배터리 절약",
+            "locationAlarm": "정확한 위치 기반 알람",
+            "checklist": "할 일 체크리스트"
+        },
+        "requesting": "권한 요청 중...",
+        "permissionNote": "위치 권한 허용이 필요합니다",
         "permissions": {
             "location": "위치 권한 필요",
             "locationDesc": "목적지 도착 알람을 위해 위치 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
@@ -297,7 +306,8 @@
         "noName": "루틴 이름 필요",
         "pleaseEnterName": "루틴 이름을 입력해주세요.",
         "noLocation": "목적지 필요",
-        "pleaseSelectLocation": "목적지를 선택해주세요."
+        "pleaseSelectLocation": "목적지를 선택해주세요.",
+        "defaultLocation": "서울역"
     },
     "days": {
         "sun": "일",
@@ -322,5 +332,25 @@
         "title": "시간 선택",
         "hour": "시",
         "minute": "분"
+    },
+    "address": {
+        "selectLocation": "위치를 선택해주세요",
+        "notFound": "주소를 찾을 수 없습니다",
+        "loadFailed": "주소를 불러올 수 없습니다"
+    },
+    "directions": {
+        "N": "북",
+        "NE": "북동",
+        "E": "동",
+        "SE": "남동",
+        "S": "남",
+        "SW": "남서",
+        "W": "서",
+        "NW": "북서"
+    },
+    "notification": {
+        "trackingTitle": "LocaAlert 실행 중",
+        "trackingBody": "목적지 도착을 알려드릴게요",
+        "nearingBody": "곧 목적지에 도착합니다"
     }
 }

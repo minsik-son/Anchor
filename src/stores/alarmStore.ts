@@ -73,12 +73,14 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
     },
 
     updateAlarm: async (id, updates) => {
+        set({ isLoading: true, error: null });
         try {
             await db.updateAlarm(id, updates);
             await get().loadAlarms();
             await get().loadActiveAlarm();
+            set({ isLoading: false });
         } catch (error) {
-            set({ error: (error as Error).message });
+            set({ error: (error as Error).message, isLoading: false });
         }
     },
 

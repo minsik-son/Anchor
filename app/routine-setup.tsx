@@ -75,7 +75,7 @@ export default function RoutineSetup() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         // In a real app, this would navigate to a location picker
         // For now, we'll just set a mock location
-        setLocationName('서울역');
+        setLocationName(t('routineSetup.defaultLocation'));
     };
 
     const handleSave = async () => {

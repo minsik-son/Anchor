@@ -130,6 +130,7 @@
         "sections": {
             "notification": "通知設定",
             "app": "アプリ情報",
+            "location": "位置設定",
             "map": "地図設定"
         },
         "items": {
@@ -193,11 +194,19 @@
         "locationLabel": "位置",
         "save": "保存する",
         "noName": "名前が必要です",
-        "pleaseEnterName": "お気に入りの名前を入力してください。"
+        "pleaseEnterName": "お気に入りの名前を入力してください。",
+        "maxFavorites": "お気に入りは最大3つまで登録できます。"
     },
     "onboarding": {
         "welcome": "到着1km前に\nお知らせします",
         "subtitle": "地下鉄、バス、電車どこでも\n目的地に着く前にアラームを受け取れます",
+        "features": {
+            "smartBattery": "スマートバッテリー節約",
+            "locationAlarm": "正確な位置アラーム",
+            "checklist": "やることチェックリスト"
+        },
+        "requesting": "権限をリクエスト中...",
+        "permissionNote": "位置情報の権限が必要です",
         "permissions": {
             "location": "位置情報の権限が必要",
             "locationDesc": "到着アラームのために位置情報が必要です。設定で許可してください。",
@@ -297,7 +306,8 @@
         "noName": "名前が必要です",
         "pleaseEnterName": "ルーティン名を入力してください。",
         "noLocation": "目的地が必要です",
-        "pleaseSelectLocation": "目的地を選択してください。"
+        "pleaseSelectLocation": "目的地を選択してください。",
+        "defaultLocation": "ソウル駅"
     },
     "days": {
         "sun": "日",
@@ -322,5 +332,25 @@
         "title": "時刻選択",
         "hour": "時",
         "minute": "分"
+    },
+    "address": {
+        "selectLocation": "位置を選択してください",
+        "notFound": "住所が見つかりません",
+        "loadFailed": "住所の読み込みに失敗しました"
+    },
+    "directions": {
+        "N": "北",
+        "NE": "北東",
+        "E": "東",
+        "SE": "南東",
+        "S": "南",
+        "SW": "南西",
+        "W": "西",
+        "NW": "北西"
+    },
+    "notification": {
+        "trackingTitle": "LocaAlert 実行中",
+        "trackingBody": "目的地到着をお知らせします",
+        "nearingBody": "まもなく目的地に到着します"
     }
 }

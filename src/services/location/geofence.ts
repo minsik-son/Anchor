@@ -39,15 +39,9 @@ export function isWithinRadius(
     return distance <= radiusMeters;
 }
 
-/**
- * Format distance for display
- */
-export function formatDistance(meters: number): string {
-    if (meters < 1000) {
-        return `${Math.round(meters)}m`;
-    }
-    return `${(meters / 1000).toFixed(1)}km`;
-}
+export { formatDistance } from '../../utils/format';
+
+import i18n from '../../i18n';
 
 /**
  * Calculate bearing (direction) from one coordinate to another
@@ -72,7 +66,8 @@ export function calculateBearing(from: Coordinate, to: Coordinate): number {
  * Get cardinal direction from bearing
  */
 export function getCardinalDirection(bearing: number): string {
-    const directions = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
+    const dirKeys = ['directions.N', 'directions.NE', 'directions.E', 'directions.SE',
+                     'directions.S', 'directions.SW', 'directions.W', 'directions.NW'];
     const index = Math.round(bearing / 45) % 8;
-    return directions[index];
+    return i18n.t(dirKeys[index]);
 }

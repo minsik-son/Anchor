@@ -18,6 +18,7 @@ import {
     ACTIVE_TRACKING_CONFIG,
     TASK_NAMES,
 } from '../../constants/trackingConfig';
+import i18n from '../../i18n';
 
 // ---------------------------------------------------------------------------
 // Module-level state (the service is the "brain")
@@ -227,8 +228,8 @@ async function setupAdaptivePolling(): Promise<void> {
         distanceInterval: 50,
         timeInterval: 15_000,
         foregroundService: {
-            notificationTitle: 'LocaAlert 실행 중',
-            notificationBody: '목적지 도착을 알려드릴게요',
+            notificationTitle: i18n.t('notification.trackingTitle'),
+            notificationBody: i18n.t('notification.trackingBody'),
             notificationColor: '#3182F6',
         },
         activityType: Location.ActivityType.OtherNavigation,
@@ -244,8 +245,8 @@ async function setupActiveTracking(): Promise<void> {
         distanceInterval: ACTIVE_TRACKING_CONFIG.DISTANCE_FILTER_METERS,
         timeInterval: 5_000,
         foregroundService: {
-            notificationTitle: 'LocaAlert 실행 중',
-            notificationBody: '곧 목적지에 도착합니다',
+            notificationTitle: i18n.t('notification.trackingTitle'),
+            notificationBody: i18n.t('notification.nearingBody'),
             notificationColor: '#3182F6',
         },
         activityType: Location.ActivityType.OtherNavigation,

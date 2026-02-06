@@ -48,7 +48,7 @@ export default function FavoritePlaceSetup() {
         }
 
         if (favorites.length >= 3) {
-            Alert.alert(t('common.error'), '즐겨찾기는 최대 3개까지 등록할 수 있습니다.'); // TODO: Add translation key if missing
+            Alert.alert(t('common.error'), t('favoriteSetup.maxFavorites'));
             return;
         }
 

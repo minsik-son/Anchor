@@ -21,6 +21,7 @@ import Animated, {
     runOnJS,
     interpolate,
     Easing,
+    cancelAnimation,
 } from 'react-native-reanimated';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
@@ -91,6 +92,7 @@ export default function AlarmTrigger() {
             -1,
             true
         );
+        return () => cancelAnimation(pulseScale);
     }, []);
 
     const handleDismiss = useCallback(async () => {
