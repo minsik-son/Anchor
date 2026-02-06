@@ -142,8 +142,8 @@ export const smartInterval = {
 
 // Default Alarm Settings
 export const alarmDefaults = {
-    radius: 500, // meters
-    minRadius: 100,
+    radius: 100, // meters
+    minRadius: 50,
     maxRadius: 5000,
 } as const;
 

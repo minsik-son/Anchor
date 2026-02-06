@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator, Alert, Platform, useColorScheme } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Circle, Marker, Region, UrlTile, Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,17 +29,23 @@ import {
     isInKorea
 } from '../../src/services/placeSearch';
 import { formatDistance } from '../../src/services/location/geofence';
+import { mapDarkStyle } from '../../src/constants/mapDarkStyle';
+import { useThemeStore } from '../../src/stores/themeStore';
+import { useElapsedTime } from '../../src/hooks/useElapsedTime';
 
 export default function Home() {
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
+    const themeMode = useThemeStore((state) => state.mode);
+    const systemScheme = useColorScheme();
+    const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && systemScheme === 'dark');
     const mapRef = useRef<MapView>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isDragging, setIsDragging] = useState(false);
     const [centerLocation, setCenterLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-    const [selectedRadius, setSelectedRadius] = useState(500);
+    const [selectedRadius, setSelectedRadius] = useState(100);
     const [isFirstHint, setIsFirstHint] = useState(true);
     const [showRadiusSlider, setShowRadiusSlider] = useState(false);
 
@@ -74,6 +80,7 @@ export default function Home() {
         isTracking,
     } = useLocationStore();
     const { favorites, loadFavorites, deleteFavorite } = useFavoritePlaceStore();
+    const elapsedTime = useElapsedTime(activeAlarm?.started_at ?? null);
 
     useEffect(() => {
         const init = async () => {
@@ -435,11 +442,6 @@ export default function Home() {
         ? { latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude }
         : { latitude: 37.5665, longitude: 126.9780 }; // Default to Seoul
 
-    // Determine search source indicator
-    const searchSourceLabel = centerLocation && isInKorea(centerLocation.latitude, centerLocation.longitude)
-        ? '🇰🇷'
-        : '🌍';
-
     // Format radius for display
     const formatRadius = (meters: number) => {
         if (meters >= 1000) {
@@ -462,6 +464,8 @@ export default function Home() {
                 }}
                 showsUserLocation
                 showsMyLocationButton={false}
+                customMapStyle={isDarkMode ? mapDarkStyle : undefined}
+                userInterfaceStyle={isDarkMode ? 'dark' : 'light'}
                 scrollEnabled={!isNavigating || true}
                 zoomEnabled={!isNavigating || true}
                 rotateEnabled={!isNavigating}
@@ -600,7 +604,7 @@ export default function Home() {
                     <Ionicons name="search" size={20} color={colors.textWeak} />
                     <TextInput
                         style={styles.searchInput}
-                        placeholder={`${t('home.searchPlaceholder')} ${searchSourceLabel}`}
+                        placeholder={t('home.searchPlaceholder')}
                         placeholderTextColor={colors.textWeak}
                         value={searchQuery}
                         onChangeText={handleSearch}
@@ -667,9 +671,6 @@ export default function Home() {
                                             {item.address}
                                         </Text>
                                     </View>
-                                    <Text style={styles.searchResultSource}>
-                                        {item.source === 'KAKAO' ? '🇰🇷' : item.source === 'GOOGLE' ? '🌍' : '📍'}
-                                    </Text>
                                 </Pressable>
                             )}
                         />
@@ -704,17 +705,31 @@ export default function Home() {
             ) : activeAlarm ? (
                 /* Active Alarm Dashboard */
                 <View style={[styles.bottomSheet, { paddingBottom: insets.bottom }]}>
-                    {/* Alarm Title + Live Distance */}
+                    {/* Alarm Title Row */}
                     <View style={styles.dashboardHeader}>
                         <View style={styles.dashboardTitleRow}>
                             <Ionicons name="navigate" size={20} color={colors.primary} />
                             <Text style={styles.dashboardTitle}>{activeAlarm.title}</Text>
                         </View>
-                        <Text style={styles.dashboardDistance}>
+                    </View>
+
+                    {/* Prominent Distance Display */}
+                    <View style={styles.distanceDisplayContainer}>
+                        <Text style={styles.distanceValue}>
+                            {distanceToTarget !== null ? formatDistance(distanceToTarget) : '--'}
+                        </Text>
+                        <Text style={styles.distanceLabel}>
                             {distanceToTarget !== null
-                                ? t('alarmDashboard.remainingDistance', { distance: formatDistance(distanceToTarget) })
+                                ? t('alarmDashboard.distanceLabel')
                                 : t('home.activeAlarm.calculating')}
                         </Text>
+                    </View>
+
+                    {/* Elapsed Time */}
+                    <View style={styles.elapsedTimeContainer}>
+                        <Ionicons name="time-outline" size={16} color={colors.textMedium} />
+                        <Text style={styles.elapsedTimeText}>{elapsedTime}</Text>
+                        <Text style={styles.elapsedTimeLabel}>{t('alarmDashboard.elapsedTime')}</Text>
                     </View>
 
                     {/* Checklist Preview */}
@@ -817,7 +832,7 @@ export default function Home() {
                             </View>
                             <Slider
                                 style={styles.radiusSlider}
-                                minimumValue={100}
+                                minimumValue={50}
                                 maximumValue={2000}
                                 step={50}
                                 value={selectedRadius}
@@ -827,7 +842,7 @@ export default function Home() {
                                 thumbTintColor={colors.primary}
                             />
                             <View style={styles.radiusSliderLabels}>
-                                <Text style={styles.radiusSliderMinMax}>100m</Text>
+                                <Text style={styles.radiusSliderMinMax}>50m</Text>
                                 <Text style={styles.radiusSliderMinMax}>2km</Text>
                             </View>
                         </Animated.View>
@@ -990,15 +1005,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         ...typography.caption,
         color: colors.textMedium,
     },
-    searchResultSource: {
-        fontSize: 12,
-    },
     // Active Alarm Dashboard styles
     dashboardHeader: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: spacing.sm,
+        marginBottom: spacing.xs,
     },
     dashboardTitleRow: {
         flexDirection: 'row',
@@ -1010,10 +1021,38 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         ...typography.heading,
         color: colors.textStrong,
     },
-    dashboardDistance: {
-        ...typography.heading,
+    distanceDisplayContainer: {
+        alignItems: 'center',
+        paddingVertical: spacing.sm,
+        marginBottom: spacing.xs,
+    },
+    distanceValue: {
+        fontSize: 40,
+        fontWeight: '800',
         color: colors.primary,
-        fontSize: 20,
+        lineHeight: 48,
+    },
+    distanceLabel: {
+        ...typography.caption,
+        color: colors.textMedium,
+        marginTop: 4,
+    },
+    elapsedTimeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: spacing.xs,
+        marginBottom: spacing.sm,
+    },
+    elapsedTimeText: {
+        ...typography.body,
+        color: colors.textMedium,
+        fontWeight: '600',
+        fontVariant: ['tabular-nums'],
+    },
+    elapsedTimeLabel: {
+        ...typography.caption,
+        color: colors.textWeak,
     },
     dashboardChecklist: {
         backgroundColor: colors.background,

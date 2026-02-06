@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useEffect, useCallback, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, LayoutChangeEvent } from 'react-native';
+import { View, Text, StyleSheet, Pressable, LayoutChangeEvent, ImageBackground } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,24 +24,31 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
-import { useAlarmSettingsStore } from '../src/stores/alarmSettingsStore';
+import { useAlarmSettingsStore, ALARM_BACKGROUNDS } from '../src/stores/alarmSettingsStore';
 import { useAlarmSound } from '../src/hooks/useAlarmSound';
 import { useAlarmVibration } from '../src/hooks/useAlarmVibration';
+import { useShakeDetection } from '../src/hooks/useShakeDetection';
 import { typography, spacing, radius, useThemeColors, ThemeColors } from '../src/styles/theme';
 
 const THUMB_WIDTH = 64;
 const DISMISS_THRESHOLD = 0.85;
 
 export default function AlarmTrigger() {
-    const { activeAlarm, deactivateAlarm, loadMemos, currentMemos, toggleMemoChecked } = useAlarmStore();
+    const { activeAlarm, completeAlarm, loadMemos, currentMemos } = useAlarmStore();
     const { stopTracking } = useLocationStore();
-    const { alertType, selectedSound } = useAlarmSettingsStore();
+    const { alertType, selectedSound, shakeToDismiss, backgroundType, selectedPreset, customImageUri } = useAlarmSettingsStore();
     const { t } = useTranslation();
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
 
     const { play, stop: stopSound } = useAlarmSound({ loop: true });
     const { startLoop, stopLoop } = useAlarmVibration();
+
+    const backgroundSource = useMemo(() => {
+        if (backgroundType === 'preset') return ALARM_BACKGROUNDS[selectedPreset]?.asset;
+        if (backgroundType === 'custom' && customImageUri) return { uri: customImageUri };
+        return null;
+    }, [backgroundType, selectedPreset, customImageUri]);
 
     const [trackWidth, setTrackWidth] = useState(0);
     const translateX = useSharedValue(0);
@@ -86,16 +93,30 @@ export default function AlarmTrigger() {
     }, []);
 
     const handleDismiss = useCallback(async () => {
+        if (!activeAlarm) return;
+
+        const alarmId = activeAlarm.id;
+        const alarmTitle = activeAlarm.title;
+        const hasMemos = currentMemos.length > 0;
+
         await stopSound();
         stopLoop();
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-        if (activeAlarm) {
-            await deactivateAlarm(activeAlarm.id);
-        }
+        await completeAlarm(alarmId);
         stopTracking();
-        router.back();
-    }, [activeAlarm, deactivateAlarm, stopTracking, stopSound, stopLoop]);
+
+        if (hasMemos) {
+            router.replace({
+                pathname: '/action-checklist',
+                params: { alarmId: String(alarmId), alarmTitle },
+            });
+        } else {
+            router.back();
+        }
+    }, [activeAlarm, currentMemos, completeAlarm, stopTracking, stopSound, stopLoop]);
+
+    useShakeDetection({ enabled: shakeToDismiss, onShake: handleDismiss });
 
     const onDismissJS = useCallback(() => {
         handleDismiss();
@@ -111,7 +132,7 @@ export default function AlarmTrigger() {
                 translateX.value = withSpring(maxSlide, { damping: 15 });
                 runOnJS(onDismissJS)();
             } else {
-                translateX.value = withSpring(0, { damping: 15 });
+                translateX.value = withTiming(0, { duration: 150, easing: Easing.out(Easing.quad) });
             }
         });
 
@@ -134,8 +155,8 @@ export default function AlarmTrigger() {
         setTrackWidth(event.nativeEvent.layout.width);
     }, []);
 
-    return (
-        <View style={styles.container}>
+    const alarmContent = (
+        <>
             <StatusBar style="light" />
 
             <View style={styles.content}>
@@ -149,30 +170,6 @@ export default function AlarmTrigger() {
                     <Text style={styles.subtitle}>{activeAlarm.title}</Text>
                 )}
 
-                {currentMemos.length > 0 && (
-                    <View style={styles.checklistContainer}>
-                        <Text style={styles.checklistTitle}>{t('alarmTrigger.checklist')}</Text>
-                        {currentMemos.map((memo) => (
-                            <Pressable
-                                key={memo.id}
-                                style={styles.checklistItem}
-                                onPress={() => toggleMemoChecked(memo.id, !memo.is_checked)}
-                            >
-                                <Ionicons
-                                    name={memo.is_checked ? 'checkbox' : 'square-outline'}
-                                    size={22}
-                                    color={colors.surface}
-                                />
-                                <Text style={[
-                                    styles.checklistText,
-                                    memo.is_checked && styles.checklistTextDone,
-                                ]}>
-                                    {memo.content}
-                                </Text>
-                            </Pressable>
-                        ))}
-                    </View>
-                )}
             </View>
 
             {/* Slide to Dismiss */}
@@ -191,7 +188,19 @@ export default function AlarmTrigger() {
 
                 <Text style={styles.dismissHint}>{t('alarmTrigger.dismissHint')}</Text>
             </View>
-        </View>
+        </>
+    );
+
+    if (backgroundSource) {
+        return (
+            <ImageBackground source={backgroundSource} style={styles.container} resizeMode="cover">
+                <View style={styles.overlay}>{alarmContent}</View>
+            </ImageBackground>
+        );
+    }
+
+    return (
+        <View style={styles.container}>{alarmContent}</View>
     );
 }
 
@@ -199,6 +208,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.error,
+    },
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
     },
     content: {
         flex: 1,
@@ -215,12 +228,18 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         color: colors.surface,
         textAlign: 'center',
         marginBottom: spacing.xs,
+        textShadowColor: 'rgba(0, 0, 0, 0.7)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
     },
     subtitle: {
         ...typography.heading,
         color: colors.surface,
         textAlign: 'center',
         opacity: 0.9,
+        textShadowColor: 'rgba(0, 0, 0, 0.7)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
     },
     dismissContainer: {
         paddingHorizontal: spacing.md,
@@ -240,6 +259,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         color: colors.surface,
         fontWeight: '600',
         position: 'absolute',
+        textShadowColor: 'rgba(0, 0, 0, 0.7)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
     },
     sliderThumb: {
         width: THUMB_WIDTH,
@@ -256,35 +278,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         color: colors.surface,
         marginTop: spacing.sm,
         opacity: 0.7,
-    },
-    checklistContainer: {
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        borderRadius: radius.md,
-        padding: spacing.sm,
-        marginTop: spacing.md,
-        width: '100%',
-        maxWidth: 300,
-    },
-    checklistTitle: {
-        ...typography.caption,
-        color: colors.surface,
-        fontWeight: '600',
-        marginBottom: spacing.xs,
-        opacity: 0.8,
-    },
-    checklistItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.xs,
-        paddingVertical: 6,
-    },
-    checklistText: {
-        ...typography.body,
-        color: colors.surface,
-        flex: 1,
-    },
-    checklistTextDone: {
-        opacity: 0.6,
-        textDecorationLine: 'line-through',
+        textShadowColor: 'rgba(0, 0, 0, 0.7)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 4,
     },
 });

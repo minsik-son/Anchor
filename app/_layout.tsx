@@ -66,6 +66,14 @@ export default function RootLayout() {
                     }}
                 />
                 <Stack.Screen name="alarm-setup" />
+                <Stack.Screen name="alarm-detail" />
+                <Stack.Screen
+                    name="action-checklist"
+                    options={{
+                        animation: 'slide_from_bottom',
+                        gestureEnabled: false,
+                    }}
+                />
             </Stack>
             <StatusBar style={statusBarStyle} />
         </GestureHandlerRootView>

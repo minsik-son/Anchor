@@ -12,6 +12,7 @@ import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
+import { useAlarmSettingsStore } from '../src/stores/alarmSettingsStore';
 import { startBackgroundLocation } from '../src/services/location/locationService';
 import { useTranslation } from 'react-i18next';
 import { typography, spacing, radius, shadows, alarmDefaults, useThemeColors, ThemeColors } from '../src/styles/theme';
@@ -48,10 +49,10 @@ export default function AlarmSetup() {
     );
     const [memo, setMemo] = useState('');
     const [smartBattery, setSmartBattery] = useState(true);
-    const [shakeToDismiss, setShakeToDismiss] = useState(false);
 
     const { createAlarm, addMemo } = useAlarmStore();
     const { startTracking, getCurrentLocation } = useLocationStore();
+    const { shakeToDismiss, setShakeToDismiss } = useAlarmSettingsStore();
 
     const handleAutoFillTitle = () => {
         const addressName = params.locationName || params.address || '';
@@ -102,6 +103,8 @@ export default function AlarmSetup() {
                 latitude: lat,
                 longitude: lng,
                 radius: alarmRadius,
+                start_latitude: location?.coords.latitude,
+                start_longitude: location?.coords.longitude,
             });
 
             // Parse memo into checklist items (split by comma, filter empty)
@@ -167,7 +170,7 @@ export default function AlarmSetup() {
                             onChangeText={setTitle}
                             placeholder={t('alarmSetup.titlePlaceholder')}
                             placeholderTextColor={colors.textWeak}
-                            autoFocus
+
                         />
                         <Pressable
                             style={styles.autoFillButton}
@@ -234,9 +237,9 @@ export default function AlarmSetup() {
                     </View>
                     <Slider
                         style={styles.slider}
-                        minimumValue={100}
+                        minimumValue={50}
                         maximumValue={2000}
-                        step={100}
+                        step={50}
                         value={alarmRadius}
                         onValueChange={setAlarmRadius}
                         minimumTrackTintColor={colors.primary}

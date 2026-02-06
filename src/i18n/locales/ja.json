@@ -112,6 +112,12 @@
             "addressNotFound": "住所が見つかりません",
             "activated": "有効化済み"
         },
+        "deleteAll": {
+            "button": "すべて削除",
+            "title": "すべて削除",
+            "message": "すべてのアラーム履歴を削除しますか？この操作は元に戻せません。",
+            "confirm": "すべて削除"
+        },
         "time": {
             "justNow": "たった今",
             "minutesAgo": "{{minutes}}分前",
@@ -142,7 +148,8 @@
             "shakeToOff": "振ってアラーム停止",
             "alertType": "通知方法",
             "mapEngine": "地図エンジン",
-            "theme": "画面テーマ"
+            "theme": "画面テーマ",
+            "alarmBackground": "アラーム背景"
         },
         "theme": {
             "title": "画面テーマ",
@@ -164,6 +171,17 @@
             "alert": "アラート",
             "digital": "デジタル",
             "crystal": "クリスタル"
+        },
+        "backgroundPicker": {
+            "title": "アラーム背景を選択",
+            "default": "デフォルト（赤）",
+            "gallery": "ギャラリーから選択"
+        },
+        "backgrounds": {
+            "sunset": "夕焼け",
+            "ocean": "海",
+            "aurora": "オーロラ",
+            "night": "夜空"
         }
     },
     "favoriteSetup": {
@@ -206,18 +224,44 @@
     "alarmDashboard": {
         "distance": "{{distance}}",
         "remainingDistance": "目的地まで {{distance}}",
+        "distanceLabel": "残り距離",
         "cancelAlarm": "アラームキャンセル",
         "cancelConfirm": {
             "title": "アラームキャンセル",
             "message": "進行中のアラームをキャンセルしますか？",
             "confirm": "キャンセルする"
         },
-        "checklist": "チェックリスト"
+        "checklist": "チェックリスト",
+        "elapsedTime": "経過時間"
+    },
+    "alarmDetail": {
+        "destination": "目的地",
+        "startPoint": "出発地",
+        "travelInfo": "移動情報",
+        "travelTime": "移動時間",
+        "travelDistance": "移動距離",
+        "arrivedAt": "到着時刻",
+        "startedAt": "出発時刻",
+        "checklist": "チェックリスト",
+        "cancelled": "キャンセル済み",
+        "arrived": "到着済み",
+        "active": "有効",
+        "durationMinutes": "{{minutes}}分",
+        "durationHours": "{{hours}}時間",
+        "durationHoursMinutes": "{{hours}}時間{{minutes}}分",
+        "noStartLocation": "出発地情報なし"
     },
     "alarmTrigger": {
         "arrived": "目的地に到着しました！",
         "dismiss": "スライドしてアラームを消す",
         "dismissHint": "最後までスライドしてアラームを消す",
         "checklist": "チェックリスト"
+    },
+    "actionChecklist": {
+        "title": "やることリスト",
+        "subtitle": "{{destination}}に到着しました！",
+        "done": "完了",
+        "allChecked": "すべて完了！お疲れ様です。",
+        "remaining": "{{count}}件 残り"
     }
 }

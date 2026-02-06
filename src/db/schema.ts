@@ -12,7 +12,11 @@ CREATE TABLE IF NOT EXISTS alarms (
   radius INTEGER DEFAULT 500,
   is_active INTEGER DEFAULT 1,
   sound_uri TEXT,
-  created_at TEXT DEFAULT (datetime('now', 'localtime'))
+  created_at TEXT DEFAULT (datetime('now', 'localtime')),
+  started_at TEXT,
+  arrived_at TEXT,
+  start_latitude REAL,
+  start_longitude REAL
 );
 `;
 
@@ -47,6 +51,10 @@ export interface Alarm {
     is_active: boolean;
     sound_uri: string | null;
     created_at: string;
+    started_at: string | null;
+    arrived_at: string | null;
+    start_latitude: number | null;
+    start_longitude: number | null;
 }
 
 export interface ActionMemo {
@@ -72,6 +80,8 @@ export interface CreateAlarmInput {
     longitude: number;
     radius?: number;
     sound_uri?: string;
+    start_latitude?: number;
+    start_longitude?: number;
 }
 
 export interface CreateActionMemoInput {

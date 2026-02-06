@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "scheme": "locaalert",
     "splash": {
@@ -26,7 +26,8 @@
         "UIBackgroundModes": [
           "location",
           "fetch"
-        ]
+        ],
+        "NSPhotoLibraryUsageDescription": "알람 배경 이미지를 선택하기 위해 갤러리 접근이 필요합니다."
       }
     },
     "android": {

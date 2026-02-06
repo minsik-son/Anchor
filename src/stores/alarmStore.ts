@@ -19,7 +19,9 @@ interface AlarmState {
     createAlarm: (input: CreateAlarmInput) => Promise<number>;
     updateAlarm: (id: number, updates: Partial<CreateAlarmInput & { is_active: boolean }>) => Promise<void>;
     deleteAlarm: (id: number) => Promise<void>;
+    deleteAllAlarms: () => Promise<void>;
     deactivateAlarm: (id: number) => Promise<void>;
+    completeAlarm: (id: number) => Promise<void>;
 
     // Memo actions
     loadMemos: (alarmId: number) => Promise<void>;
@@ -90,9 +92,28 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
         }
     },
 
+    deleteAllAlarms: async () => {
+        try {
+            await db.deleteAllAlarms();
+            set({ alarms: [], activeAlarm: null, currentMemos: [] });
+        } catch (error) {
+            set({ error: (error as Error).message });
+        }
+    },
+
     deactivateAlarm: async (id) => {
         try {
             await db.updateAlarm(id, { is_active: false });
+            await get().loadAlarms();
+            await get().loadActiveAlarm();
+        } catch (error) {
+            set({ error: (error as Error).message });
+        }
+    },
+
+    completeAlarm: async (id) => {
+        try {
+            await db.updateAlarm(id, { is_active: false, arrived_at: new Date().toISOString() });
             await get().loadAlarms();
             await get().loadActiveAlarm();
         } catch (error) {

@@ -112,6 +112,12 @@
             "addressNotFound": "주소를 찾을 수 없습니다",
             "activated": "활성화됨"
         },
+        "deleteAll": {
+            "button": "전체 삭제",
+            "title": "전체 삭제",
+            "message": "모든 알람 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+            "confirm": "전체 삭제"
+        },
         "time": {
             "justNow": "방금 전",
             "minutesAgo": "{{minutes}}분 전",
@@ -122,7 +128,8 @@
         "title": "설정",
         "sections": {
             "notification": "알림 설정",
-            "app": "앱 정보"
+            "app": "앱 정보",
+            "map": "지도 설정"
         },
         "items": {
             "language": "언어 설정",
@@ -141,7 +148,8 @@
             "shakeToOff": "흔들어서 끄기",
             "alertType": "알림 방식",
             "mapEngine": "지도 엔진",
-            "theme": "화면 테마"
+            "theme": "화면 테마",
+            "alarmBackground": "알람 배경"
         },
         "theme": {
             "title": "화면 테마",
@@ -163,6 +171,17 @@
             "alert": "알림",
             "digital": "디지털",
             "crystal": "크리스탈"
+        },
+        "backgroundPicker": {
+            "title": "알람 배경 선택",
+            "default": "기본 (빨간색)",
+            "gallery": "갤러리에서 선택"
+        },
+        "backgrounds": {
+            "sunset": "석양",
+            "ocean": "바다",
+            "aurora": "오로라",
+            "night": "밤하늘"
         }
     },
     "favoriteSetup": {
@@ -205,18 +224,44 @@
     "alarmDashboard": {
         "distance": "{{distance}}",
         "remainingDistance": "목적지까지 {{distance}}",
+        "distanceLabel": "남은 거리",
         "cancelAlarm": "알람 취소",
         "cancelConfirm": {
             "title": "알람 취소",
             "message": "진행 중인 알람을 취소하시겠습니까?",
             "confirm": "취소하기"
         },
-        "checklist": "할 일 목록"
+        "checklist": "할 일 목록",
+        "elapsedTime": "경과 시간"
+    },
+    "alarmDetail": {
+        "destination": "목적지",
+        "startPoint": "출발지",
+        "travelInfo": "이동 정보",
+        "travelTime": "이동 시간",
+        "travelDistance": "이동 거리",
+        "arrivedAt": "도착 시간",
+        "startedAt": "출발 시간",
+        "checklist": "할 일 목록",
+        "cancelled": "취소됨",
+        "arrived": "도착 완료",
+        "active": "활성화 중",
+        "durationMinutes": "{{minutes}}분",
+        "durationHours": "{{hours}}시간",
+        "durationHoursMinutes": "{{hours}}시간 {{minutes}}분",
+        "noStartLocation": "출발 위치 정보 없음"
     },
     "alarmTrigger": {
         "arrived": "목적지에 도착했어요!",
         "dismiss": "밀어서 알람 끄기",
         "dismissHint": "끝까지 밀어서 알람을 끄세요",
         "checklist": "할 일 목록"
+    },
+    "actionChecklist": {
+        "title": "할 일 목록",
+        "subtitle": "{{destination}}에 도착했어요!",
+        "done": "완료",
+        "allChecked": "모두 완료! 잘했어요.",
+        "remaining": "{{count}}개 남음"
     }
 }

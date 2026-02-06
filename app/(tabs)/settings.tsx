@@ -4,7 +4,8 @@
  */
 
 import { useMemo, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, Switch, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Switch, ScrollView, ActivityIndicator, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +16,9 @@ import {
     AlertType,
     AlarmSoundKey,
     ALARM_SOUNDS,
+    ALARM_BACKGROUNDS,
+    BackgroundType,
+    PresetKey,
 } from '../../src/stores/alarmSettingsStore';
 import { useAlarmSound } from '../../src/hooks/useAlarmSound';
 
@@ -25,6 +29,7 @@ const ALERT_TYPE_OPTIONS: { code: AlertType; labelKey: string; icon: string }[] 
 ];
 
 const SOUND_KEYS: AlarmSoundKey[] = ['breeze', 'alert', 'digital', 'crystal'];
+const PRESET_KEYS: PresetKey[] = ['sunset', 'ocean', 'aurora', 'night'];
 
 export default function Settings() {
     const insets = useSafeAreaInsets();
@@ -32,7 +37,12 @@ export default function Settings() {
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const { mode, setMode } = useThemeStore();
-    const { alertType, selectedSound, setAlertType, setSelectedSound } = useAlarmSettingsStore();
+    const {
+        alertType, selectedSound, setAlertType, setSelectedSound,
+        shakeToDismiss, setShakeToDismiss,
+        backgroundType, selectedPreset, customImageUri,
+        setBackgroundType, setSelectedPreset, setCustomImageUri,
+    } = useAlarmSettingsStore();
     const { play: previewSound, stop: stopPreview } = useAlarmSound();
 
     const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +50,7 @@ export default function Settings() {
     const [showThemeModal, setShowThemeModal] = useState(false);
     const [showAlertTypeModal, setShowAlertTypeModal] = useState(false);
     const [showSoundPickerModal, setShowSoundPickerModal] = useState(false);
+    const [showBackgroundModal, setShowBackgroundModal] = useState(false);
 
     const currentLanguage = i18n.language;
     const hasSoundSetting = alertType === 'both' || alertType === 'sound';
@@ -98,6 +109,33 @@ export default function Settings() {
         stopPreview();
         setShowSoundPickerModal(false);
     }, [stopPreview]);
+
+    const handleBackgroundSelect = useCallback((type: BackgroundType, preset?: PresetKey) => {
+        setBackgroundType(type);
+        if (preset) setSelectedPreset(preset);
+        if (type !== 'custom') setShowBackgroundModal(false);
+    }, [setBackgroundType, setSelectedPreset]);
+
+    const handleGalleryPick = useCallback(async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [9, 16],
+            quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+            setCustomImageUri(result.assets[0].uri);
+            setBackgroundType('custom');
+            setShowBackgroundModal(false);
+        }
+    }, [setCustomImageUri, setBackgroundType]);
+
+    const getBackgroundLabel = () => {
+        if (backgroundType === 'preset') return t(ALARM_BACKGROUNDS[selectedPreset].labelKey);
+        if (backgroundType === 'custom') return t('settings.backgroundPicker.gallery');
+        return t('settings.backgroundPicker.default');
+    };
 
     return (
         <View style={styles.container}>
@@ -195,6 +233,30 @@ export default function Settings() {
                             colors={colors}
                         />
                     )}
+
+                    <SettingItem
+                        icon="phone-portrait"
+                        label={t('settings.items.shakeToOff')}
+                        rightElement={
+                            <Switch
+                                value={shakeToDismiss}
+                                onValueChange={setShakeToDismiss}
+                                trackColor={{ false: colors.textWeak, true: colors.primary }}
+                            />
+                        }
+                        colors={colors}
+                    />
+
+                    <SettingItem
+                        icon="image"
+                        label={t('settings.items.alarmBackground')}
+                        description={getBackgroundLabel()}
+                        onPress={() => setShowBackgroundModal(true)}
+                        rightElement={
+                            <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
+                        }
+                        colors={colors}
+                    />
                 </View>
 
                 {/* Map Settings */}
@@ -296,9 +358,9 @@ export default function Settings() {
                         <Text style={styles.modalTitle}>{t('settings.items.language')}</Text>
 
                         {[
-                            { code: 'ko', label: '한국어 🇰🇷' },
-                            { code: 'en', label: 'English 🇺🇸' },
-                            { code: 'ja', label: '日本語 🇯🇵' }
+                            { code: 'ko', label: '한국어' },
+                            { code: 'en', label: 'English' },
+                            { code: 'ja', label: '日本語' }
                         ].map((lang) => (
                             <Pressable
                                 key={lang.code}
@@ -393,6 +455,90 @@ export default function Settings() {
                                 )}
                             </Pressable>
                         ))}
+                    </View>
+                </Pressable>
+            )}
+
+            {/* Background Picker Modal */}
+            {showBackgroundModal && (
+                <Pressable style={styles.modalOverlay} onPress={() => setShowBackgroundModal(false)}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>{t('settings.backgroundPicker.title')}</Text>
+
+                        {/* Default option */}
+                        <Pressable
+                            style={[
+                                styles.optionRow,
+                                backgroundType === 'default' && styles.optionRowSelected,
+                            ]}
+                            onPress={() => handleBackgroundSelect('default')}
+                        >
+                            <View style={styles.optionLeft}>
+                                <View style={[styles.presetPreview, { backgroundColor: colors.error }]} />
+                                <Text style={[
+                                    styles.optionText,
+                                    backgroundType === 'default' && styles.optionTextSelected,
+                                ]}>
+                                    {t('settings.backgroundPicker.default')}
+                                </Text>
+                            </View>
+                            {backgroundType === 'default' && (
+                                <Ionicons name="checkmark" size={20} color={colors.primary} />
+                            )}
+                        </Pressable>
+
+                        {/* Preset options */}
+                        {PRESET_KEYS.map((key) => {
+                            const isSelected = backgroundType === 'preset' && selectedPreset === key;
+                            return (
+                                <Pressable
+                                    key={key}
+                                    style={[
+                                        styles.optionRow,
+                                        isSelected && styles.optionRowSelected,
+                                    ]}
+                                    onPress={() => handleBackgroundSelect('preset', key)}
+                                >
+                                    <View style={styles.optionLeft}>
+                                        <Image
+                                            source={ALARM_BACKGROUNDS[key].asset}
+                                            style={styles.presetPreview}
+                                        />
+                                        <Text style={[
+                                            styles.optionText,
+                                            isSelected && styles.optionTextSelected,
+                                        ]}>
+                                            {t(ALARM_BACKGROUNDS[key].labelKey)}
+                                        </Text>
+                                    </View>
+                                    {isSelected && (
+                                        <Ionicons name="checkmark" size={20} color={colors.primary} />
+                                    )}
+                                </Pressable>
+                            );
+                        })}
+
+                        {/* Gallery option */}
+                        <Pressable
+                            style={[
+                                styles.optionRow,
+                                backgroundType === 'custom' && styles.optionRowSelected,
+                            ]}
+                            onPress={handleGalleryPick}
+                        >
+                            <View style={styles.optionLeft}>
+                                <Ionicons name="images" size={20} color={backgroundType === 'custom' ? colors.primary : colors.textMedium} />
+                                <Text style={[
+                                    styles.optionText,
+                                    backgroundType === 'custom' && styles.optionTextSelected,
+                                ]}>
+                                    {t('settings.backgroundPicker.gallery')}
+                                </Text>
+                            </View>
+                            {backgroundType === 'custom' && (
+                                <Ionicons name="checkmark" size={20} color={colors.primary} />
+                            )}
+                        </Pressable>
                     </View>
                 </Pressable>
             )}
@@ -564,6 +710,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
+    },
+    presetPreview: {
+        width: 40,
+        height: 40,
+        borderRadius: radius.sm,
     },
     optionText: {
         ...typography.body,

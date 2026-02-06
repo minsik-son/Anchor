@@ -112,6 +112,12 @@
             "addressNotFound": "Address not found",
             "activated": "Activated"
         },
+        "deleteAll": {
+            "button": "Delete All",
+            "title": "Delete All",
+            "message": "Delete all alarm records? This cannot be undone.",
+            "confirm": "Delete All"
+        },
         "time": {
             "justNow": "Just now",
             "minutesAgo": "{{minutes}}m ago",
@@ -122,7 +128,8 @@
         "title": "Settings",
         "sections": {
             "notification": "Notification Settings",
-            "app": "App Info"
+            "app": "App Info",
+            "map": "Map Settings"
         },
         "items": {
             "language": "Language",
@@ -141,7 +148,8 @@
             "shakeToOff": "Shake to Turn Off",
             "alertType": "Alert Type",
             "mapEngine": "Map Engine",
-            "theme": "Screen Theme"
+            "theme": "Screen Theme",
+            "alarmBackground": "Alarm Background"
         },
         "theme": {
             "title": "Screen Theme",
@@ -163,6 +171,17 @@
             "alert": "Alert",
             "digital": "Digital",
             "crystal": "Crystal"
+        },
+        "backgroundPicker": {
+            "title": "Select Alarm Background",
+            "default": "Default (Red)",
+            "gallery": "Choose from Gallery"
+        },
+        "backgrounds": {
+            "sunset": "Sunset",
+            "ocean": "Ocean",
+            "aurora": "Aurora",
+            "night": "Night Sky"
         }
     },
     "favoriteSetup": {
@@ -205,18 +224,44 @@
     "alarmDashboard": {
         "distance": "{{distance}}",
         "remainingDistance": "{{distance}} to destination",
+        "distanceLabel": "remaining distance",
         "cancelAlarm": "Cancel Alarm",
         "cancelConfirm": {
             "title": "Cancel Alarm",
             "message": "Cancel the active alarm?",
             "confirm": "Cancel"
         },
-        "checklist": "Checklist"
+        "checklist": "Checklist",
+        "elapsedTime": "elapsed"
+    },
+    "alarmDetail": {
+        "destination": "Destination",
+        "startPoint": "Start Point",
+        "travelInfo": "Travel Info",
+        "travelTime": "Travel Time",
+        "travelDistance": "Travel Distance",
+        "arrivedAt": "Arrived At",
+        "startedAt": "Started At",
+        "checklist": "Checklist",
+        "cancelled": "Cancelled",
+        "arrived": "Arrived",
+        "active": "Active",
+        "durationMinutes": "{{minutes}} min",
+        "durationHours": "{{hours}} hr",
+        "durationHoursMinutes": "{{hours}} hr {{minutes}} min",
+        "noStartLocation": "No start location"
     },
     "alarmTrigger": {
         "arrived": "You've arrived!",
         "dismiss": "Slide to dismiss",
         "dismissHint": "Slide all the way to dismiss",
         "checklist": "Checklist"
+    },
+    "actionChecklist": {
+        "title": "Things to do",
+        "subtitle": "You've arrived at {{destination}}!",
+        "done": "Done",
+        "allChecked": "All done! Great job.",
+        "remaining": "{{count}} remaining"
     }
 }
