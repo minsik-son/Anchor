@@ -96,3 +96,70 @@ export interface CreateCustomActionInput {
     icon_name?: string;
     order_index?: number;
 }
+
+// ========== ROUTINE SCHEMA ==========
+
+export const CREATE_ROUTINES_TABLE = `
+CREATE TABLE IF NOT EXISTS routines (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  icon TEXT NOT NULL DEFAULT 'business',
+  location_name TEXT NOT NULL DEFAULT '',
+  latitude REAL NOT NULL,
+  longitude REAL NOT NULL,
+  radius INTEGER DEFAULT 500,
+  start_time TEXT NOT NULL,
+  end_time TEXT NOT NULL,
+  repeat_days TEXT NOT NULL DEFAULT '[]',
+  is_enabled INTEGER DEFAULT 1,
+  sound TEXT DEFAULT 'breeze',
+  memo TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now', 'localtime'))
+);
+`;
+
+export interface RoutineRow {
+    id: number;
+    name: string;
+    icon: string;
+    location_name: string;
+    latitude: number;
+    longitude: number;
+    radius: number;
+    start_time: string;
+    end_time: string;
+    repeat_days: number[];
+    is_enabled: boolean;
+    sound: string;
+    memo: string;
+    created_at: string;
+}
+
+export interface CreateRoutineInput {
+    name: string;
+    icon?: string;
+    location_name: string;
+    latitude: number;
+    longitude: number;
+    radius?: number;
+    start_time: string;
+    end_time: string;
+    repeat_days: number[];
+    sound?: string;
+    memo?: string;
+}
+
+export interface UpdateRoutineInput {
+    name?: string;
+    icon?: string;
+    location_name?: string;
+    latitude?: number;
+    longitude?: number;
+    radius?: number;
+    start_time?: string;
+    end_time?: string;
+    repeat_days?: number[];
+    is_enabled?: boolean;
+    sound?: string;
+    memo?: string;
+}

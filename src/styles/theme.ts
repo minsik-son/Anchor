@@ -118,28 +118,6 @@ export const animation = {
     slow: 500,
 } as const;
 
-// Smart Interval Constants
-export const smartInterval = {
-    restPhase: {
-        distance: 10000,  // > 10km
-        interval: 600000, // 10 minutes
-    },
-    approachPhase: {
-        distance: 2000,   // 2km - 10km
-        interval: 180000, // 3 minutes
-    },
-    preparePhase: {
-        distance: 1000,   // 1km - 2km
-        interval: 60000,  // 1 minute
-    },
-    targetPhase: {
-        distance: 1000,   // <= 1km
-        distanceFilter: 10, // 10m
-    },
-    highSpeedThreshold: 100, // km/h
-    highSpeedMultiplier: 1.5,
-} as const;
-
 // Default Alarm Settings
 export const alarmDefaults = {
     radius: 100, // meters

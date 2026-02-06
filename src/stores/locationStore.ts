@@ -4,11 +4,10 @@
 
 import { create } from 'zustand';
 import * as Location from 'expo-location';
-import { smartInterval } from '../styles/theme';
-import { stopBackgroundLocation } from '../services/location/locationService';
-import { isWithinRadius } from '../services/location/geofence';
+import { stopAllTracking } from '../services/location/locationService';
+import { calculateDistance, isWithinRadius } from '../services/location/geofence';
 
-export type LocationPhase = 'rest' | 'approach' | 'prepare' | 'target';
+export type TrackingPhase = 'IDLE' | 'GEOFENCING' | 'ADAPTIVE_POLLING' | 'ACTIVE_TRACKING';
 export type TransportMode = 'driving' | 'transit' | 'walking' | 'cycling';
 
 export interface RouteInfo {
@@ -28,8 +27,9 @@ interface LocationState {
 
     // Tracking state
     isTracking: boolean;
-    currentPhase: LocationPhase;
+    currentPhase: TrackingPhase;
     distanceToTarget: number | null;
+    trackingStartedAt: string | null;
 
     // Target
     targetLocation: { latitude: number; longitude: number } | null;
@@ -53,8 +53,7 @@ interface LocationState {
     stopTracking: () => void;
     updateLocation: (location: Location.LocationObject) => void;
     checkGeofence: () => boolean;
-    calculatePhase: (distance: number, speed: number) => LocationPhase;
-    getCheckInterval: () => number;
+    setPhase: (phase: TrackingPhase) => void;
 
     // Navigation actions
     setTransportMode: (mode: TransportMode) => void;
@@ -65,34 +64,14 @@ interface LocationState {
     stopNavigation: () => void;
 }
 
-/**
- * Calculate distance between two coordinates (Haversine formula)
- */
-function calculateDistance(
-    lat1: number, lon1: number,
-    lat2: number, lon2: number
-): number {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-        Math.cos(φ1) * Math.cos(φ2) *
-        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c; // Distance in meters
-}
-
 export const useLocationStore = create<LocationState>((set, get) => ({
     currentLocation: null,
     accuracy: null,
     speed: null,
     isTracking: false,
-    currentPhase: 'rest',
+    currentPhase: 'IDLE',
     distanceToTarget: null,
+    trackingStartedAt: null,
     targetLocation: null,
     targetRadius: 500,
     hasPermission: false,
@@ -126,7 +105,6 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             // Handle Expo Go environment where Info.plist keys may not be available
             if (error?.message?.includes('NSLocation') || error?.message?.includes('Info.plist')) {
                 console.warn('[LocationStore] Running in Expo Go - location permissions not available. This is expected.');
-                // Set hasPermission to false but allow testing other features
                 set({ hasPermission: false, permissionStatus: Location.PermissionStatus.UNDETERMINED });
             } else {
                 console.error('[LocationStore] Permission request failed:', error);
@@ -138,12 +116,10 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
     getCurrentLocation: async () => {
         try {
-            // Try to get current position
             const location = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.Balanced,
             });
 
-            // Update store with this location
             set({ currentLocation: location });
 
             return location;
@@ -151,7 +127,6 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             console.warn('[LocationStore] getCurrentPositionAsync failed, trying last known position:', error?.message);
 
             try {
-                // Fallback to last known position
                 const lastKnown = await Location.getLastKnownPositionAsync();
                 if (lastKnown) {
                     set({ currentLocation: lastKnown });
@@ -182,10 +157,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         let initialDistance: number | null = null;
         if (loc) {
             initialDistance = calculateDistance(
-                loc.coords.latitude,
-                loc.coords.longitude,
-                target.latitude,
-                target.longitude
+                { latitude: loc.coords.latitude, longitude: loc.coords.longitude },
+                target
             );
         }
 
@@ -193,7 +166,9 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             targetLocation: target,
             targetRadius: radius,
             isTracking: true,
+            currentPhase: 'IDLE',
             distanceToTarget: initialDistance,
+            trackingStartedAt: new Date().toISOString(),
             ...(initialLocation ? { currentLocation: initialLocation } : {}),
         });
 
@@ -201,16 +176,16 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     },
 
     stopTracking: () => {
-        // Stop background location updates
-        stopBackgroundLocation().catch((err) => {
-            console.warn('[LocationStore] Failed to stop background location:', err);
+        stopAllTracking().catch((err) => {
+            console.warn('[LocationStore] Failed to stop tracking:', err);
         });
 
         set({
             isTracking: false,
-            currentPhase: 'rest',
+            currentPhase: 'IDLE',
             distanceToTarget: null,
             targetLocation: null,
+            trackingStartedAt: null,
         });
         console.log('[LocationStore] Stopped tracking');
     },
@@ -228,21 +203,15 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
     updateLocation: (location) => {
         const { targetLocation } = get();
-
         const speed = location.coords.speed ?? 0;
-        const speedKmh = (speed * 3600) / 1000; // Convert m/s to km/h
+        const speedKmh = (speed * 3600) / 1000;
 
         let distance: number | null = null;
-        let phase: LocationPhase = 'rest';
-
         if (targetLocation) {
             distance = calculateDistance(
-                location.coords.latitude,
-                location.coords.longitude,
-                targetLocation.latitude,
-                targetLocation.longitude
+                { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                targetLocation
             );
-            phase = get().calculatePhase(distance, speedKmh);
         }
 
         set({
@@ -250,38 +219,10 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             accuracy: location.coords.accuracy,
             speed: speedKmh,
             distanceToTarget: distance,
-            currentPhase: phase,
         });
     },
 
-    calculatePhase: (distance: number, speed: number): LocationPhase => {
-        // Adjust distance for high-speed travel (KTX, etc.)
-        const adjustedDistance = speed > smartInterval.highSpeedThreshold
-            ? distance * smartInterval.highSpeedMultiplier
-            : distance;
-
-        if (adjustedDistance > smartInterval.restPhase.distance) return 'rest';
-        if (adjustedDistance > smartInterval.approachPhase.distance) return 'approach';
-        if (adjustedDistance > smartInterval.preparePhase.distance) return 'prepare';
-        return 'target';
-    },
-
-    getCheckInterval: () => {
-        const { currentPhase } = get();
-
-        switch (currentPhase) {
-            case 'rest':
-                return smartInterval.restPhase.interval;
-            case 'approach':
-                return smartInterval.approachPhase.interval;
-            case 'prepare':
-                return smartInterval.preparePhase.interval;
-            case 'target':
-                return 0; // Use distance filter instead
-            default:
-                return smartInterval.restPhase.interval;
-        }
-    },
+    setPhase: (phase) => set({ currentPhase: phase }),
 
     // Navigation actions
     setTransportMode: (mode) => {

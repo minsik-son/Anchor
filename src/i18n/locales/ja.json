@@ -15,6 +15,7 @@
     },
     "tabs": {
         "home": "ホーム",
+        "routines": "ルーティン",
         "history": "履歴",
         "settings": "設定"
     },
@@ -263,5 +264,63 @@
         "done": "完了",
         "allChecked": "すべて完了！お疲れ様です。",
         "remaining": "{{count}}件 残り"
+    },
+    "routines": {
+        "title": "マイルーティン",
+        "total": "全 {{count}}件",
+        "empty": "ルーティンがありません",
+        "emptyHint": "よく行く場所に繰り返しアラームを設定してみましょう！",
+        "addRoutine": "ルーティン追加",
+        "deleteAll": {
+            "button": "すべて削除",
+            "title": "すべて削除",
+            "message": "すべてのルーティンを削除しますか？この操作は元に戻せません。",
+            "confirm": "すべて削除"
+        },
+        "timeRange": "{{start}} - {{end}}"
+    },
+    "routineSetup": {
+        "title": "ルーティン作成",
+        "nameLabel": "ルーティン名",
+        "namePlaceholder": "例：通勤、通学、ジム",
+        "iconLabel": "アイコン",
+        "locationLabel": "目的地",
+        "selectLocation": "地図から選択",
+        "timeLabel": "有効時間",
+        "startTime": "開始時刻",
+        "endTime": "終了時刻",
+        "repeatLabel": "繰り返し曜日",
+        "soundLabel": "アラーム音",
+        "memoLabel": "メモ (任意)",
+        "memoPlaceholder": "例：出口番号、持ち物など",
+        "save": "保存する",
+        "noName": "名前が必要です",
+        "pleaseEnterName": "ルーティン名を入力してください。",
+        "noLocation": "目的地が必要です",
+        "pleaseSelectLocation": "目的地を選択してください。"
+    },
+    "days": {
+        "sun": "日",
+        "mon": "月",
+        "tue": "火",
+        "wed": "水",
+        "thu": "木",
+        "fri": "金",
+        "sat": "土",
+        "sunFull": "日曜日",
+        "monFull": "月曜日",
+        "tueFull": "火曜日",
+        "wedFull": "水曜日",
+        "thuFull": "木曜日",
+        "friFull": "金曜日",
+        "satFull": "土曜日",
+        "weekdays": "平日",
+        "weekend": "週末",
+        "everyday": "毎日"
+    },
+    "timePicker": {
+        "title": "時刻選択",
+        "hour": "時",
+        "minute": "分"
     }
 }

@@ -13,10 +13,10 @@ import * as Haptics from 'expo-haptics';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
 import { useAlarmSettingsStore } from '../src/stores/alarmSettingsStore';
-import { startBackgroundLocation } from '../src/services/location/locationService';
+import { startTracking as startServiceTracking } from '../src/services/location/locationService';
 import { useTranslation } from 'react-i18next';
 import { typography, spacing, radius, shadows, alarmDefaults, useThemeColors, ThemeColors } from '../src/styles/theme';
-import { isWithinRadius } from '../src/services/location/geofence';
+import { isWithinRadius, calculateDistance } from '../src/services/location/geofence';
 
 const ALARM_ICONS = [
     { key: 'home', icon: 'home' },
@@ -121,13 +121,22 @@ export default function AlarmSetup() {
 
             // Start location tracking — pass fresh location for immediate distance calculation
             const target = { latitude: lat, longitude: lng };
+
+            // Calculate initial distance for phase selection
+            const initialDistance = location
+                ? calculateDistance(
+                    { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                    target
+                )
+                : undefined;
+
             await startTracking(target, alarmRadius, location ?? undefined);
 
-            // Start background location (may fail in Expo Go)
+            // Start background tracking service (may fail in Expo Go)
             try {
-                await startBackgroundLocation(target, alarmRadius);
+                await startServiceTracking(target, alarmRadius, initialDistance);
             } catch (bgError) {
-                console.warn('[AlarmSetup] Background location failed (Expo Go?):', bgError);
+                console.warn('[AlarmSetup] Background tracking failed (Expo Go?):', bgError);
             }
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

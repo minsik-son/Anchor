@@ -45,6 +45,15 @@ export default function TabsLayout() {
                 }}
             />
             <Tabs.Screen
+                name="routines"
+                options={{
+                    title: t('tabs.routines'),
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="repeat" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
                 name="history"
                 options={{
                     title: t('tabs.history'),

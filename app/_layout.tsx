@@ -6,12 +6,15 @@
 import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useColorScheme } from 'react-native';
 import { initDatabase } from '../src/db/database';
 import { colors as defaultColors, useThemeColors } from '../src/styles/theme';
 import { useThemeStore } from '../src/stores/themeStore';
+import { useRoutineStore } from '../src/stores/routineStore';
+import { evaluate } from '../src/services/routineManager';
+import { registerLocationTickCallback } from '../src/services/location/locationService';
 import '../src/i18n'; // Initialize i18n
 
 export default function RootLayout() {
@@ -28,6 +31,7 @@ export default function RootLayout() {
         async function initialize() {
             try {
                 await initDatabase();
+                await useRoutineStore.getState().loadRoutines();
                 setIsReady(true);
             } catch (err) {
                 console.error('[RootLayout] Initialization failed:', err);
@@ -36,6 +40,20 @@ export default function RootLayout() {
         }
         initialize();
     }, []);
+
+    // Routine evaluation: foreground + background location ticks
+    useEffect(() => {
+        if (!isReady) return;
+
+        registerLocationTickCallback(() => evaluate());
+        evaluate();
+
+        const subscription = AppState.addEventListener('change', (state) => {
+            if (state === 'active') evaluate();
+        });
+
+        return () => subscription.remove();
+    }, [isReady]);
 
     if (!isReady) {
         return (
@@ -67,6 +85,7 @@ export default function RootLayout() {
                 />
                 <Stack.Screen name="alarm-setup" />
                 <Stack.Screen name="alarm-detail" />
+                <Stack.Screen name="routine-setup" options={{ headerShown: false }} />
                 <Stack.Screen
                     name="action-checklist"
                     options={{

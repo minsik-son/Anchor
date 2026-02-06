@@ -3,7 +3,7 @@
  * Check if user is within alarm radius
  */
 
-interface Coordinate {
+export interface Coordinate {
     latitude: number;
     longitude: number;
 }

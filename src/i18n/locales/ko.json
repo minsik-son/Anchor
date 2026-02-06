@@ -15,6 +15,7 @@
     },
     "tabs": {
         "home": "홈",
+        "routines": "루틴",
         "history": "히스토리",
         "settings": "설정"
     },
@@ -263,5 +264,63 @@
         "done": "완료",
         "allChecked": "모두 완료! 잘했어요.",
         "remaining": "{{count}}개 남음"
+    },
+    "routines": {
+        "title": "나의 루틴",
+        "total": "총 {{count}}개",
+        "empty": "등록된 루틴이 없습니다",
+        "emptyHint": "자주 가는 장소에 반복 알람을 설정해보세요!",
+        "addRoutine": "루틴 추가",
+        "deleteAll": {
+            "button": "전체 삭제",
+            "title": "전체 삭제",
+            "message": "모든 루틴을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+            "confirm": "전체 삭제"
+        },
+        "timeRange": "{{start}} - {{end}}"
+    },
+    "routineSetup": {
+        "title": "루틴 만들기",
+        "nameLabel": "루틴 이름",
+        "namePlaceholder": "예: 출근길, 퇴근길, 학원 가기",
+        "iconLabel": "아이콘",
+        "locationLabel": "목적지",
+        "selectLocation": "지도에서 선택",
+        "timeLabel": "활성화 시간",
+        "startTime": "시작 시간",
+        "endTime": "종료 시간",
+        "repeatLabel": "반복 요일",
+        "soundLabel": "알람 사운드",
+        "memoLabel": "메모 (선택사항)",
+        "memoPlaceholder": "예: 출구 번호, 준비물 등",
+        "save": "저장하기",
+        "noName": "루틴 이름 필요",
+        "pleaseEnterName": "루틴 이름을 입력해주세요.",
+        "noLocation": "목적지 필요",
+        "pleaseSelectLocation": "목적지를 선택해주세요."
+    },
+    "days": {
+        "sun": "일",
+        "mon": "월",
+        "tue": "화",
+        "wed": "수",
+        "thu": "목",
+        "fri": "금",
+        "sat": "토",
+        "sunFull": "일요일",
+        "monFull": "월요일",
+        "tueFull": "화요일",
+        "wedFull": "수요일",
+        "thuFull": "목요일",
+        "friFull": "금요일",
+        "satFull": "토요일",
+        "weekdays": "평일",
+        "weekend": "주말",
+        "everyday": "매일"
+    },
+    "timePicker": {
+        "title": "시간 선택",
+        "hour": "시",
+        "minute": "분"
     }
 }

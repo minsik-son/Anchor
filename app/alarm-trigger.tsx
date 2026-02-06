@@ -24,6 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
+import { useRoutineStore } from '../src/stores/routineStore';
 import { useAlarmSettingsStore, ALARM_BACKGROUNDS } from '../src/stores/alarmSettingsStore';
 import { useAlarmSound } from '../src/hooks/useAlarmSound';
 import { useAlarmVibration } from '../src/hooks/useAlarmVibration';
@@ -105,6 +106,13 @@ export default function AlarmTrigger() {
 
         await completeAlarm(alarmId);
         stopTracking();
+
+        // Mark routine as fulfilled to prevent re-triggering in the same time window
+        const routineState = useRoutineStore.getState();
+        if (routineState.activeRoutineId !== null) {
+            routineState.markRoutineFulfilled(routineState.activeRoutineId);
+            routineState.setActiveRoutineId(null);
+        }
 
         if (hasMemos) {
             router.replace({

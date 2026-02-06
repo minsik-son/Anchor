@@ -8,12 +8,16 @@ import {
     CREATE_ALARMS_TABLE,
     CREATE_ACTION_MEMOS_TABLE,
     CREATE_CUSTOM_ACTIONS_TABLE,
+    CREATE_ROUTINES_TABLE,
     Alarm,
     ActionMemo,
     CustomAction,
+    RoutineRow,
     CreateAlarmInput,
     CreateActionMemoInput,
     CreateCustomActionInput,
+    CreateRoutineInput,
+    UpdateRoutineInput,
 } from './schema';
 
 const DB_NAME = 'locaalert.db';
@@ -33,6 +37,7 @@ export async function initDatabase(): Promise<void> {
       ${CREATE_ALARMS_TABLE}
       ${CREATE_ACTION_MEMOS_TABLE}
       ${CREATE_CUSTOM_ACTIONS_TABLE}
+      ${CREATE_ROUTINES_TABLE}
     `);
 
         await runMigrations(db);
@@ -205,4 +210,106 @@ export async function getAllCustomActions(): Promise<CustomAction[]> {
 export async function deleteCustomAction(id: number): Promise<void> {
     const database = getDatabase();
     await database.runAsync('DELETE FROM custom_actions WHERE id = ?', [id]);
+}
+
+// ========== ROUTINE OPERATIONS ==========
+
+/** Raw DB row before parsing JSON/boolean fields */
+interface RawRoutineRow {
+    id: number;
+    name: string;
+    icon: string;
+    location_name: string;
+    latitude: number;
+    longitude: number;
+    radius: number;
+    start_time: string;
+    end_time: string;
+    repeat_days: string;
+    is_enabled: number;
+    sound: string;
+    memo: string;
+    created_at: string;
+}
+
+function parseRoutineRow(raw: RawRoutineRow): RoutineRow {
+    return {
+        ...raw,
+        repeat_days: JSON.parse(raw.repeat_days),
+        is_enabled: Boolean(raw.is_enabled),
+    };
+}
+
+export async function createRoutine(input: CreateRoutineInput): Promise<number> {
+    const database = getDatabase();
+    const result = await database.runAsync(
+        `INSERT INTO routines (name, icon, location_name, latitude, longitude, radius, start_time, end_time, repeat_days, sound, memo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+            input.name,
+            input.icon ?? 'business',
+            input.location_name,
+            input.latitude,
+            input.longitude,
+            input.radius ?? 500,
+            input.start_time,
+            input.end_time,
+            JSON.stringify(input.repeat_days),
+            input.sound ?? 'breeze',
+            input.memo ?? '',
+        ]
+    );
+    return result.lastInsertRowId;
+}
+
+export async function getAllRoutines(): Promise<RoutineRow[]> {
+    const database = getDatabase();
+    const rows = await database.getAllAsync<RawRoutineRow>('SELECT * FROM routines ORDER BY created_at DESC');
+    return rows.map(parseRoutineRow);
+}
+
+export async function getEnabledRoutines(): Promise<RoutineRow[]> {
+    const database = getDatabase();
+    const rows = await database.getAllAsync<RawRoutineRow>('SELECT * FROM routines WHERE is_enabled = 1');
+    return rows.map(parseRoutineRow);
+}
+
+export async function getRoutineById(id: number): Promise<RoutineRow | null> {
+    const database = getDatabase();
+    const row = await database.getFirstAsync<RawRoutineRow>('SELECT * FROM routines WHERE id = ?', [id]);
+    if (!row) return null;
+    return parseRoutineRow(row);
+}
+
+export async function updateRoutine(id: number, updates: UpdateRoutineInput): Promise<void> {
+    const database = getDatabase();
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (updates.name !== undefined) { fields.push('name = ?'); values.push(updates.name); }
+    if (updates.icon !== undefined) { fields.push('icon = ?'); values.push(updates.icon); }
+    if (updates.location_name !== undefined) { fields.push('location_name = ?'); values.push(updates.location_name); }
+    if (updates.latitude !== undefined) { fields.push('latitude = ?'); values.push(updates.latitude); }
+    if (updates.longitude !== undefined) { fields.push('longitude = ?'); values.push(updates.longitude); }
+    if (updates.radius !== undefined) { fields.push('radius = ?'); values.push(updates.radius); }
+    if (updates.start_time !== undefined) { fields.push('start_time = ?'); values.push(updates.start_time); }
+    if (updates.end_time !== undefined) { fields.push('end_time = ?'); values.push(updates.end_time); }
+    if (updates.repeat_days !== undefined) { fields.push('repeat_days = ?'); values.push(JSON.stringify(updates.repeat_days)); }
+    if (updates.is_enabled !== undefined) { fields.push('is_enabled = ?'); values.push(updates.is_enabled ? 1 : 0); }
+    if (updates.sound !== undefined) { fields.push('sound = ?'); values.push(updates.sound); }
+    if (updates.memo !== undefined) { fields.push('memo = ?'); values.push(updates.memo); }
+
+    if (fields.length === 0) return;
+    values.push(id);
+
+    await database.runAsync(`UPDATE routines SET ${fields.join(', ')} WHERE id = ?`, values);
+}
+
+export async function deleteRoutine(id: number): Promise<void> {
+    const database = getDatabase();
+    await database.runAsync('DELETE FROM routines WHERE id = ?', [id]);
+}
+
+export async function deleteAllRoutines(): Promise<void> {
+    const database = getDatabase();
+    await database.runAsync('DELETE FROM routines');
 }

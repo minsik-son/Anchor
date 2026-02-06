@@ -15,6 +15,7 @@
     },
     "tabs": {
         "home": "Home",
+        "routines": "Routines",
         "history": "History",
         "settings": "Settings"
     },
@@ -263,5 +264,63 @@
         "done": "Done",
         "allChecked": "All done! Great job.",
         "remaining": "{{count}} remaining"
+    },
+    "routines": {
+        "title": "My Routines",
+        "total": "{{count}} total",
+        "empty": "No routines yet",
+        "emptyHint": "Set up recurring alarms for places you visit regularly!",
+        "addRoutine": "Add Routine",
+        "deleteAll": {
+            "button": "Delete All",
+            "title": "Delete All",
+            "message": "Delete all routines? This cannot be undone.",
+            "confirm": "Delete All"
+        },
+        "timeRange": "{{start}} - {{end}}"
+    },
+    "routineSetup": {
+        "title": "Create Routine",
+        "nameLabel": "Routine Name",
+        "namePlaceholder": "e.g. Morning Commute, Gym, School",
+        "iconLabel": "Icon",
+        "locationLabel": "Destination",
+        "selectLocation": "Select from Map",
+        "timeLabel": "Active Hours",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "repeatLabel": "Repeat Days",
+        "soundLabel": "Alarm Sound",
+        "memoLabel": "Memo (Optional)",
+        "memoPlaceholder": "e.g. Exit number, things to bring",
+        "save": "Save",
+        "noName": "Name Required",
+        "pleaseEnterName": "Please enter a routine name.",
+        "noLocation": "Location Required",
+        "pleaseSelectLocation": "Please select a destination."
+    },
+    "days": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sunFull": "Sunday",
+        "monFull": "Monday",
+        "tueFull": "Tuesday",
+        "wedFull": "Wednesday",
+        "thuFull": "Thursday",
+        "friFull": "Friday",
+        "satFull": "Saturday",
+        "weekdays": "Weekdays",
+        "weekend": "Weekend",
+        "everyday": "Everyday"
+    },
+    "timePicker": {
+        "title": "Select Time",
+        "hour": "Hour",
+        "minute": "Min"
     }
 }

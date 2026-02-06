@@ -5,6 +5,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator, Alert, Platform, useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import MapView, { PROVIDER_GOOGLE, Circle, Marker, Region, UrlTile, Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -46,7 +47,8 @@ export default function Home() {
     const [isDragging, setIsDragging] = useState(false);
     const [centerLocation, setCenterLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const [selectedRadius, setSelectedRadius] = useState(100);
-    const [isFirstHint, setIsFirstHint] = useState(true);
+    const [isFirstHint, setIsFirstHint] = useState(false);
+    const hintOpacity = useRef(new Animated.Value(1)).current;
     const [showRadiusSlider, setShowRadiusSlider] = useState(false);
 
     // Address state
@@ -110,6 +112,28 @@ export default function Home() {
             }
         };
         init();
+    }, []);
+
+    // Show map hint only on first-ever app launch, then auto-fade
+    useEffect(() => {
+        const HINT_SHOWN_KEY = 'map_hint_shown';
+
+        AsyncStorage.getItem(HINT_SHOWN_KEY).then((value) => {
+            if (value !== 'true') {
+                setIsFirstHint(true);
+                AsyncStorage.setItem(HINT_SHOWN_KEY, 'true');
+
+                const timer = setTimeout(() => {
+                    Animated.timing(hintOpacity, {
+                        toValue: 0,
+                        duration: 500,
+                        useNativeDriver: true,
+                    }).start(() => setIsFirstHint(false));
+                }, 3000);
+
+                return () => clearTimeout(timer);
+            }
+        });
     }, []);
 
     // Load memos when activeAlarm changes
@@ -284,8 +308,11 @@ export default function Home() {
             setIsLoadingAddress(true);
             Keyboard.dismiss();
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            // Hide first-time hint
-            if (isFirstHint) setIsFirstHint(false);
+            // Hide first-time hint immediately on drag
+            if (isFirstHint) {
+                hintOpacity.setValue(0);
+                setIsFirstHint(false);
+            }
             // Hide search results when dragging
             setShowSearchResults(false);
             // Hide radius slider when dragging
@@ -685,9 +712,9 @@ export default function Home() {
 
             {/* First time hint toast */}
             {isFirstHint && !isDragging && centerLocation && !isNavigating && (
-                <View style={styles.hintToast}>
+                <Animated.View style={[styles.hintToast, { opacity: hintOpacity }]}>
                     <Text style={styles.hintText}>{t('home.hint')}</Text>
-                </View>
+                </Animated.View>
             )}
 
             {/* Navigation Panel (shown during navigation mode) */}
