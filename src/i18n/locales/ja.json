@@ -63,7 +63,31 @@
         "noTitle": "タイトルが必要です",
         "pleaseEnterTitle": "アラームのタイトルを入力してください。",
         "locationError": "位置情報がありません。",
-        "createFailed": "アラームの作成に失敗しました。"
+        "createFailed": "アラームの作成に失敗しました。",
+        "batteryInfo": {
+            "title": "スマートバッテリー節約",
+            "description": "距離に応じて位置確認の間隔を自動調整し、バッテリーを節約します。",
+            "phase1": "• 10km以上 → 10分間隔",
+            "phase2": "• 2〜10km → 3分間隔",
+            "phase3": "• 1〜2km → 1分間隔",
+            "phase4": "• 1km以内 → リアルタイム追跡"
+        },
+        "iconLabel": "アイコン",
+        "icons": {
+            "home": "家",
+            "office": "会社",
+            "restaurant": "レストラン",
+            "cafe": "カフェ",
+            "pin": "位置",
+            "gym": "ジム",
+            "others": "その他"
+        },
+        "smartBattery": "スマートバッテリー節約",
+        "smartBatteryDesc": "距離に応じて位置確認の間隔を自動調整します。",
+        "shakeToDismiss": "振ってアラーム停止",
+        "shakeToDismissDesc": "アラームが鳴った時、端末を振るとアラームが止まります。",
+        "locationLabel": "目的地",
+        "rawCoordinates": "元の座標 (デバッグ)"
     },
     "navigation": {
         "eta": "到着予定 {{time}}",

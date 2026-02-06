@@ -447,6 +447,17 @@ export default function Home() {
                     />
                 )}
 
+                {/* Debug: Red dot at exact center coordinates */}
+                {centerLocation && !isDragging && (
+                    <Marker
+                        coordinate={centerLocation}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        tracksViewChanges={false}
+                    >
+                        <View style={styles.debugDot} />
+                    </Marker>
+                )}
+
                 {/* Active alarm marker */}
                 {activeAlarm && (
                     <>
@@ -663,9 +674,13 @@ export default function Home() {
                                 {
                                     maxHeight: sliderHeight.interpolate({
                                         inputRange: [0, 1],
-                                        outputRange: [0, 120], // 0 to full height
+                                        outputRange: [0, 120],
                                     }),
                                     opacity: sliderHeight,
+                                    marginBottom: sliderHeight.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [0, spacing.xs],
+                                    }),
                                     overflow: 'hidden',
                                 }
                             ]}
@@ -896,12 +911,20 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         ...typography.caption,
         fontWeight: '600',
     },
+    debugDot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: '#FF0000',
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
+    },
     bottomSheet: {
         backgroundColor: colors.surface,
         borderTopLeftRadius: radius.lg,
         borderTopRightRadius: radius.lg,
         padding: spacing.md,
-        paddingTop: spacing.lg,
+        paddingTop: spacing.sm,
         ...shadows.card,
         position: 'absolute',
         bottom: 0,
@@ -912,7 +935,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: spacing.md,
+        marginBottom: spacing.xs,
         gap: spacing.sm,
     },
     addressBarWrapper: {
@@ -945,7 +968,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         backgroundColor: colors.background,
         borderRadius: radius.md,
         padding: spacing.md,
-        marginBottom: spacing.md,
     },
     radiusSliderHeader: {
         flexDirection: 'row',
@@ -986,7 +1008,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         borderRadius: radius.md,
         gap: spacing.xs,
         height: 52,
-        marginBottom: spacing.lg,
+        marginBottom: spacing.sm,
         ...shadows.button,
     },
     createButtonPressed: {

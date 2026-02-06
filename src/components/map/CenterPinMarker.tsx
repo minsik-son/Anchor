@@ -116,7 +116,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         top: '50%',
         left: '50%',
         marginLeft: -24,
-        marginTop: -48, // Offset to point at center
+        marginTop: -28, // Adjusted to center the pin body (User reported it was too high at -56)
         width: 48,
         height: 56,
         alignItems: 'center',

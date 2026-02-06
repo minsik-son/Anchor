@@ -63,7 +63,31 @@
         "noTitle": "Title Required",
         "pleaseEnterTitle": "Please enter an alarm title.",
         "locationError": "Location information is missing.",
-        "createFailed": "Failed to create alarm."
+        "createFailed": "Failed to create alarm.",
+        "batteryInfo": {
+            "title": "Smart Battery Saving",
+            "description": "Automatically adjusts location check intervals based on distance to save battery.",
+            "phase1": "• Over 10km → every 10 min",
+            "phase2": "• 2–10km → every 3 min",
+            "phase3": "• 1–2km → every 1 min",
+            "phase4": "• Under 1km → real-time tracking"
+        },
+        "iconLabel": "Icon",
+        "icons": {
+            "home": "Home",
+            "office": "Office",
+            "restaurant": "Restaurant",
+            "cafe": "Cafe",
+            "pin": "Pin",
+            "gym": "Gym",
+            "others": "Others"
+        },
+        "smartBattery": "Smart Battery Saving",
+        "smartBatteryDesc": "Automatically adjusts location check intervals based on distance.",
+        "shakeToDismiss": "Shake to Dismiss",
+        "shakeToDismissDesc": "Shake the device to dismiss the alarm when it rings.",
+        "locationLabel": "Destination",
+        "rawCoordinates": "Raw Coordinates (Debug)"
     },
     "navigation": {
         "eta": "ETA {{time}}",

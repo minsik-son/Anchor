@@ -63,7 +63,31 @@
         "noTitle": "알람 제목 필요",
         "pleaseEnterTitle": "알람 제목을 입력해주세요.",
         "locationError": "위치 정보가 없습니다.",
-        "createFailed": "알람 생성에 실패했습니다."
+        "createFailed": "알람 생성에 실패했습니다.",
+        "batteryInfo": {
+            "title": "스마트 배터리 절약",
+            "description": "거리에 따라 위치 확인 주기를 자동 조절하여 배터리를 절약합니다.",
+            "phase1": "• 10km 이상 → 10분 간격",
+            "phase2": "• 2~10km → 3분 간격",
+            "phase3": "• 1~2km → 1분 간격",
+            "phase4": "• 1km 이내 → 실시간 추적"
+        },
+        "iconLabel": "아이콘",
+        "icons": {
+            "home": "집",
+            "office": "회사",
+            "restaurant": "식당",
+            "cafe": "카페",
+            "pin": "위치",
+            "gym": "운동",
+            "others": "기타"
+        },
+        "smartBattery": "스마트 배터리 절약",
+        "smartBatteryDesc": "거리에 따라 위치 확인 주기를 자동 조절합니다.",
+        "shakeToDismiss": "흔들어서 끄기",
+        "shakeToDismissDesc": "알람이 울릴 때 기기를 흔들면 알람이 꺼집니다.",
+        "locationLabel": "목적지 위치",
+        "rawCoordinates": "원본 좌표 (디버그)"
     },
     "navigation": {
         "eta": "도착 예정 {{time}}",
