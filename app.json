@@ -25,9 +25,12 @@
         "NSLocationAlwaysUsageDescription": "백그라운드에서도 목적지 도착을 알려드리기 위해 항상 위치 정보가 필요합니다.",
         "UIBackgroundModes": [
           "location",
+          "fetch",
+          "location",
           "fetch"
         ],
-        "NSPhotoLibraryUsageDescription": "알람 배경 이미지를 선택하기 위해 갤러리 접근이 필요합니다."
+        "NSPhotoLibraryUsageDescription": "알람 배경 이미지를 선택하기 위해 갤러리 접근이 필요합니다.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -50,7 +53,12 @@
         "FOREGROUND_SERVICE_LOCATION",
         "VIBRATE",
         "RECEIVE_BOOT_COMPLETED",
-        "SYSTEM_ALERT_WINDOW"
+        "SYSTEM_ALERT_WINDOW",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ]
     },
     "web": {
@@ -68,6 +76,12 @@
           "isAndroidForegroundServiceEnabled": true
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "27eb277b-af1b-4215-b4a5-89077eb9ce26"
+      }
+    }
   }
 }

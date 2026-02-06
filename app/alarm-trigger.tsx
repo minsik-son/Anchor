@@ -3,7 +3,7 @@
  * Full-screen alarm with slide-to-dismiss gesture, sound, and vibration
  */
 
-import { useMemo, useEffect, useCallback, useState } from 'react';
+import { useMemo, useEffect, useCallback, useState, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, LayoutChangeEvent, ImageBackground } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -52,6 +52,7 @@ export default function AlarmTrigger() {
         return null;
     }, [backgroundType, selectedPreset, customImageUri]);
 
+    const isDismissingRef = useRef(false);
     const [trackWidth, setTrackWidth] = useState(0);
     const translateX = useSharedValue(0);
     const pulseScale = useSharedValue(1);
@@ -96,33 +97,38 @@ export default function AlarmTrigger() {
     }, []);
 
     const handleDismiss = useCallback(async () => {
-        if (!activeAlarm) return;
+        if (!activeAlarm || isDismissingRef.current) return;
+        isDismissingRef.current = true;
 
         const alarmId = activeAlarm.id;
         const alarmTitle = activeAlarm.title;
         const hasMemos = currentMemos.length > 0;
 
-        await stopSound();
-        stopLoop();
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        try {
+            await stopSound();
+            stopLoop();
+            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-        await completeAlarm(alarmId);
-        stopTracking();
+            await completeAlarm(alarmId);
+            stopTracking();
 
-        // Mark routine as fulfilled to prevent re-triggering in the same time window
-        const routineState = useRoutineStore.getState();
-        if (routineState.activeRoutineId !== null) {
-            routineState.markRoutineFulfilled(routineState.activeRoutineId);
-            routineState.setActiveRoutineId(null);
-        }
+            // Mark routine as fulfilled to prevent re-triggering in the same time window
+            const routineState = useRoutineStore.getState();
+            if (routineState.activeRoutineId !== null) {
+                routineState.markRoutineFulfilled(routineState.activeRoutineId);
+                routineState.setActiveRoutineId(null);
+            }
+        } finally {
+            router.dismiss();
 
-        if (hasMemos) {
-            router.replace({
-                pathname: '/action-checklist',
-                params: { alarmId: String(alarmId), alarmTitle },
-            });
-        } else {
-            router.back();
+            if (hasMemos) {
+                setTimeout(() => {
+                    router.push({
+                        pathname: '/action-checklist',
+                        params: { alarmId: String(alarmId), alarmTitle },
+                    });
+                }, 0);
+            }
         }
     }, [activeAlarm, currentMemos, completeAlarm, stopTracking, stopSound, stopLoop]);
 
