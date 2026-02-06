@@ -3,13 +3,28 @@
  * App settings and preferences
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Switch, ScrollView, ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
+import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
 import { useThemeStore, ThemeMode } from '../../src/stores/themeStore';
+import {
+    useAlarmSettingsStore,
+    AlertType,
+    AlarmSoundKey,
+    ALARM_SOUNDS,
+} from '../../src/stores/alarmSettingsStore';
+import { useAlarmSound } from '../../src/hooks/useAlarmSound';
+
+const ALERT_TYPE_OPTIONS: { code: AlertType; labelKey: string; icon: string }[] = [
+    { code: 'both', labelKey: 'settings.alertType.both', icon: 'notifications' },
+    { code: 'sound', labelKey: 'settings.alertType.soundOnly', icon: 'volume-high' },
+    { code: 'vibration', labelKey: 'settings.alertType.vibrationOnly', icon: 'vibrate' },
+];
+
+const SOUND_KEYS: AlarmSoundKey[] = ['breeze', 'alert', 'digital', 'crystal'];
 
 export default function Settings() {
     const insets = useSafeAreaInsets();
@@ -17,21 +32,24 @@ export default function Settings() {
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const { mode, setMode } = useThemeStore();
+    const { alertType, selectedSound, setAlertType, setSelectedSound } = useAlarmSettingsStore();
+    const { play: previewSound, stop: stopPreview } = useAlarmSound();
 
     const [isLoading, setIsLoading] = useState(false);
     const [showLanguageModal, setShowLanguageModal] = useState(false);
     const [showThemeModal, setShowThemeModal] = useState(false);
+    const [showAlertTypeModal, setShowAlertTypeModal] = useState(false);
+    const [showSoundPickerModal, setShowSoundPickerModal] = useState(false);
 
     const currentLanguage = i18n.language;
+    const hasSoundSetting = alertType === 'both' || alertType === 'sound';
 
     const handleLanguageChange = (lang: string) => {
         setShowLanguageModal(false);
         setIsLoading(true);
 
-        // Toss-style delay for smooth transition
         setTimeout(() => {
             i18n.changeLanguage(lang);
-            // Slight delay after language change before hiding loader
             setTimeout(() => {
                 setIsLoading(false);
             }, 500);
@@ -56,10 +74,30 @@ export default function Settings() {
         }
     };
 
+    const getAlertTypeLabel = (type: AlertType) => {
+        const option = ALERT_TYPE_OPTIONS.find(o => o.code === type);
+        return option ? t(option.labelKey) : '';
+    };
+
     const handleThemeChange = (newMode: ThemeMode) => {
         setMode(newMode);
         setShowThemeModal(false);
     };
+
+    const handleAlertTypeChange = (type: AlertType) => {
+        setAlertType(type);
+        setShowAlertTypeModal(false);
+    };
+
+    const handleSoundSelect = useCallback((soundKey: AlarmSoundKey) => {
+        setSelectedSound(soundKey);
+        previewSound(soundKey);
+    }, [setSelectedSound, previewSound]);
+
+    const handleCloseSoundPicker = useCallback(() => {
+        stopPreview();
+        setShowSoundPickerModal(false);
+    }, [stopPreview]);
 
     return (
         <View style={styles.container}>
@@ -135,25 +173,28 @@ export default function Settings() {
                     <Text style={styles.sectionTitle}>{t('settings.sections.notification')}</Text>
 
                     <SettingItem
-                        icon="volume-high"
-                        label={t('settings.items.smartVolume') || '스마트 볼륨'}
-                        rightElement={<Switch value={true} trackColor={{ false: colors.textWeak, true: colors.primary }} />}
+                        icon="notifications"
+                        label={t('settings.items.alertType')}
+                        description={getAlertTypeLabel(alertType)}
+                        onPress={() => setShowAlertTypeModal(true)}
+                        rightElement={
+                            <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
+                        }
                         colors={colors}
                     />
 
-                    <SettingItem
-                        icon="vibrate"
-                        label={t('settings.items.vibration')}
-                        rightElement={<Switch value={true} trackColor={{ false: colors.textWeak, true: colors.primary }} />}
-                        colors={colors}
-                    />
-
-                    <SettingItem
-                        icon="phone-portrait"
-                        label={t('settings.items.shakeToOff') || '흔들어서 끄기'}
-                        rightElement={<Switch value={false} trackColor={{ false: colors.textWeak, true: colors.primary }} />}
-                        colors={colors}
-                    />
+                    {hasSoundSetting && (
+                        <SettingItem
+                            icon="musical-notes"
+                            label={t('settings.items.sound')}
+                            description={t(ALARM_SOUNDS[selectedSound].labelKey)}
+                            onPress={() => setShowSoundPickerModal(true)}
+                            rightElement={
+                                <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
+                            }
+                            colors={colors}
+                        />
+                    )}
                 </View>
 
                 {/* Map Settings */}
@@ -225,16 +266,16 @@ export default function Settings() {
                             <Pressable
                                 key={item.code}
                                 style={[
-                                    styles.languageOption,
-                                    mode === item.code && styles.languageOptionSelected
+                                    styles.optionRow,
+                                    mode === item.code && styles.optionRowSelected
                                 ]}
                                 onPress={() => handleThemeChange(item.code as ThemeMode)}
                             >
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                <View style={styles.optionLeft}>
                                     <Ionicons name={item.icon as any} size={20} color={mode === item.code ? colors.primary : colors.textMedium} />
                                     <Text style={[
-                                        styles.languageOptionText,
-                                        mode === item.code && styles.languageOptionTextSelected
+                                        styles.optionText,
+                                        mode === item.code && styles.optionTextSelected
                                     ]}>
                                         {item.label}
                                     </Text>
@@ -262,18 +303,92 @@ export default function Settings() {
                             <Pressable
                                 key={lang.code}
                                 style={[
-                                    styles.languageOption,
-                                    currentLanguage === lang.code && styles.languageOptionSelected
+                                    styles.optionRow,
+                                    currentLanguage === lang.code && styles.optionRowSelected
                                 ]}
                                 onPress={() => handleLanguageChange(lang.code)}
                             >
                                 <Text style={[
-                                    styles.languageOptionText,
-                                    currentLanguage === lang.code && styles.languageOptionTextSelected
+                                    styles.optionText,
+                                    currentLanguage === lang.code && styles.optionTextSelected
                                 ]}>
                                     {lang.label}
                                 </Text>
                                 {currentLanguage === lang.code && (
+                                    <Ionicons name="checkmark" size={20} color={colors.primary} />
+                                )}
+                            </Pressable>
+                        ))}
+                    </View>
+                </Pressable>
+            )}
+
+            {/* Alert Type Modal */}
+            {showAlertTypeModal && (
+                <Pressable style={styles.modalOverlay} onPress={() => setShowAlertTypeModal(false)}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>{t('settings.alertType.title')}</Text>
+
+                        {ALERT_TYPE_OPTIONS.map((option) => (
+                            <Pressable
+                                key={option.code}
+                                style={[
+                                    styles.optionRow,
+                                    alertType === option.code && styles.optionRowSelected
+                                ]}
+                                onPress={() => handleAlertTypeChange(option.code)}
+                            >
+                                <View style={styles.optionLeft}>
+                                    <Ionicons
+                                        name={option.icon as any}
+                                        size={20}
+                                        color={alertType === option.code ? colors.primary : colors.textMedium}
+                                    />
+                                    <Text style={[
+                                        styles.optionText,
+                                        alertType === option.code && styles.optionTextSelected
+                                    ]}>
+                                        {t(option.labelKey)}
+                                    </Text>
+                                </View>
+                                {alertType === option.code && (
+                                    <Ionicons name="checkmark" size={20} color={colors.primary} />
+                                )}
+                            </Pressable>
+                        ))}
+                    </View>
+                </Pressable>
+            )}
+
+            {/* Sound Picker Modal */}
+            {showSoundPickerModal && (
+                <Pressable style={styles.modalOverlay} onPress={handleCloseSoundPicker}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>{t('settings.soundPicker.title')}</Text>
+
+                        {SOUND_KEYS.map((soundKey) => (
+                            <Pressable
+                                key={soundKey}
+                                style={[
+                                    styles.optionRow,
+                                    selectedSound === soundKey && styles.optionRowSelected
+                                ]}
+                                onPress={() => handleSoundSelect(soundKey)}
+                            >
+                                <View style={styles.optionLeft}>
+                                    <Ionicons
+                                        name="play-circle"
+                                        size={20}
+                                        color={selectedSound === soundKey ? colors.primary : colors.textMedium}
+                                    />
+                                    <Text style={[
+                                        styles.optionText,
+                                        selectedSound === soundKey && styles.optionTextSelected
+                                    ]}>
+                                        {t(ALARM_SOUNDS[soundKey].labelKey)}
+                                    </Text>
+                                </View>
+                                {selectedSound === soundKey && (
                                     <Ionicons name="checkmark" size={20} color={colors.primary} />
                                 )}
                             </Pressable>
@@ -433,7 +548,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         marginBottom: spacing.md,
         textAlign: 'center',
     },
-    languageOption: {
+    optionRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -442,14 +557,19 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: colors.background,
     },
-    languageOptionSelected: {
+    optionRowSelected: {
         backgroundColor: colors.background,
     },
-    languageOptionText: {
+    optionLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    optionText: {
         ...typography.body,
         color: colors.textMedium,
     },
-    languageOptionTextSelected: {
+    optionTextSelected: {
         color: colors.primary,
         fontWeight: '600',
     },

@@ -139,6 +139,7 @@
             "batterySaving": "배터리 세이빙 모드",
             "smartVolume": "스마트 볼륨",
             "shakeToOff": "흔들어서 끄기",
+            "alertType": "알림 방식",
             "mapEngine": "지도 엔진",
             "theme": "화면 테마"
         },
@@ -147,6 +148,21 @@
             "light": "밝은 모드",
             "dark": "어두운 모드",
             "system": "시스템 설정"
+        },
+        "alertType": {
+            "title": "알림 방식",
+            "both": "소리 + 진동",
+            "soundOnly": "소리만",
+            "vibrationOnly": "진동만"
+        },
+        "soundPicker": {
+            "title": "알람 사운드 선택"
+        },
+        "sounds": {
+            "breeze": "브리즈",
+            "alert": "알림",
+            "digital": "디지털",
+            "crystal": "크리스탈"
         }
     },
     "favoriteSetup": {
@@ -200,7 +216,7 @@
     "alarmTrigger": {
         "arrived": "목적지에 도착했어요!",
         "dismiss": "밀어서 알람 끄기",
-        "dismissHint": "또는 터치하여 끄기",
+        "dismissHint": "끝까지 밀어서 알람을 끄세요",
         "checklist": "할 일 목록"
     }
 }

@@ -1,27 +1,53 @@
 /**
  * LocaAlert Alarm Trigger Screen
- * Full-screen alarm when user arrives at destination
+ * Full-screen alarm with slide-to-dismiss gesture, sound, and vibration
  */
 
-import { useMemo, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useMemo, useEffect, useCallback, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, LayoutChangeEvent } from 'react-native';
+import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring,
+    withRepeat,
+    withSequence,
+    withTiming,
+    runOnJS,
+    interpolate,
+    Easing,
+} from 'react-native-reanimated';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
-import { colors as defaultColors, typography, spacing, radius, useThemeColors, ThemeColors } from '../src/styles/theme';
+import { useAlarmSettingsStore } from '../src/stores/alarmSettingsStore';
+import { useAlarmSound } from '../src/hooks/useAlarmSound';
+import { useAlarmVibration } from '../src/hooks/useAlarmVibration';
+import { typography, spacing, radius, useThemeColors, ThemeColors } from '../src/styles/theme';
+
+const THUMB_WIDTH = 64;
+const DISMISS_THRESHOLD = 0.85;
 
 export default function AlarmTrigger() {
-    const params = useLocalSearchParams<{ alarmId: string }>();
-    const [slideValue] = useState(new Animated.Value(0));
     const { activeAlarm, deactivateAlarm, loadMemos, currentMemos, toggleMemoChecked } = useAlarmStore();
     const { stopTracking } = useLocationStore();
+    const { alertType, selectedSound } = useAlarmSettingsStore();
     const { t } = useTranslation();
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
+
+    const { play, stop: stopSound } = useAlarmSound({ loop: true });
+    const { startLoop, stopLoop } = useAlarmVibration();
+
+    const [trackWidth, setTrackWidth] = useState(0);
+    const translateX = useSharedValue(0);
+    const pulseScale = useSharedValue(1);
+
+    const maxSlide = trackWidth > 0 ? trackWidth - THUMB_WIDTH : 0;
 
     useEffect(() => {
         if (activeAlarm) {
@@ -29,50 +55,91 @@ export default function AlarmTrigger() {
         }
     }, [activeAlarm]);
 
+    // Start sound and vibration based on settings
     useEffect(() => {
-        // Trigger haptic feedback
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        const shouldPlaySound = alertType === 'both' || alertType === 'sound';
+        const shouldVibrate = alertType === 'both' || alertType === 'vibration';
 
-        // Pulse animation
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(slideValue, {
-                    toValue: 1,
-                    duration: 1000,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(slideValue, {
-                    toValue: 0,
-                    duration: 1000,
-                    useNativeDriver: true,
-                }),
-            ])
-        ).start();
+        if (shouldPlaySound) {
+            play(selectedSound);
+        }
+        if (shouldVibrate) {
+            startLoop();
+        }
+
+        return () => {
+            stopSound();
+            stopLoop();
+        };
     }, []);
 
-    const handleDismiss = async () => {
+    // Pulse animation
+    useEffect(() => {
+        pulseScale.value = withRepeat(
+            withSequence(
+                withTiming(1.1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+                withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+            ),
+            -1,
+            true
+        );
+    }, []);
+
+    const handleDismiss = useCallback(async () => {
+        await stopSound();
+        stopLoop();
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
         if (activeAlarm) {
             await deactivateAlarm(activeAlarm.id);
         }
-
         stopTracking();
         router.back();
-    };
+    }, [activeAlarm, deactivateAlarm, stopTracking, stopSound, stopLoop]);
 
-    const scale = slideValue.interpolate({
-        inputRange: [0, 1],
-        outputRange: [1, 1.1],
+    const onDismissJS = useCallback(() => {
+        handleDismiss();
+    }, [handleDismiss]);
+
+    const panGesture = Gesture.Pan()
+        .onUpdate((event) => {
+            const clamped = Math.max(0, Math.min(event.translationX, maxSlide));
+            translateX.value = clamped;
+        })
+        .onEnd(() => {
+            if (maxSlide > 0 && translateX.value >= maxSlide * DISMISS_THRESHOLD) {
+                translateX.value = withSpring(maxSlide, { damping: 15 });
+                runOnJS(onDismissJS)();
+            } else {
+                translateX.value = withSpring(0, { damping: 15 });
+            }
+        });
+
+    const thumbAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{ translateX: translateX.value }],
+    }));
+
+    const labelAnimatedStyle = useAnimatedStyle(() => {
+        const opacity = maxSlide > 0
+            ? interpolate(translateX.value, [0, maxSlide * 0.5], [1, 0], 'clamp')
+            : 1;
+        return { opacity };
     });
+
+    const iconPulseStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: pulseScale.value }],
+    }));
+
+    const handleTrackLayout = useCallback((event: LayoutChangeEvent) => {
+        setTrackWidth(event.nativeEvent.layout.width);
+    }, []);
 
     return (
         <View style={styles.container}>
             <StatusBar style="light" />
 
-            {/* Main Content */}
             <View style={styles.content}>
-                <Animated.View style={[styles.iconContainer, { transform: [{ scale }] }]}>
+                <Animated.View style={[styles.iconContainer, iconPulseStyle]}>
                     <Ionicons name="checkmark-circle" size={120} color={colors.surface} />
                 </Animated.View>
 
@@ -82,7 +149,6 @@ export default function AlarmTrigger() {
                     <Text style={styles.subtitle}>{activeAlarm.title}</Text>
                 )}
 
-                {/* Checklist */}
                 {currentMemos.length > 0 && (
                     <View style={styles.checklistContainer}>
                         <Text style={styles.checklistTitle}>{t('alarmTrigger.checklist')}</Text>
@@ -111,23 +177,20 @@ export default function AlarmTrigger() {
 
             {/* Slide to Dismiss */}
             <View style={styles.dismissContainer}>
-                <Pressable
-                    style={({ pressed }) => [
-                        styles.dismissButton,
-                        pressed && styles.dismissButtonPressed,
-                    ]}
-                    onPress={handleDismiss}
-                    onLongPress={handleDismiss}
-                >
-                    <Ionicons name="arrow-forward" size={24} color={colors.error} />
-                    <Text style={styles.dismissText}>{t('alarmTrigger.dismiss')}</Text>
-                </Pressable>
+                <View style={styles.sliderTrack} onLayout={handleTrackLayout}>
+                    <Animated.Text style={[styles.sliderLabel, labelAnimatedStyle]}>
+                        {t('alarmTrigger.dismiss')}
+                    </Animated.Text>
+
+                    <GestureDetector gesture={panGesture}>
+                        <Animated.View style={[styles.sliderThumb, thumbAnimatedStyle]}>
+                            <Ionicons name="chevron-forward" size={28} color={colors.error} />
+                        </Animated.View>
+                    </GestureDetector>
+                </View>
 
                 <Text style={styles.dismissHint}>{t('alarmTrigger.dismissHint')}</Text>
             </View>
-
-            {/* Background Gradient Effect */}
-            <View style={styles.backgroundGradient} />
         </View>
     );
 }
@@ -136,14 +199,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.error,
-    },
-    backgroundGradient: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'transparent',
     },
     content: {
         flex: 1,
@@ -172,23 +227,29 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         paddingBottom: spacing.lg * 2,
         alignItems: 'center',
     },
-    dismissButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.surface,
+    sliderTrack: {
+        width: '100%',
+        height: THUMB_WIDTH,
         borderRadius: radius.full,
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        gap: spacing.xs,
+        backgroundColor: 'rgba(255, 255, 255, 0.25)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    dismissButtonPressed: {
-        opacity: 0.9,
-        transform: [{ scale: 0.98 }],
-    },
-    dismissText: {
+    sliderLabel: {
         ...typography.body,
-        color: colors.error,
-        fontWeight: '700',
+        color: colors.surface,
+        fontWeight: '600',
+        position: 'absolute',
+    },
+    sliderThumb: {
+        width: THUMB_WIDTH,
+        height: THUMB_WIDTH,
+        borderRadius: radius.full,
+        backgroundColor: colors.surface,
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'absolute',
+        left: 0,
     },
     dismissHint: {
         ...typography.caption,

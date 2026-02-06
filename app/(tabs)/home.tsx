@@ -78,8 +78,29 @@ export default function Home() {
     useEffect(() => {
         const init = async () => {
             await requestPermissions();
-            await getCurrentLocation();
+            const location = await getCurrentLocation();
             await loadFavorites();
+
+            // Animate map to user's actual GPS position
+            if (location && mapRef.current) {
+                const userPos = {
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude,
+                };
+                setCenterLocation(userPos);
+                mapRef.current.animateToRegion({
+                    ...userPos,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                }, 500);
+
+                // Initial geocoding
+                setIsLoadingAddress(true);
+                debouncedReverseGeocode(userPos.latitude, userPos.longitude, (result) => {
+                    setAddressInfo(result);
+                    setIsLoadingAddress(false);
+                });
+            }
         };
         init();
     }, []);
@@ -533,6 +554,25 @@ export default function Home() {
                         coordinates={selectedRoute.coordinates}
                         strokeColor={colors.primary}
                         strokeWidth={4}
+                    />
+                )}
+
+                {/* Active alarm connection line (user → destination) */}
+                {activeAlarm && currentLocation && !isNavigating && (
+                    <Polyline
+                        coordinates={[
+                            {
+                                latitude: currentLocation.coords.latitude,
+                                longitude: currentLocation.coords.longitude,
+                            },
+                            {
+                                latitude: activeAlarm.latitude,
+                                longitude: activeAlarm.longitude,
+                            },
+                        ]}
+                        strokeColor={colors.error}
+                        strokeWidth={2}
+                        lineDashPattern={[5, 5]}
                     />
                 )}
             </MapView>

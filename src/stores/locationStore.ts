@@ -49,7 +49,7 @@ interface LocationState {
     // Actions
     requestPermissions: () => Promise<boolean>;
     getCurrentLocation: () => Promise<Location.LocationObject | null>;
-    startTracking: (target: { latitude: number; longitude: number }, radius: number) => Promise<void>;
+    startTracking: (target: { latitude: number; longitude: number }, radius: number, initialLocation?: Location.LocationObject) => Promise<void>;
     stopTracking: () => void;
     updateLocation: (location: Location.LocationObject) => void;
     checkGeofence: () => boolean;
@@ -165,7 +165,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         }
     },
 
-    startTracking: async (target, radius) => {
+    startTracking: async (target, radius, initialLocation) => {
         const { hasPermission, requestPermissions, currentLocation } = get();
 
         if (!hasPermission) {
@@ -176,12 +176,14 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             }
         }
 
-        // Calculate initial distance if we already have a location
+        // Use provided location (guaranteed fresh) or fall back to store
+        const loc = initialLocation || currentLocation;
+
         let initialDistance: number | null = null;
-        if (currentLocation) {
+        if (loc) {
             initialDistance = calculateDistance(
-                currentLocation.coords.latitude,
-                currentLocation.coords.longitude,
+                loc.coords.latitude,
+                loc.coords.longitude,
                 target.latitude,
                 target.longitude
             );
@@ -192,6 +194,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             targetRadius: radius,
             isTracking: true,
             distanceToTarget: initialDistance,
+            ...(initialLocation ? { currentLocation: initialLocation } : {}),
         });
 
         console.log('[LocationStore] Started tracking to target:', target, 'initial distance:', initialDistance);

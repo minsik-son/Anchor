@@ -15,6 +15,7 @@ import { useLocationStore } from '../src/stores/locationStore';
 import { startBackgroundLocation } from '../src/services/location/locationService';
 import { useTranslation } from 'react-i18next';
 import { typography, spacing, radius, shadows, alarmDefaults, useThemeColors, ThemeColors } from '../src/styles/theme';
+import { isWithinRadius } from '../src/services/location/geofence';
 
 const ALARM_ICONS = [
     { key: 'home', icon: 'home' },
@@ -50,7 +51,7 @@ export default function AlarmSetup() {
     const [shakeToDismiss, setShakeToDismiss] = useState(false);
 
     const { createAlarm, addMemo } = useAlarmStore();
-    const { startTracking, checkGeofence, getCurrentLocation } = useLocationStore();
+    const { startTracking, getCurrentLocation } = useLocationStore();
 
     const handleAutoFillTitle = () => {
         const addressName = params.locationName || params.address || '';
@@ -80,8 +81,8 @@ export default function AlarmSetup() {
         const lat = parseFloat(params.latitude);
         const lng = parseFloat(params.longitude);
 
-        // Ensure fresh GPS location before any geofence check
-        await getCurrentLocation();
+        // Fetch fresh GPS — capture return value as local variable (store update may not be visible this tick)
+        const location = await getCurrentLocation();
 
         console.log('[AlarmSetup] Alarm data:', {
             title,
@@ -115,9 +116,9 @@ export default function AlarmSetup() {
                 }
             }
 
-            // Start location tracking
+            // Start location tracking — pass fresh location for immediate distance calculation
             const target = { latitude: lat, longitude: lng };
-            await startTracking(target, alarmRadius);
+            await startTracking(target, alarmRadius, location ?? undefined);
 
             // Start background location (may fail in Expo Go)
             try {
@@ -128,9 +129,13 @@ export default function AlarmSetup() {
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-            // Immediate geofence check: if user is already inside radius, trigger alarm now
-            if (checkGeofence()) {
-                console.log('[AlarmSetup] User already inside radius — triggering alarm immediately');
+            // Immediate trigger check using LOCAL variable — no store dependency
+            if (location && isWithinRadius(
+                { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                target,
+                alarmRadius
+            )) {
+                console.log('[AlarmSetup] Already inside radius — triggering immediately');
                 router.replace('/alarm-trigger');
             } else {
                 router.replace('/(tabs)/home');

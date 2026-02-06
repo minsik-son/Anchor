@@ -139,6 +139,7 @@
             "batterySaving": "Battery Saving Mode",
             "smartVolume": "Smart Volume",
             "shakeToOff": "Shake to Turn Off",
+            "alertType": "Alert Type",
             "mapEngine": "Map Engine",
             "theme": "Screen Theme"
         },
@@ -147,6 +148,21 @@
             "light": "Light Mode",
             "dark": "Dark Mode",
             "system": "System Default"
+        },
+        "alertType": {
+            "title": "Alert Type",
+            "both": "Sound + Vibration",
+            "soundOnly": "Sound Only",
+            "vibrationOnly": "Vibration Only"
+        },
+        "soundPicker": {
+            "title": "Select Alarm Sound"
+        },
+        "sounds": {
+            "breeze": "Breeze",
+            "alert": "Alert",
+            "digital": "Digital",
+            "crystal": "Crystal"
         }
     },
     "favoriteSetup": {
@@ -200,7 +216,7 @@
     "alarmTrigger": {
         "arrived": "You've arrived!",
         "dismiss": "Slide to dismiss",
-        "dismissHint": "or tap to dismiss",
+        "dismissHint": "Slide all the way to dismiss",
         "checklist": "Checklist"
     }
 }

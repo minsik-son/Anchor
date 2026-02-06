@@ -140,6 +140,7 @@
             "batterySaving": "バッテリー節約モード",
             "smartVolume": "スマートボリューム",
             "shakeToOff": "振ってアラーム停止",
+            "alertType": "通知方法",
             "mapEngine": "地図エンジン",
             "theme": "画面テーマ"
         },
@@ -148,6 +149,21 @@
             "light": "ライトモード",
             "dark": "ダークモード",
             "system": "システム設定"
+        },
+        "alertType": {
+            "title": "通知方法",
+            "both": "サウンド + バイブレーション",
+            "soundOnly": "サウンドのみ",
+            "vibrationOnly": "バイブレーションのみ"
+        },
+        "soundPicker": {
+            "title": "アラーム音を選択"
+        },
+        "sounds": {
+            "breeze": "ブリーズ",
+            "alert": "アラート",
+            "digital": "デジタル",
+            "crystal": "クリスタル"
         }
     },
     "favoriteSetup": {
@@ -201,7 +217,7 @@
     "alarmTrigger": {
         "arrived": "目的地に到着しました！",
         "dismiss": "スライドしてアラームを消す",
-        "dismissHint": "またはタッチして消す",
+        "dismissHint": "最後までスライドしてアラームを消す",
         "checklist": "チェックリスト"
     }
 }
