@@ -185,5 +185,22 @@
         "shortest": "Shortest Time",
         "shortestDistance": "Shortest Distance",
         "arrival": "Arrive at {{time}}"
+    },
+    "alarmDashboard": {
+        "distance": "{{distance}}",
+        "remainingDistance": "{{distance}} to destination",
+        "cancelAlarm": "Cancel Alarm",
+        "cancelConfirm": {
+            "title": "Cancel Alarm",
+            "message": "Cancel the active alarm?",
+            "confirm": "Cancel"
+        },
+        "checklist": "Checklist"
+    },
+    "alarmTrigger": {
+        "arrived": "You've arrived!",
+        "dismiss": "Slide to dismiss",
+        "dismissHint": "or tap to dismiss",
+        "checklist": "Checklist"
     }
 }

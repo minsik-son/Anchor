@@ -28,6 +28,7 @@ import {
     resetSessionToken,
     isInKorea
 } from '../../src/services/placeSearch';
+import { formatDistance } from '../../src/services/location/geofence';
 
 export default function Home() {
     const insets = useSafeAreaInsets();
@@ -60,7 +61,7 @@ export default function Home() {
     // Ref to track programmatic map animations (to prevent pin lift)
     const isAnimatingRef = useRef(false);
 
-    const { activeAlarm, deactivateAlarm } = useAlarmStore();
+    const { activeAlarm, deactivateAlarm, loadMemos, currentMemos } = useAlarmStore();
     const {
         currentLocation,
         requestPermissions,
@@ -69,6 +70,8 @@ export default function Home() {
         selectedRoute,
         stopNavigation,
         stopTracking,
+        distanceToTarget,
+        isTracking,
     } = useLocationStore();
     const { favorites, loadFavorites, deleteFavorite } = useFavoritePlaceStore();
 
@@ -80,6 +83,13 @@ export default function Home() {
         };
         init();
     }, []);
+
+    // Load memos when activeAlarm changes
+    useEffect(() => {
+        if (activeAlarm) {
+            loadMemos(activeAlarm.id);
+        }
+    }, [activeAlarm]);
 
     // Fit map to route when navigation starts
     useEffect(() => {
@@ -244,6 +254,7 @@ export default function Home() {
             isDraggingRef.current = true;
             setIsDragging(true);
             setIsLoadingAddress(true);
+            Keyboard.dismiss();
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             // Hide first-time hint
             if (isFirstHint) setIsFirstHint(false);
@@ -341,6 +352,27 @@ export default function Home() {
         setSelectedRadius(roundedValue);
     };
 
+    const handleCancelAlarm = () => {
+        Alert.alert(
+            t('alarmDashboard.cancelConfirm.title'),
+            t('alarmDashboard.cancelConfirm.message'),
+            [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                    text: t('alarmDashboard.cancelConfirm.confirm'),
+                    style: 'destructive',
+                    onPress: async () => {
+                        if (activeAlarm) {
+                            await deactivateAlarm(activeAlarm.id);
+                        }
+                        stopTracking();
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                    },
+                },
+            ]
+        );
+    };
+
     // Jump to favorite location
     const handleJumpToFavorite = (favorite: { latitude: number; longitude: number; radius: number; label: string }) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -416,7 +448,8 @@ export default function Home() {
                 onPress={(e) => {
                     // Disable interactions during navigation
                     if (isNavigating) return;
-                    // Instant close without waiting for animation
+                    Keyboard.dismiss();
+                    if (showSearchResults) setShowSearchResults(false);
                     if (showRadiusSlider) {
                         setShowRadiusSlider(false);
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -436,8 +469,8 @@ export default function Home() {
                         zIndex={-1}
                     />
                 )}
-                {/* Radius preview circle */}
-                {centerLocation && !isDragging && (
+                {/* Radius preview circle (setup mode only) */}
+                {centerLocation && !isDragging && !activeAlarm && (
                     <Circle
                         center={centerLocation}
                         radius={selectedRadius}
@@ -447,12 +480,25 @@ export default function Home() {
                     />
                 )}
 
-                {/* Debug: Red dot at exact center coordinates */}
-                {centerLocation && !isDragging && (
+                {/* Debug: Red dot at exact coordinates */}
+                {!activeAlarm && centerLocation && !isDragging && (
                     <Marker
                         coordinate={centerLocation}
                         anchor={{ x: 0.5, y: 0.5 }}
                         tracksViewChanges={false}
+                    >
+                        <View style={styles.debugDot} />
+                    </Marker>
+                )}
+                {activeAlarm && (
+                    <Marker
+                        coordinate={{
+                            latitude: activeAlarm.latitude,
+                            longitude: activeAlarm.longitude,
+                        }}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        tracksViewChanges={false}
+                        zIndex={10}
                     >
                         <View style={styles.debugDot} />
                     </Marker>
@@ -505,7 +551,7 @@ export default function Home() {
             )}
 
             {/* Center Pin (Fixed at screen center - hidden during navigation) */}
-            {!isNavigating && <CenterPinMarker isDragging={isDragging} />}
+            {!isNavigating && !activeAlarm && <CenterPinMarker isDragging={isDragging} />}
 
             {/* Top Bar Container - Search + Location Button aligned */}
             <View style={[styles.topBarContainer, { top: insets.top + spacing.sm }]}>
@@ -596,17 +642,6 @@ export default function Home() {
                 </View>
             )}
 
-            {/* Active Alarm Card */}
-            {activeAlarm && !showSearchResults && (
-                <View style={[styles.activeAlarmCard, { top: insets.top + spacing.sm + 56 }]}>
-                    <View style={styles.activeAlarmContent}>
-                        <Ionicons name="navigate" size={20} color={colors.primary} />
-                        <Text style={styles.activeAlarmTitle}>{activeAlarm.title}</Text>
-                    </View>
-                    <Text style={styles.activeAlarmDistance}>{t('home.activeAlarm.calculating')}</Text>
-                </View>
-            )}
-
             {/* First time hint toast */}
             {isFirstHint && !isDragging && centerLocation && !isNavigating && (
                 <View style={styles.hintToast}>
@@ -626,8 +661,59 @@ export default function Home() {
                         stopTracking();
                     }}
                 />
+            ) : activeAlarm ? (
+                /* Active Alarm Dashboard */
+                <View style={[styles.bottomSheet, { paddingBottom: insets.bottom }]}>
+                    {/* Alarm Title + Live Distance */}
+                    <View style={styles.dashboardHeader}>
+                        <View style={styles.dashboardTitleRow}>
+                            <Ionicons name="navigate" size={20} color={colors.primary} />
+                            <Text style={styles.dashboardTitle}>{activeAlarm.title}</Text>
+                        </View>
+                        <Text style={styles.dashboardDistance}>
+                            {distanceToTarget !== null
+                                ? t('alarmDashboard.remainingDistance', { distance: formatDistance(distanceToTarget) })
+                                : t('home.activeAlarm.calculating')}
+                        </Text>
+                    </View>
+
+                    {/* Checklist Preview */}
+                    {currentMemos.length > 0 && (
+                        <View style={styles.dashboardChecklist}>
+                            <Text style={styles.dashboardChecklistTitle}>
+                                {t('alarmDashboard.checklist')}
+                            </Text>
+                            {currentMemos.map((memo) => (
+                                <View key={memo.id} style={styles.dashboardCheckItem}>
+                                    <Ionicons
+                                        name={memo.is_checked ? 'checkbox' : 'square-outline'}
+                                        size={18}
+                                        color={memo.is_checked ? colors.primary : colors.textWeak}
+                                    />
+                                    <Text style={[
+                                        styles.dashboardCheckText,
+                                        memo.is_checked && styles.dashboardCheckTextDone,
+                                    ]}>
+                                        {memo.content}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
+
+                    {/* Cancel Alarm Button */}
+                    <Pressable
+                        style={({ pressed }) => [
+                            styles.cancelAlarmButton,
+                            pressed && styles.cancelAlarmButtonPressed,
+                        ]}
+                        onPress={handleCancelAlarm}
+                    >
+                        <Text style={styles.cancelAlarmText}>{t('alarmDashboard.cancelAlarm')}</Text>
+                    </Pressable>
+                </View>
             ) : (
-                /* Bottom Sheet (hidden during navigation) */
+                /* Normal setup bottom sheet */
                 <View style={[styles.bottomSheet, { paddingBottom: insets.bottom }]}>
                     {/* Address Bar with Radius Chip */}
                     <View style={styles.addressRow}>
@@ -867,33 +953,68 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     searchResultSource: {
         fontSize: 12,
     },
-    activeAlarmCard: {
-        position: 'absolute',
-        left: spacing.sm,
-        right: spacing.sm,
-        backgroundColor: colors.surface,
-        borderRadius: radius.md,
-        padding: spacing.md,
+    // Active Alarm Dashboard styles
+    dashboardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        ...shadows.card,
-        borderLeftWidth: 4,
-        borderLeftColor: colors.primary,
+        marginBottom: spacing.sm,
     },
-    activeAlarmContent: {
+    dashboardTitleRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: spacing.sm,
+        gap: spacing.xs,
+        flex: 1,
     },
-    activeAlarmTitle: {
+    dashboardTitle: {
+        ...typography.heading,
+        color: colors.textStrong,
+    },
+    dashboardDistance: {
+        ...typography.heading,
+        color: colors.primary,
+        fontSize: 20,
+    },
+    dashboardChecklist: {
+        backgroundColor: colors.background,
+        borderRadius: radius.md,
+        padding: spacing.sm,
+        marginBottom: spacing.sm,
+    },
+    dashboardChecklistTitle: {
+        ...typography.caption,
+        color: colors.textMedium,
+        fontWeight: '600',
+        marginBottom: spacing.xs,
+    },
+    dashboardCheckItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+        paddingVertical: 4,
+    },
+    dashboardCheckText: {
         ...typography.body,
         color: colors.textStrong,
-        fontWeight: '600',
     },
-    activeAlarmDistance: {
-        ...typography.caption,
-        color: colors.primary,
+    dashboardCheckTextDone: {
+        color: colors.textWeak,
+        textDecorationLine: 'line-through',
+    },
+    cancelAlarmButton: {
+        borderWidth: 2,
+        borderColor: colors.error,
+        borderRadius: radius.md,
+        paddingVertical: spacing.sm,
+        alignItems: 'center',
+    },
+    cancelAlarmButtonPressed: {
+        opacity: 0.7,
+        backgroundColor: `${colors.error}10`,
+    },
+    cancelAlarmText: {
+        ...typography.body,
+        color: colors.error,
         fontWeight: '700',
     },
     hintToast: {

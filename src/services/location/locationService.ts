@@ -7,6 +7,7 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { router } from 'expo-router';
 import { useLocationStore } from '../../stores/locationStore';
+import { isWithinRadius } from '../location/geofence';
 import { smartInterval } from '../../styles/theme';
 
 const LOCATION_TASK_NAME = 'background-location-task';
@@ -24,21 +25,14 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
 
         if (!location) return;
 
-        // Update location store
+        // Update location store (this recalculates distanceToTarget)
         const store = useLocationStore.getState();
         store.updateLocation(location);
 
-        // Check if user has arrived
-        if (store.distanceToTarget !== null && store.targetRadius !== undefined) {
-            if (store.distanceToTarget <= store.targetRadius) {
-                // Trigger alarm
-                console.log('[LocationService] User arrived at destination!');
-
-                // Navigate to alarm trigger screen
-                router.push('/alarm-trigger');
-
-                // Stop tracking temporarily (alarm screen will handle deactivation)
-            }
+        // Check if user is within the radius (uses Haversine straight-line distance)
+        if (store.checkGeofence()) {
+            console.log('[LocationService] User arrived at destination! Distance:', store.distanceToTarget);
+            router.push('/alarm-trigger');
         }
 
         console.log('[LocationService] Location updated:', {

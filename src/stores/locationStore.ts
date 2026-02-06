@@ -5,6 +5,8 @@
 import { create } from 'zustand';
 import * as Location from 'expo-location';
 import { smartInterval } from '../styles/theme';
+import { stopBackgroundLocation } from '../services/location/locationService';
+import { isWithinRadius } from '../services/location/geofence';
 
 export type LocationPhase = 'rest' | 'approach' | 'prepare' | 'target';
 export type TransportMode = 'driving' | 'transit' | 'walking' | 'cycling';
@@ -50,6 +52,7 @@ interface LocationState {
     startTracking: (target: { latitude: number; longitude: number }, radius: number) => Promise<void>;
     stopTracking: () => void;
     updateLocation: (location: Location.LocationObject) => void;
+    checkGeofence: () => boolean;
     calculatePhase: (distance: number, speed: number) => LocationPhase;
     getCheckInterval: () => number;
 
@@ -163,7 +166,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     },
 
     startTracking: async (target, radius) => {
-        const { hasPermission, requestPermissions } = get();
+        const { hasPermission, requestPermissions, currentLocation } = get();
 
         if (!hasPermission) {
             const granted = await requestPermissions();
@@ -173,16 +176,33 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             }
         }
 
+        // Calculate initial distance if we already have a location
+        let initialDistance: number | null = null;
+        if (currentLocation) {
+            initialDistance = calculateDistance(
+                currentLocation.coords.latitude,
+                currentLocation.coords.longitude,
+                target.latitude,
+                target.longitude
+            );
+        }
+
         set({
             targetLocation: target,
             targetRadius: radius,
             isTracking: true,
+            distanceToTarget: initialDistance,
         });
 
-        console.log('[LocationStore] Started tracking to target:', target);
+        console.log('[LocationStore] Started tracking to target:', target, 'initial distance:', initialDistance);
     },
 
     stopTracking: () => {
+        // Stop background location updates
+        stopBackgroundLocation().catch((err) => {
+            console.warn('[LocationStore] Failed to stop background location:', err);
+        });
+
         set({
             isTracking: false,
             currentPhase: 'rest',
@@ -192,8 +212,19 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         console.log('[LocationStore] Stopped tracking');
     },
 
+    checkGeofence: () => {
+        const { currentLocation, targetLocation, targetRadius } = get();
+        if (!currentLocation || !targetLocation) return false;
+
+        const userPos = {
+            latitude: currentLocation.coords.latitude,
+            longitude: currentLocation.coords.longitude,
+        };
+        return isWithinRadius(userPos, targetLocation, targetRadius);
+    },
+
     updateLocation: (location) => {
-        const { targetLocation, targetRadius } = get();
+        const { targetLocation } = get();
 
         const speed = location.coords.speed ?? 0;
         const speedKmh = (speed * 3600) / 1000; // Convert m/s to km/h
@@ -218,12 +249,6 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             distanceToTarget: distance,
             currentPhase: phase,
         });
-
-        // Check if arrived
-        if (distance !== null && distance <= targetRadius) {
-            console.log('[LocationStore] ARRIVED! Distance:', distance);
-            // Trigger alarm logic will be handled separately
-        }
     },
 
     calculatePhase: (distance: number, speed: number): LocationPhase => {

@@ -9,6 +9,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
 import { colors as defaultColors, typography, spacing, radius, useThemeColors, ThemeColors } from '../src/styles/theme';
@@ -16,10 +17,17 @@ import { colors as defaultColors, typography, spacing, radius, useThemeColors, T
 export default function AlarmTrigger() {
     const params = useLocalSearchParams<{ alarmId: string }>();
     const [slideValue] = useState(new Animated.Value(0));
-    const { activeAlarm, deactivateAlarm } = useAlarmStore();
+    const { activeAlarm, deactivateAlarm, loadMemos, currentMemos, toggleMemoChecked } = useAlarmStore();
     const { stopTracking } = useLocationStore();
+    const { t } = useTranslation();
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
+
+    useEffect(() => {
+        if (activeAlarm) {
+            loadMemos(activeAlarm.id);
+        }
+    }, [activeAlarm]);
 
     useEffect(() => {
         // Trigger haptic feedback
@@ -68,10 +76,36 @@ export default function AlarmTrigger() {
                     <Ionicons name="checkmark-circle" size={120} color={colors.surface} />
                 </Animated.View>
 
-                <Text style={styles.title}>목적지에 도착했어요!</Text>
+                <Text style={styles.title}>{t('alarmTrigger.arrived')}</Text>
 
                 {activeAlarm && (
                     <Text style={styles.subtitle}>{activeAlarm.title}</Text>
+                )}
+
+                {/* Checklist */}
+                {currentMemos.length > 0 && (
+                    <View style={styles.checklistContainer}>
+                        <Text style={styles.checklistTitle}>{t('alarmTrigger.checklist')}</Text>
+                        {currentMemos.map((memo) => (
+                            <Pressable
+                                key={memo.id}
+                                style={styles.checklistItem}
+                                onPress={() => toggleMemoChecked(memo.id, !memo.is_checked)}
+                            >
+                                <Ionicons
+                                    name={memo.is_checked ? 'checkbox' : 'square-outline'}
+                                    size={22}
+                                    color={colors.surface}
+                                />
+                                <Text style={[
+                                    styles.checklistText,
+                                    memo.is_checked && styles.checklistTextDone,
+                                ]}>
+                                    {memo.content}
+                                </Text>
+                            </Pressable>
+                        ))}
+                    </View>
                 )}
             </View>
 
@@ -86,10 +120,10 @@ export default function AlarmTrigger() {
                     onLongPress={handleDismiss}
                 >
                     <Ionicons name="arrow-forward" size={24} color={colors.error} />
-                    <Text style={styles.dismissText}>밀어서 알람 끄기</Text>
+                    <Text style={styles.dismissText}>{t('alarmTrigger.dismiss')}</Text>
                 </Pressable>
 
-                <Text style={styles.dismissHint}>또는 터치하여 끄기</Text>
+                <Text style={styles.dismissHint}>{t('alarmTrigger.dismissHint')}</Text>
             </View>
 
             {/* Background Gradient Effect */}
@@ -161,5 +195,35 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         color: colors.surface,
         marginTop: spacing.sm,
         opacity: 0.7,
+    },
+    checklistContainer: {
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderRadius: radius.md,
+        padding: spacing.sm,
+        marginTop: spacing.md,
+        width: '100%',
+        maxWidth: 300,
+    },
+    checklistTitle: {
+        ...typography.caption,
+        color: colors.surface,
+        fontWeight: '600',
+        marginBottom: spacing.xs,
+        opacity: 0.8,
+    },
+    checklistItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+        paddingVertical: 6,
+    },
+    checklistText: {
+        ...typography.body,
+        color: colors.surface,
+        flex: 1,
+    },
+    checklistTextDone: {
+        opacity: 0.6,
+        textDecorationLine: 'line-through',
     },
 });

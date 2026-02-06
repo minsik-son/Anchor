@@ -186,5 +186,22 @@
         "shortest": "最短時間",
         "shortestDistance": "最短距離",
         "arrival": "{{time}} 到着"
+    },
+    "alarmDashboard": {
+        "distance": "{{distance}}",
+        "remainingDistance": "目的地まで {{distance}}",
+        "cancelAlarm": "アラームキャンセル",
+        "cancelConfirm": {
+            "title": "アラームキャンセル",
+            "message": "進行中のアラームをキャンセルしますか？",
+            "confirm": "キャンセルする"
+        },
+        "checklist": "チェックリスト"
+    },
+    "alarmTrigger": {
+        "arrived": "目的地に到着しました！",
+        "dismiss": "スライドしてアラームを消す",
+        "dismissHint": "またはタッチして消す",
+        "checklist": "チェックリスト"
     }
 }

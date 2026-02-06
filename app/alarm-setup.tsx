@@ -11,6 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
 import { useAlarmStore } from '../src/stores/alarmStore';
+import { useLocationStore } from '../src/stores/locationStore';
+import { startBackgroundLocation } from '../src/services/location/locationService';
 import { useTranslation } from 'react-i18next';
 import { typography, spacing, radius, shadows, alarmDefaults, useThemeColors, ThemeColors } from '../src/styles/theme';
 
@@ -47,7 +49,8 @@ export default function AlarmSetup() {
     const [smartBattery, setSmartBattery] = useState(true);
     const [shakeToDismiss, setShakeToDismiss] = useState(false);
 
-    const { createAlarm } = useAlarmStore();
+    const { createAlarm, addMemo } = useAlarmStore();
+    const { startTracking, checkGeofence } = useLocationStore();
 
     const handleAutoFillTitle = () => {
         const addressName = params.locationName || params.address || '';
@@ -90,14 +93,45 @@ export default function AlarmSetup() {
         });
 
         try {
-            await createAlarm({
+            const alarmId = await createAlarm({
                 title,
                 latitude: lat,
                 longitude: lng,
                 radius: alarmRadius,
             });
+
+            // Parse memo into checklist items (split by comma, filter empty)
+            if (memo.trim()) {
+                const items = memo.split(',').map(s => s.trim()).filter(Boolean);
+                for (const item of items) {
+                    await addMemo({
+                        alarm_id: alarmId,
+                        type: 'CHECKLIST',
+                        content: item,
+                    });
+                }
+            }
+
+            // Start location tracking
+            const target = { latitude: lat, longitude: lng };
+            await startTracking(target, alarmRadius);
+
+            // Start background location (may fail in Expo Go)
+            try {
+                await startBackgroundLocation(target, alarmRadius);
+            } catch (bgError) {
+                console.warn('[AlarmSetup] Background location failed (Expo Go?):', bgError);
+            }
+
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            router.replace('/(tabs)/history');
+
+            // Immediate geofence check: if user is already inside radius, trigger alarm now
+            if (checkGeofence()) {
+                console.log('[AlarmSetup] User already inside radius — triggering alarm immediately');
+                router.replace('/alarm-trigger');
+            } else {
+                router.replace('/(tabs)/home');
+            }
         } catch (error) {
             Alert.alert(t('common.error'), t('alarmSetup.createFailed'));
         }

@@ -107,6 +107,31 @@ const state = useAlarmStore.getState();
 - Expo Go has limitations with background permissions; use dev builds for full testing
 
 ## Agent Guidelines
-
 - **Reasoning & Thought Process:** Must be conducted in **English**.
 - **User Communication:** Final briefings and responses to the user must be in **Korean**.
+
+## Code Quality & Architecture Principles
+
+When generating, refactoring, or analyzing code, you must strictly adhere to the following standards to ensure professional-grade maintainability and scalability:
+
+### 1. High Readability & Intent
+* **Self-Documenting Code:** Prioritize descriptive variable and function names that clearly convey *business logic* and *intent* (e.g., `isUserLoggedIn` vs `flag`).
+* **Contextual Comments:** Add comments only to explain "why" a complex decision was made, not "what" the code is doing. Avoid redundant comments.
+
+### 2. Maintainability & Scalability
+* **Modular Design:** Ensure strict separation of concerns. Decouple business logic from UI components using custom hooks or utility functions.
+* **No Side Effects:** Functions should be predictable and pure where possible. Modifications to one part of the codebase should not risk regression in unrelated areas.
+
+### 3. DRY (Don't Repeat Yourself)
+* **Abstraction:** Actively identify duplicated patterns. Extract them into reusable constants, typed utilities, or shared hooks immediately.
+* **Single Source of Truth:** Avoid hardcoded values; use configuration files or constant definitions.
+
+### 4. Consistency & Standards
+* **Naming Conventions:** Strictly follow language-specific idioms (e.g., `camelCase` for variables/functions, `PascalCase` for React components/Interfaces).
+* **Architectural Patterns:** Maintain consistent folder structures and file organizations as established in the project.
+* **Performance:** Apply memoization (`useMemo`, `useCallback`) judiciously—only when expensive calculations or reference stability are critical.
+
+### 5. Clean Logic & Safety
+* **Clarity over Cleverness:** Avoid convoluted one-liners. Break down complex conditions into named variables for better readability.
+* **Type Safety (if applicable):** Prefer strict typing over `any`. Ensure interfaces/types are explicit.
+* **Error Handling:** Always consider edge cases and failure states. Implement robust error handling patterns rather than ignoring potential failures.
