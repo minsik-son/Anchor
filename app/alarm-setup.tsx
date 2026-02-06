@@ -50,7 +50,7 @@ export default function AlarmSetup() {
     const [shakeToDismiss, setShakeToDismiss] = useState(false);
 
     const { createAlarm, addMemo } = useAlarmStore();
-    const { startTracking, checkGeofence } = useLocationStore();
+    const { startTracking, checkGeofence, getCurrentLocation } = useLocationStore();
 
     const handleAutoFillTitle = () => {
         const addressName = params.locationName || params.address || '';
@@ -79,6 +79,9 @@ export default function AlarmSetup() {
 
         const lat = parseFloat(params.latitude);
         const lng = parseFloat(params.longitude);
+
+        // Ensure fresh GPS location before any geofence check
+        await getCurrentLocation();
 
         console.log('[AlarmSetup] Alarm data:', {
             title,
