@@ -21,7 +21,7 @@ import CenterPinMarker from '../../src/components/map/CenterPinMarker';
 import AddressBar from '../../src/components/map/AddressBar';
 import NavigationPanel from '../../src/components/navigation/NavigationPanel';
 import AlarmDashboard from '../../src/components/alarm/AlarmDashboard';
-import { debouncedReverseGeocode, GeocodingResult } from '../../src/services/geocoding';
+import { debouncedReverseGeocode, GeocodingResult, clearGeocodeCache } from '../../src/services/geocoding';
 import { PlaceResult, isInKorea } from '../../src/services/placeSearch';
 import { formatDistance } from '../../src/services/location/geofence';
 import { mapDarkStyle } from '../../src/constants/mapDarkStyle';
@@ -32,7 +32,7 @@ import { useMapAnimation } from '../../src/hooks/useMapAnimation';
 
 export default function Home() {
     const insets = useSafeAreaInsets();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const themeMode = useThemeStore((state) => state.mode);
@@ -198,6 +198,25 @@ export default function Home() {
         }
     }, [currentLocation]);
 
+    // Re-fetch address when language changes
+    useEffect(() => {
+        const handleLanguageChanged = (newLang: string) => {
+            if (centerLocation) {
+                clearGeocodeCache();
+                setIsLoadingAddress(true);
+                debouncedReverseGeocode(centerLocation.latitude, centerLocation.longitude, (result) => {
+                    setAddressInfo(result);
+                    setIsLoadingAddress(false);
+                });
+            }
+        };
+
+        i18n.on('languageChanged', handleLanguageChanged);
+        return () => {
+            i18n.off('languageChanged', handleLanguageChanged);
+        };
+    }, [centerLocation]);
+
     // Animate search bar opacity
     useEffect(() => {
         Animated.timing(searchBarOpacity, {
@@ -257,6 +276,10 @@ export default function Home() {
     }, [isFirstHint]);
 
     const handleRegionChangeComplete = useCallback((region: Region) => {
+        // Skip region changes from programmatic animations (follow mode, search, etc.)
+        // All programmatic call sites manage state directly, so this is always redundant.
+        if (isAnimatingRef.current) return;
+
         isDraggingRef.current = false;
         setIsDragging(false);
 
