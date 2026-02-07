@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator, Alert, Platform, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import MapView, { PROVIDER_GOOGLE, Circle, Marker, Region, UrlTile, Polyline } from 'react-native-maps';
+import MapView, { Details, PROVIDER_GOOGLE, Circle, Marker, Region, UrlTile, Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -254,26 +254,20 @@ export default function Home() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }, [resolveSearchResult, animateToLocation]);
 
-    // Handle user pan/drag gesture (NOT programmatic map changes)
-    const handlePanDrag = useCallback(() => {
+    const handleRegionChange = useCallback((_region: Region, details: Details) => {
         if (isAnimatingRef.current) return;
+        if (isDraggingRef.current) return;
 
-        if (!isDraggingRef.current) {
-            isDraggingRef.current = true;
-            isFollowModeRef.current = false;
-            setIsFollowMode(false);
-            setIsDragging(true);
-            setIsLoadingAddress(true);
-            Keyboard.dismiss();
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            if (isFirstHint) {
-                hintOpacity.setValue(0);
-                setIsFirstHint(false);
-            }
-            setShowSearchResults(false);
-            setShowRadiusSlider(false);
-        }
-    }, [isFirstHint]);
+        isDraggingRef.current = true;
+        isFollowModeRef.current = false;
+        setIsFollowMode(false);
+        setIsDragging(true);
+        setIsLoadingAddress(true);
+        Keyboard.dismiss();
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setShowSearchResults(false);
+        setShowRadiusSlider(false);
+    }, []);
 
     const handleRegionChangeComplete = useCallback((region: Region) => {
         // Skip region changes from programmatic animations (follow mode, search, etc.)
@@ -426,7 +420,7 @@ export default function Home() {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }
                 }}
-                onPanDrag={isNavigating ? undefined : handlePanDrag}
+                onRegionChange={isNavigating ? undefined : handleRegionChange}
                 onRegionChangeComplete={isNavigating ? undefined : handleRegionChangeComplete}
             >
                 {/* OSM Tile Overlay for Android */}
