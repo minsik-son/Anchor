@@ -28,8 +28,8 @@ export default function TabsLayout() {
                     shadowOffset: { width: 0, height: -2 },
                     shadowOpacity: 0.05,
                     shadowRadius: 8,
-                    height: 60 + insets.bottom,
-                    paddingBottom: insets.bottom,
+                    height: 60 + insets.bottom * 0.5,
+                    paddingBottom: insets.bottom * 0.5,
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,

@@ -26,5 +26,18 @@ export function useMapAnimation() {
         }, duration + 50);
     }, []);
 
-    return { mapRef, isAnimatingRef, animateToLocation };
+    /** Moves camera center without changing zoom/heading/pitch */
+    const animateToCenter = useCallback((
+        location: { latitude: number; longitude: number },
+        duration = 500,
+    ) => {
+        if (!mapRef.current) return;
+        isAnimatingRef.current = true;
+        mapRef.current.animateCamera({ center: location }, { duration });
+        setTimeout(() => {
+            isAnimatingRef.current = false;
+        }, duration + 50);
+    }, []);
+
+    return { mapRef, isAnimatingRef, animateToLocation, animateToCenter };
 }

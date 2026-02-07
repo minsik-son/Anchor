@@ -39,7 +39,11 @@ export default function Home() {
     const systemScheme = useColorScheme();
     const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && systemScheme === 'dark');
 
-    const { mapRef, isAnimatingRef, animateToLocation } = useMapAnimation();
+    const { mapRef, isAnimatingRef, animateToLocation, animateToCenter } = useMapAnimation();
+
+    // Follow mode: auto-center map on user location during alarm tracking
+    const [isFollowMode, setIsFollowMode] = useState(false);
+    const isFollowModeRef = useRef(false);
 
     const [isDragging, setIsDragging] = useState(false);
     const [centerLocation, setCenterLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -142,6 +146,22 @@ export default function Home() {
         }
     }, [activeAlarm]);
 
+    // Auto-enable follow mode when alarm activates, disable on cancel/navigation
+    useEffect(() => {
+        const shouldFollow = activeAlarm !== null && !isNavigating;
+        isFollowModeRef.current = shouldFollow;
+        setIsFollowMode(shouldFollow);
+    }, [activeAlarm, isNavigating]);
+
+    // Follow mode: auto-center map on user location updates
+    useEffect(() => {
+        if (!isFollowModeRef.current || !activeAlarm || !currentLocation) return;
+        animateToCenter({
+            latitude: currentLocation.coords.latitude,
+            longitude: currentLocation.coords.longitude,
+        }, 500);
+    }, [currentLocation, activeAlarm, animateToCenter]);
+
     // Fit map to route when navigation starts
     useEffect(() => {
         if (isNavigating && selectedRoute && mapRef.current) {
@@ -221,6 +241,8 @@ export default function Home() {
 
         if (!isDraggingRef.current) {
             isDraggingRef.current = true;
+            isFollowModeRef.current = false;
+            setIsFollowMode(false);
             setIsDragging(true);
             setIsLoadingAddress(true);
             Keyboard.dismiss();
@@ -265,7 +287,15 @@ export default function Home() {
             longitude: location.coords.longitude,
         };
 
-        animateToLocation(myLocation);
+        // Re-enable follow mode during alarm tracking (preserves zoom)
+        if (activeAlarm && !isNavigating) {
+            isFollowModeRef.current = true;
+            setIsFollowMode(true);
+            animateToCenter(myLocation);
+        } else {
+            animateToLocation(myLocation);
+        }
+
         setCenterLocation(myLocation);
 
         setIsLoadingAddress(true);
@@ -275,7 +305,7 @@ export default function Home() {
         });
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }, [getCurrentLocation, animateToLocation]);
+    }, [getCurrentLocation, animateToLocation, animateToCenter, activeAlarm, isNavigating]);
 
     const handleCreateAlarm = () => {
         if (!centerLocation) return;
@@ -467,9 +497,8 @@ export default function Home() {
                                 longitude: activeAlarm.longitude,
                             },
                         ]}
-                        strokeColor={colors.error}
-                        strokeWidth={2}
-                        lineDashPattern={[5, 5]}
+                        strokeColor={colors.primary}
+                        strokeWidth={3}
                     />
                 )}
             </MapView>
@@ -518,7 +547,7 @@ export default function Home() {
                     style={styles.myLocationButton}
                     onPress={handleMyLocationPress}
                 >
-                    <Ionicons name="locate" size={24} color={colors.primary} />
+                    <Ionicons name={isFollowMode ? "navigate" : "locate"} size={24} color={colors.primary} />
                 </Pressable>
             </View>
 
