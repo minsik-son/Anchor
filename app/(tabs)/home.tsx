@@ -325,15 +325,12 @@ export default function Home() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }, []);
 
-    // Handle map region change (pin lifting)
-    const handleRegionChange = useCallback((_region: Region, details: Details) => {
-        // Only lift pin if it's a user gesture
-        if (!details?.isGesture) return;
-
+    // Handle user pan/drag gesture (immediate UI response)
+    const handlePanDrag = useCallback(() => {
         // Skip if programmatic animation is in progress
         if (isAnimatingRef.current) return;
 
-        // Only set dragging if not already dragging (prevent repeated calls)
+        // Only set dragging if not already dragging
         if (!isDraggingRef.current) {
             isDraggingRef.current = true;
             setIsDragging(true);
@@ -352,6 +349,16 @@ export default function Home() {
             setShowRadiusSlider(false);
         }
     }, [isFirstHint]);
+
+    // Handle map region change (safety backup and logic)
+    const handleRegionChange = useCallback((_region: Region, details: Details) => {
+        // If it's a gesture and we haven't caught it with onPanDrag yet
+        if (details?.isGesture && !isDraggingRef.current && !isAnimatingRef.current) {
+            isDraggingRef.current = true;
+            setIsDragging(true);
+            setIsLoadingAddress(true);
+        }
+    }, []);
 
     const handleRegionChangeComplete = useCallback((region: Region) => {
         // Always reset dragging state when gesture ends
@@ -540,6 +547,7 @@ export default function Home() {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }
                 }}
+                onPanDrag={isNavigating ? undefined : handlePanDrag}
                 onRegionChange={isNavigating ? undefined : handleRegionChange}
                 onRegionChangeComplete={isNavigating ? undefined : handleRegionChangeComplete}
             >
