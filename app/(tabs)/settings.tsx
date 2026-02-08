@@ -55,7 +55,16 @@ export default function Settings() {
     const currentLanguage = i18n.language;
     const hasSoundSetting = alertType === 'both' || alertType === 'sound';
 
+    const isSameLanguage = (lang: string) => lang === i18n.language;
+
     const handleLanguageChange = (lang: string) => {
+        // 1. Validation: Prevent redundant re-selection
+        if (isSameLanguage(lang)) {
+            setShowLanguageModal(false);
+            return;
+        }
+
+        // 2. Transition and Update logic
         setShowLanguageModal(false);
         setIsLoading(true);
 

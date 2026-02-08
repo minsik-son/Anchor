@@ -34,6 +34,7 @@ import { formatDistance } from '../../src/services/location/geofence';
 import { mapDarkStyle } from '../../src/constants/mapDarkStyle';
 import { useThemeStore } from '../../src/stores/themeStore';
 import { useElapsedTime } from '../../src/hooks/useElapsedTime';
+import { useMapPin } from '../../src/hooks/useMapPin';
 
 export default function Home() {
     const insets = useSafeAreaInsets();
@@ -44,33 +45,16 @@ export default function Home() {
     const systemScheme = useColorScheme();
     const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && systemScheme === 'dark');
     const mapRef = useRef<MapView>(null);
+    const searchBarOpacity = useRef(new Animated.Value(1)).current;
     const [searchQuery, setSearchQuery] = useState('');
-    const [isDragging, setIsDragging] = useState(false);
-    const [centerLocation, setCenterLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-    const [selectedRadius, setSelectedRadius] = useState(100);
-    const [isFirstHint, setIsFirstHint] = useState(false);
-    const hintOpacity = useRef(new Animated.Value(1)).current;
-    const [showRadiusSlider, setShowRadiusSlider] = useState(false);
-
-    // Address state
-    const [addressInfo, setAddressInfo] = useState<GeocodingResult>({ address: '' });
-    const [isLoadingAddress, setIsLoadingAddress] = useState(false);
-
     // Search state
     const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
 
-    // Animation values (using React Native Animated API)
-    const searchBarOpacity = useRef(new Animated.Value(1)).current;
-    const sliderHeight = useRef(new Animated.Value(0)).current;
-
-    // Ref to track if map is being dragged by user
-    const isDraggingRef = useRef(false);
-    // Ref to track programmatic map animations (to prevent pin lift)
-    const isAnimatingRef = useRef(false);
-
     const { activeAlarm, deactivateAlarm, loadMemos, currentMemos } = useAlarmStore();
+    const { favorites, loadFavorites, deleteFavorite } = useFavoritePlaceStore();
+
     const {
         currentLocation,
         requestPermissions,
@@ -82,8 +66,31 @@ export default function Home() {
         distanceToTarget,
         isTracking,
     } = useLocationStore();
-    const { favorites, loadFavorites, deleteFavorite } = useFavoritePlaceStore();
+
+    const {
+        isDragging,
+        centerLocation,
+        addressInfo,
+        isLoadingAddress,
+        isAnimatingRef,
+        isDraggingRef,
+        handlers: pinHandlers,
+        actions: pinActions,
+    } = useMapPin({
+        mapRef,
+        initialLocation: currentLocation ? {
+            latitude: currentLocation.coords.latitude,
+            longitude: currentLocation.coords.longitude
+        } : null,
+    });
+
     const elapsedTime = useElapsedTime(activeAlarm?.started_at ?? null);
+
+    const sliderHeight = useRef(new Animated.Value(0)).current;
+    const [selectedRadius, setSelectedRadius] = useState(100);
+    const [isFirstHint, setIsFirstHint] = useState(false);
+    const hintOpacity = useRef(new Animated.Value(1)).current;
+    const [showRadiusSlider, setShowRadiusSlider] = useState(false);
 
     useEffect(() => {
         const init = async () => {
@@ -91,25 +98,13 @@ export default function Home() {
             const location = await getCurrentLocation();
             await loadFavorites();
 
-            // Animate map to user's actual GPS position
-            if (location && mapRef.current) {
+            // Sync initial location to pin hook
+            if (location) {
                 const userPos = {
                     latitude: location.coords.latitude,
                     longitude: location.coords.longitude,
                 };
-                setCenterLocation(userPos);
-                mapRef.current.animateToRegion({
-                    ...userPos,
-                    latitudeDelta: 0.01,
-                    longitudeDelta: 0.01,
-                }, 500);
-
-                // Initial geocoding
-                setIsLoadingAddress(true);
-                debouncedReverseGeocode(userPos.latitude, userPos.longitude, (result) => {
-                    setAddressInfo(result);
-                    setIsLoadingAddress(false);
-                });
+                pinActions.moveToLocation(userPos);
             }
         };
         init();
@@ -173,13 +168,7 @@ export default function Home() {
                 latitude: currentLocation.coords.latitude,
                 longitude: currentLocation.coords.longitude,
             };
-            setCenterLocation(newCenter);
-            // Initial geocoding
-            setIsLoadingAddress(true);
-            debouncedReverseGeocode(newCenter.latitude, newCenter.longitude, (result) => {
-                setAddressInfo(result);
-                setIsLoadingAddress(false);
-            });
+            pinActions.moveToLocation(newCenter, 0);
         }
     }, [currentLocation]);
 
@@ -281,7 +270,7 @@ export default function Home() {
         }
         // Google results need an additional API call
         else if (result.source === 'GOOGLE' && result.placeId) {
-            setIsLoadingAddress(true);
+            pinActions.setIsLoadingAddress(true);
             const coords = await getGooglePlaceDetails(result.placeId, '');
             if (coords) {
                 finalLocation = coords;
@@ -290,133 +279,46 @@ export default function Home() {
 
         if (!finalLocation) {
             console.error('[Home] Could not get coordinates for selected place');
-            setIsLoadingAddress(false);
+            pinActions.setIsLoadingAddress(false);
             return;
         }
 
         // Move map to selected location (prevent pin lift during animation)
-        if (mapRef.current) {
-            isAnimatingRef.current = true;
-            mapRef.current.animateToRegion({
-                latitude: finalLocation.latitude,
-                longitude: finalLocation.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-            }, 400);
-            // Reset animation flag after animation completes
-            setTimeout(() => {
-                isAnimatingRef.current = false;
-            }, 450);
-        }
-
-        // Update center location
-        setCenterLocation(finalLocation);
+        pinActions.moveToLocation(finalLocation, 400);
 
         // Update address
-        setAddressInfo({
+        pinActions.setAddressInfo({
             address: result.address,
             detail: result.name,
         });
-        setIsLoadingAddress(false);
+        pinActions.setIsLoadingAddress(false);
 
         // Reset session token after selection (for Google billing optimization)
         resetSessionToken();
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }, []);
-
-    // Handle map region change (pin lifting)
-    const handleRegionChange = useCallback((_region: Region, details: Details) => {
-        // Only lift pin if it's a user gesture
-        if (!details?.isGesture) return;
-
-        // Skip if programmatic animation is in progress
-        if (isAnimatingRef.current) return;
-
-        // Only set dragging if not already dragging (prevent repeated calls)
-        if (!isDraggingRef.current) {
-            isDraggingRef.current = true;
-            setIsDragging(true);
-            setIsLoadingAddress(true);
-            Keyboard.dismiss();
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-            // Hide first-time hint immediately on drag
-            if (isFirstHint) {
-                hintOpacity.setValue(0);
-                setIsFirstHint(false);
-            }
-            // Hide search results when dragging
-            setShowSearchResults(false);
-            // Hide radius slider when dragging
-            setShowRadiusSlider(false);
-        }
-    }, [isFirstHint]);
-
-    const handleRegionChangeComplete = useCallback((region: Region) => {
-        // Always reset dragging state when gesture ends
-        isDraggingRef.current = false;
-        setIsDragging(false);
-
-        setCenterLocation({
-            latitude: region.latitude,
-            longitude: region.longitude,
-        });
-
-        // Haptic feedback when pin drops
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-        // Debounced reverse geocoding
-        debouncedReverseGeocode(region.latitude, region.longitude, (result) => {
-            setAddressInfo(result);
-            setIsLoadingAddress(false);
-        });
-    }, []);
+    }, [pinActions]);
 
     // Handle My Location button press
     const handleMyLocationPress = useCallback(async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-        // Get current location (this will update the store and return the location)
+        // Get current location
         const location = await getCurrentLocation();
 
-        if (!location) {
+        if (location) {
+            const myLocation = {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            };
+            pinActions.moveToLocation(myLocation, 500);
+        } else {
             console.log('[Home] Could not get current location');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            return;
         }
-
-        const myLocation = {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-        };
-
-        // Animate map to current location (prevent pin lift during animation)
-        if (mapRef.current) {
-            isAnimatingRef.current = true;
-            mapRef.current.animateToRegion({
-                ...myLocation,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-            }, 500);
-            // Reset animation flag after animation completes
-            setTimeout(() => {
-                isAnimatingRef.current = false;
-            }, 550);
-        }
-
-        // Update center location
-        setCenterLocation(myLocation);
-
-        // Trigger reverse geocoding for this location
-        setIsLoadingAddress(true);
-        debouncedReverseGeocode(myLocation.latitude, myLocation.longitude, (result) => {
-            setAddressInfo(result);
-            setIsLoadingAddress(false);
-        });
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }, [getCurrentLocation]);
+    }, [getCurrentLocation, pinActions]);
 
     const handleCreateAlarm = () => {
         if (!centerLocation) return;
@@ -467,35 +369,14 @@ export default function Home() {
         Keyboard.dismiss();
         setShowSearchResults(false);
 
-        isAnimatingRef.current = true;
-
         const newLocation = {
             latitude: favorite.latitude,
             longitude: favorite.longitude,
         };
 
-        // Animate map to location
-        mapRef.current?.animateToRegion({
-            ...newLocation,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-        }, 500);
-
-        // Update state
-        setCenterLocation(newLocation);
+        // Animate map to location and geocode
+        pinActions.moveToLocation(newLocation, 500);
         setSelectedRadius(favorite.radius);
-
-        // Reverse geocode the location
-        setIsLoadingAddress(true);
-        debouncedReverseGeocode(newLocation.latitude, newLocation.longitude, (result) => {
-            setAddressInfo(result);
-            setIsLoadingAddress(false);
-        });
-
-        // Reset animation flag after animation completes
-        setTimeout(() => {
-            isAnimatingRef.current = false;
-        }, 600);
     };
 
     const userLocation = currentLocation
@@ -540,8 +421,9 @@ export default function Home() {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }
                 }}
-                onRegionChange={isNavigating ? undefined : handleRegionChange}
-                onRegionChangeComplete={isNavigating ? undefined : handleRegionChangeComplete}
+                onPanDrag={isNavigating ? undefined : pinHandlers.handlePanDrag}
+                onRegionChange={isNavigating ? undefined : pinHandlers.handleRegionChange}
+                onRegionChangeComplete={isNavigating ? undefined : pinHandlers.handleRegionChangeComplete}
             >
                 {/* OSM Tile Overlay for Android */}
                 {Platform.OS === 'android' && (
