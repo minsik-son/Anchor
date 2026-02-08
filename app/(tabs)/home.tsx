@@ -6,10 +6,11 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator, Alert, Platform, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import MapView, { PROVIDER_GOOGLE, Circle, Marker, Region, UrlTile, Polyline } from 'react-native-maps';
+import MapView, { Details, PROVIDER_GOOGLE, Circle, Marker, Region, UrlTile, Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import Slider from '@react-native-community/slider';
@@ -191,7 +192,7 @@ export default function Home() {
         }).start();
     }, [isDragging]);
 
-    // Animate radius slider height (fast and responsive)
+    // Animate radius slider height
     useEffect(() => {
         Animated.timing(sliderHeight, {
             toValue: showRadiusSlider ? 1 : 0,
@@ -199,6 +200,37 @@ export default function Home() {
             useNativeDriver: false, // Height animation needs JS thread
         }).start();
     }, [showRadiusSlider]);
+
+    // Watch user location in foreground when alarm is active (for smooth distance updates)
+    useEffect(() => {
+        if (!activeAlarm || isNavigating) return;
+
+        let subscription: Location.LocationSubscription | null = null;
+
+        const startWatching = async () => {
+            try {
+                subscription = await Location.watchPositionAsync(
+                    {
+                        accuracy: Location.Accuracy.High,
+                        distanceInterval: 5, // Update every 5 meters
+                        timeInterval: 1000,
+                    },
+                    (location) => {
+                        // Directly update store to reflect distance on UI immediately
+                        useLocationStore.getState().updateLocation(location);
+                    }
+                );
+            } catch (err) {
+                console.warn('[Home] Failed to start foreground watcher:', err);
+            }
+        };
+
+        startWatching();
+
+        return () => {
+            subscription?.remove();
+        };
+    }, [activeAlarm, isNavigating]);
 
     // Default location for search (Seoul if no current location)
     const defaultLocation = currentLocation
@@ -293,13 +325,13 @@ export default function Home() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }, []);
 
-    // Handle user pan/drag gesture (NOT programmatic map changes)
-    // This prevents Circle rendering from triggering pin lifts
-    const handlePanDrag = useCallback(() => {
+    // Handle map region change (pin lifting)
+    const handleRegionChange = useCallback((_region: Region, details: Details) => {
+        // Only lift pin if it's a user gesture
+        if (!details?.isGesture) return;
+
         // Skip if programmatic animation is in progress
-        if (isAnimatingRef.current) {
-            return;
-        }
+        if (isAnimatingRef.current) return;
 
         // Only set dragging if not already dragging (prevent repeated calls)
         if (!isDraggingRef.current) {
@@ -308,6 +340,7 @@ export default function Home() {
             setIsLoadingAddress(true);
             Keyboard.dismiss();
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
             // Hide first-time hint immediately on drag
             if (isFirstHint) {
                 hintOpacity.setValue(0);
@@ -507,7 +540,7 @@ export default function Home() {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }
                 }}
-                onPanDrag={isNavigating ? undefined : handlePanDrag}
+                onRegionChange={isNavigating ? undefined : handleRegionChange}
                 onRegionChangeComplete={isNavigating ? undefined : handleRegionChangeComplete}
             >
                 {/* OSM Tile Overlay for Android */}
@@ -731,7 +764,7 @@ export default function Home() {
                 />
             ) : activeAlarm ? (
                 /* Active Alarm Dashboard */
-                <View style={[styles.bottomSheet, { paddingBottom: insets.bottom }]}>
+                <View style={[styles.bottomSheet, { paddingBottom: spacing.sm }]}>
                     {/* Alarm Title Row */}
                     <View style={styles.dashboardHeader}>
                         <View style={styles.dashboardTitleRow}>
@@ -796,7 +829,7 @@ export default function Home() {
                 </View>
             ) : (
                 /* Normal setup bottom sheet */
-                <View style={[styles.bottomSheet, { paddingBottom: insets.bottom }]}>
+                <View style={[styles.bottomSheet, { paddingBottom: spacing.sm }]}>
                     {/* Address Bar with Radius Chip */}
                     <View style={styles.addressRow}>
                         <View style={styles.addressBarWrapper}>
@@ -834,6 +867,7 @@ export default function Home() {
                         )}
                     </View>
 
+                    {/* Supposed to be hide from UI */}
                     {/* Radius Slider (shown when chip is tapped) */}
                     {centerLocation && (
                         <Animated.View
@@ -848,6 +882,10 @@ export default function Home() {
                                     marginBottom: sliderHeight.interpolate({
                                         inputRange: [0, 1],
                                         outputRange: [0, spacing.xs],
+                                    }),
+                                    padding: sliderHeight.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [0, spacing.md],
                                     }),
                                     overflow: 'hidden',
                                 }
@@ -1152,6 +1190,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         borderTopRightRadius: radius.lg,
         padding: spacing.md,
         paddingTop: spacing.sm,
+        paddingBottom: spacing.sm,
         ...shadows.card,
         position: 'absolute',
         bottom: 0,
@@ -1191,10 +1230,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     radiusChipTextActive: {
         color: colors.surface,
     },
+    //Animated.View Style
     radiusSliderContainer: {
         backgroundColor: colors.background,
         borderRadius: radius.md,
-        padding: spacing.md,
+        // padding is animated inline
     },
     radiusSliderHeader: {
         flexDirection: 'row',
