@@ -21,20 +21,13 @@ import { colors as defaultColors, typography, spacing, radius, shadows, useTheme
 import CenterPinMarker from '../../src/components/map/CenterPinMarker';
 import AddressBar from '../../src/components/map/AddressBar';
 import NavigationPanel from '../../src/components/navigation/NavigationPanel';
-import { debouncedReverseGeocode, GeocodingResult } from '../../src/services/geocoding';
-import {
-    PlaceResult,
-    debouncedSearchPlaces,
-    cancelPendingSearch,
-    getGooglePlaceDetails,
-    resetSessionToken,
-    isInKorea
-} from '../../src/services/placeSearch';
+import { isInKorea } from '../../src/services/location/searchService';
 import { formatDistance } from '../../src/services/location/geofence';
 import { mapDarkStyle } from '../../src/constants/mapDarkStyle';
 import { useThemeStore } from '../../src/stores/themeStore';
 import { useElapsedTime } from '../../src/hooks/useElapsedTime';
 import { useMapPin } from '../../src/hooks/useMapPin';
+import { useLocationSearch } from '../../src/hooks/useLocationSearch';
 
 export default function Home() {
     const insets = useSafeAreaInsets();
@@ -46,11 +39,6 @@ export default function Home() {
     const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && systemScheme === 'dark');
     const mapRef = useRef<MapView>(null);
     const searchBarOpacity = useRef(new Animated.Value(1)).current;
-    const [searchQuery, setSearchQuery] = useState('');
-    // Search state
-    const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
-    const [isSearching, setIsSearching] = useState(false);
-    const [showSearchResults, setShowSearchResults] = useState(false);
 
     const { activeAlarm, deactivateAlarm, loadMemos, currentMemos } = useAlarmStore();
     const { favorites, loadFavorites, deleteFavorite } = useFavoritePlaceStore();
@@ -64,7 +52,6 @@ export default function Home() {
         stopNavigation,
         stopTracking,
         distanceToTarget,
-        isTracking,
     } = useLocationStore();
 
     const {
@@ -82,6 +69,25 @@ export default function Home() {
             latitude: currentLocation.coords.latitude,
             longitude: currentLocation.coords.longitude
         } : null,
+    });
+
+    const {
+        state: searchState,
+        setQuery,
+        clearSearch,
+        showResults,
+        hideResults,
+        selectPlace,
+        handleSearchSubmit,
+    } = useLocationSearch({
+        currentLocation: centerLocation,
+        onPlaceSelected: (location, placeInfo) => {
+            pinActions.moveToLocation(location, 400);
+            pinActions.setAddressInfo({
+                address: placeInfo.address,
+                detail: placeInfo.name,
+            });
+        },
     });
 
     const elapsedTime = useElapsedTime(activeAlarm?.started_at ?? null);
@@ -221,84 +227,6 @@ export default function Home() {
         };
     }, [activeAlarm, isNavigating]);
 
-    // Default location for search (Seoul if no current location)
-    const defaultLocation = currentLocation
-        ? { latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude }
-        : { latitude: 37.5665, longitude: 126.9780 };
-
-    // Search for places using hybrid search
-    const handleSearch = useCallback((query: string) => {
-        setSearchQuery(query);
-
-        if (query.length < 2) {
-            setSearchResults([]);
-            setShowSearchResults(false);
-            cancelPendingSearch();
-            return;
-        }
-
-        setIsSearching(true);
-        setShowSearchResults(true);
-
-        debouncedSearchPlaces(
-            {
-                query,
-                currentLocation: centerLocation || defaultLocation,
-                language: 'ko',
-            },
-            (results) => {
-                setSearchResults(results);
-                setIsSearching(false);
-            },
-            350
-        );
-    }, [centerLocation, defaultLocation]);
-
-    const handleSelectSearchResult = useCallback(async (result: PlaceResult) => {
-        setShowSearchResults(false);
-        setSearchQuery('');
-        Keyboard.dismiss();
-
-        let finalLocation: { latitude: number; longitude: number } | null = null;
-
-        // Kakao and Expo results have coordinates directly
-        if (result.latitude !== undefined && result.longitude !== undefined) {
-            finalLocation = {
-                latitude: result.latitude,
-                longitude: result.longitude,
-            };
-        }
-        // Google results need an additional API call
-        else if (result.source === 'GOOGLE' && result.placeId) {
-            pinActions.setIsLoadingAddress(true);
-            const coords = await getGooglePlaceDetails(result.placeId, '');
-            if (coords) {
-                finalLocation = coords;
-            }
-        }
-
-        if (!finalLocation) {
-            console.error('[Home] Could not get coordinates for selected place');
-            pinActions.setIsLoadingAddress(false);
-            return;
-        }
-
-        // Move map to selected location (prevent pin lift during animation)
-        pinActions.moveToLocation(finalLocation, 400);
-
-        // Update address
-        pinActions.setAddressInfo({
-            address: result.address,
-            detail: result.name,
-        });
-        pinActions.setIsLoadingAddress(false);
-
-        // Reset session token after selection (for Google billing optimization)
-        resetSessionToken();
-
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }, [pinActions]);
-
     // Handle My Location button press
     const handleMyLocationPress = useCallback(async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -373,7 +301,7 @@ export default function Home() {
     const handleJumpToFavorite = (favorite: { latitude: number; longitude: number; radius: number; label: string }) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         Keyboard.dismiss();
-        setShowSearchResults(false);
+        hideResults();
 
         const newLocation = {
             latitude: favorite.latitude,
@@ -421,7 +349,7 @@ export default function Home() {
                     // Disable interactions during navigation
                     if (isNavigating) return;
                     Keyboard.dismiss();
-                    if (showSearchResults) setShowSearchResults(false);
+                    if (searchState.isVisible) hideResults();
                     if (showRadiusSlider) {
                         setShowRadiusSlider(false);
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -531,13 +459,13 @@ export default function Home() {
             </MapView>
 
             {/* Invisible overlay to close radius slider and keyboard - INSTANT response */}
-            {(showRadiusSlider || showSearchResults) && (
+            {(showRadiusSlider || searchState.isVisible) && (
                 <Pressable
                     style={StyleSheet.absoluteFill}
                     onPress={() => {
                         Keyboard.dismiss();
                         setShowRadiusSlider(false);
-                        setShowSearchResults(false);
+                        hideResults();
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }}
                 />
@@ -555,24 +483,17 @@ export default function Home() {
                         style={styles.searchInput}
                         placeholder={t('home.searchPlaceholder')}
                         placeholderTextColor={colors.textWeak}
-                        value={searchQuery}
-                        onChangeText={handleSearch}
+                        value={searchState.query}
+                        onChangeText={setQuery}
                         onFocus={() => {
-                            searchQuery.length >= 2 && setShowSearchResults(true);
+                            showResults();
                             setShowRadiusSlider(false);
                         }}
-                        onSubmitEditing={() => {
-                            Keyboard.dismiss();
-                        }}
+                        onSubmitEditing={handleSearchSubmit}
                         returnKeyType="search"
                     />
-                    {searchQuery.length > 0 && (
-                        <Pressable onPress={() => {
-                            setSearchQuery('');
-                            setSearchResults([]);
-                            setShowSearchResults(false);
-                            cancelPendingSearch();
-                        }}>
+                    {searchState.query.length > 0 && (
+                        <Pressable onPress={clearSearch}>
                             <Ionicons name="close-circle" size={20} color={colors.textWeak} />
                         </Pressable>
                     )}
@@ -588,42 +509,51 @@ export default function Home() {
             </View>
 
             {/* Search Results Dropdown */}
-            {showSearchResults && (
+            {searchState.isVisible && (
                 <View style={[styles.searchResultsContainer, { top: insets.top + spacing.sm + 56 }]}>
-                    {isSearching ? (
+                    {searchState.isSearching ? (
                         <View style={styles.searchLoadingContainer}>
                             <ActivityIndicator size="small" color={colors.primary} />
                             <Text style={styles.searchLoadingText}>검색 중...</Text>
                         </View>
-                    ) : searchResults.length > 0 ? (
+                    ) : searchState.results.length > 0 ? (
                         <FlatList
-                            data={searchResults}
+                            data={searchState.results}
                             keyExtractor={(item) => item.id}
                             keyboardShouldPersistTaps="handled"
-                            renderItem={({ item }) => (
-                                <Pressable
-                                    style={styles.searchResultItem}
-                                    onPress={() => handleSelectSearchResult(item)}
-                                >
-                                    <View style={styles.searchResultIconContainer}>
-                                        <Ionicons
-                                            name={item.source === 'KAKAO' ? 'location' : 'location-outline'}
-                                            size={20}
-                                            color={item.source === 'KAKAO' ? colors.primary : colors.textMedium}
-                                        />
-                                    </View>
-                                    <View style={styles.searchResultTextContainer}>
-                                        <Text style={styles.searchResultName} numberOfLines={1}>
-                                            {item.name}
-                                        </Text>
-                                        <Text style={styles.searchResultAddress} numberOfLines={1}>
-                                            {item.address}
-                                        </Text>
-                                    </View>
-                                </Pressable>
-                            )}
+                            renderItem={({ item }) => {
+                                const isTopMatch = searchState.topMatch?.id === item.id;
+                                return (
+                                    <Pressable
+                                        style={styles.searchResultItem}
+                                        onPress={() => selectPlace(item)}
+                                    >
+                                        <View style={styles.searchResultIconContainer}>
+                                            <Ionicons
+                                                name={isTopMatch ? 'location' : 'location-outline'}
+                                                size={20}
+                                                color={isTopMatch ? colors.primary : colors.textMedium}
+                                            />
+                                        </View>
+                                        <View style={styles.searchResultTextContainer}>
+                                            <Text
+                                                style={[
+                                                    styles.searchResultName,
+                                                    isTopMatch && styles.searchResultNameTop,
+                                                ]}
+                                                numberOfLines={1}
+                                            >
+                                                {item.name}
+                                            </Text>
+                                            <Text style={styles.searchResultAddress} numberOfLines={1}>
+                                                {item.address}
+                                            </Text>
+                                        </View>
+                                    </Pressable>
+                                );
+                            }}
                         />
-                    ) : searchQuery.length >= 2 ? (
+                    ) : searchState.query.length >= 2 ? (
                         <View style={styles.searchLoadingContainer}>
                             <Ionicons name="search-outline" size={24} color={colors.textWeak} />
                             <Text style={styles.searchLoadingText}>{t('common.noResults', '검색 결과가 없습니다')}</Text>
@@ -954,6 +884,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         ...typography.body,
         color: colors.textStrong,
         fontWeight: '600',
+    },
+    searchResultNameTop: {
+        color: colors.primary,
+        fontWeight: '700',
     },
     searchResultAddress: {
         ...typography.caption,
