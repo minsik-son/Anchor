@@ -4,23 +4,25 @@
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator, Alert, Platform, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator, Alert, Platform, useColorScheme, useWindowDimensions } from 'react-native';
+import ReanimatedAnimated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import MapView, { Details, PROVIDER_GOOGLE, Circle, Marker, Region, UrlTile, Polyline } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE, Circle, Marker, UrlTile, Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import Slider from '@react-native-community/slider';
 import { useAlarmStore } from '../../src/stores/alarmStore';
 import { useLocationStore } from '../../src/stores/locationStore';
 import { useFavoritePlaceStore } from '../../src/stores/favoritePlaceStore';
-import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
+import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
 import CenterPinMarker from '../../src/components/map/CenterPinMarker';
-import AddressBar from '../../src/components/map/AddressBar';
 import NavigationPanel from '../../src/components/navigation/NavigationPanel';
+import BottomSheetDashboard, {
+    BOTTOM_SHEET_COLLAPSED,
+} from '../../src/components/home/BottomSheetDashboard';
 import { isInKorea } from '../../src/services/location/searchService';
 import { formatDistance } from '../../src/services/location/geofence';
 import { mapDarkStyle } from '../../src/constants/mapDarkStyle';
@@ -39,6 +41,20 @@ export default function Home() {
     const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && systemScheme === 'dark');
     const mapRef = useRef<MapView>(null);
     const searchBarOpacity = useRef(new Animated.Value(1)).current;
+    const { height: screenHeight } = useWindowDimensions();
+
+    // SharedValue for bottom sheet height - source of truth for both map and pin sync
+    const bottomSheetAnimatedHeight = useSharedValue(BOTTOM_SHEET_COLLAPSED);
+
+    // Animated style for map translation - syncs with pin movement
+    const animatedMapStyle = useAnimatedStyle(() => {
+        const sheetExpansion = bottomSheetAnimatedHeight.value - BOTTOM_SHEET_COLLAPSED;
+        const verticalOffset = sheetExpansion / 2;
+        return {
+            flex: 1,
+            transform: [{ translateY: -verticalOffset }],
+        };
+    });
 
     const { activeAlarm, deactivateAlarm, loadMemos, currentMemos } = useAlarmStore();
     const { favorites, loadFavorites, deleteFavorite } = useFavoritePlaceStore();
@@ -53,6 +69,11 @@ export default function Home() {
         stopTracking,
         distanceToTarget,
     } = useLocationStore();
+
+    // Getter function for useMapPin (reads current value)
+    const getBottomSheetHeight = useCallback(() => {
+        return bottomSheetAnimatedHeight.value;
+    }, []);
 
     const {
         isDragging,
@@ -69,6 +90,8 @@ export default function Home() {
             latitude: currentLocation.coords.latitude,
             longitude: currentLocation.coords.longitude
         } : null,
+        screenHeight,
+        getBottomSheetHeight,
     });
 
     const {
@@ -92,11 +115,10 @@ export default function Home() {
 
     const elapsedTime = useElapsedTime(activeAlarm?.started_at ?? null);
 
-    const sliderHeight = useRef(new Animated.Value(0)).current;
     const [selectedRadius, setSelectedRadius] = useState(100);
     const [isFirstHint, setIsFirstHint] = useState(false);
     const hintOpacity = useRef(new Animated.Value(1)).current;
-    const [showRadiusSlider, setShowRadiusSlider] = useState(false);
+    const [bottomSheetExpanded, setBottomSheetExpanded] = useState(false);
 
     useEffect(() => {
         const init = async () => {
@@ -187,14 +209,6 @@ export default function Home() {
         }).start();
     }, [isDragging]);
 
-    // Animate radius slider height
-    useEffect(() => {
-        Animated.timing(sliderHeight, {
-            toValue: showRadiusSlider ? 1 : 0,
-            duration: 150, // Faster for better responsiveness
-            useNativeDriver: false, // Height animation needs JS thread
-        }).start();
-    }, [showRadiusSlider]);
 
     // Watch user location in foreground when alarm is active (for smooth distance updates)
     useEffect(() => {
@@ -317,48 +331,40 @@ export default function Home() {
         ? { latitude: currentLocation.coords.latitude, longitude: currentLocation.coords.longitude }
         : { latitude: 37.5665, longitude: 126.9780 }; // Default to Seoul
 
-    // Format radius for display
-    const formatRadius = (meters: number) => {
-        if (meters >= 1000) {
-            return `${(meters / 1000).toFixed(1)}km`;
-        }
-        return `${meters}m`;
-    };
-
     return (
         <View style={styles.container}>
-            {/* Map */}
-            <MapView
-                ref={mapRef}
-                provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-                style={styles.map}
-                initialRegion={{
-                    ...userLocation,
-                    latitudeDelta: 0.01,
-                    longitudeDelta: 0.01,
-                }}
-                showsUserLocation
-                showsMyLocationButton={false}
-                customMapStyle={isDarkMode ? mapDarkStyle : undefined}
-                userInterfaceStyle={isDarkMode ? 'dark' : 'light'}
-                scrollEnabled={!isNavigating || true}
-                zoomEnabled={!isNavigating || true}
-                rotateEnabled={!isNavigating}
-                pitchEnabled={!isNavigating}
-                onPress={(e) => {
-                    // Disable interactions during navigation
-                    if (isNavigating) return;
-                    Keyboard.dismiss();
-                    if (searchState.isVisible) hideResults();
-                    if (showRadiusSlider) {
-                        setShowRadiusSlider(false);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                }}
-                onPanDrag={isNavigating ? undefined : pinHandlers.handlePanDrag}
-                onRegionChange={isNavigating ? undefined : pinHandlers.handleRegionChange}
-                onRegionChangeComplete={isNavigating ? undefined : pinHandlers.handleRegionChangeComplete}
-            >
+            {/* Map - wrapped in Animated.View for smooth translation sync with pin */}
+            <ReanimatedAnimated.View style={animatedMapStyle}>
+                <MapView
+                    ref={mapRef}
+                    provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+                    style={styles.map}
+                    initialRegion={{
+                        ...userLocation,
+                        latitudeDelta: 0.01,
+                        longitudeDelta: 0.01,
+                    }}
+                    showsUserLocation
+                    showsMyLocationButton={false}
+                    customMapStyle={isDarkMode ? mapDarkStyle : undefined}
+                    userInterfaceStyle={isDarkMode ? 'dark' : 'light'}
+                    scrollEnabled={!isNavigating || true}
+                    zoomEnabled={!isNavigating || true}
+                    rotateEnabled={!isNavigating}
+                    pitchEnabled={!isNavigating}
+                    onPress={(e) => {
+                        // Disable interactions during navigation
+                        if (isNavigating) return;
+                        Keyboard.dismiss();
+                        if (searchState.isVisible) hideResults();
+                        if (bottomSheetExpanded) {
+                            setBottomSheetExpanded(false);
+                        }
+                    }}
+                    onPanDrag={isNavigating ? undefined : pinHandlers.handlePanDrag}
+                    onRegionChange={isNavigating ? undefined : pinHandlers.handleRegionChange}
+                    onRegionChangeComplete={isNavigating ? undefined : pinHandlers.handleRegionChangeComplete}
+                >
                 {/* OSM Tile Overlay for Android */}
                 {Platform.OS === 'android' && (
                     <UrlTile
@@ -456,15 +462,15 @@ export default function Home() {
                         lineDashPattern={[5, 5]}
                     />
                 )}
-            </MapView>
+                </MapView>
+            </ReanimatedAnimated.View>
 
-            {/* Invisible overlay to close radius slider and keyboard - INSTANT response */}
-            {(showRadiusSlider || searchState.isVisible) && (
+            {/* Invisible overlay to close search results and keyboard - INSTANT response */}
+            {searchState.isVisible && (
                 <Pressable
                     style={StyleSheet.absoluteFill}
                     onPress={() => {
                         Keyboard.dismiss();
-                        setShowRadiusSlider(false);
                         hideResults();
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }}
@@ -472,7 +478,13 @@ export default function Home() {
             )}
 
             {/* Center Pin (Fixed at screen center - hidden during navigation) */}
-            {!isNavigating && !activeAlarm && <CenterPinMarker isDragging={isDragging} />}
+            {!isNavigating && !activeAlarm && (
+                <CenterPinMarker
+                    isDragging={isDragging}
+                    bottomSheetHeight={bottomSheetAnimatedHeight}
+                    screenHeight={screenHeight}
+                />
+            )}
 
             {/* Top Bar Container - Search + Location Button aligned */}
             <View style={[styles.topBarContainer, { top: insets.top + spacing.sm }]}>
@@ -487,7 +499,7 @@ export default function Home() {
                         onChangeText={setQuery}
                         onFocus={() => {
                             showResults();
-                            setShowRadiusSlider(false);
+                            setBottomSheetExpanded(false);
                         }}
                         onSubmitEditing={handleSearchSubmit}
                         returnKeyType="search"
@@ -647,151 +659,34 @@ export default function Home() {
                     </Pressable>
                 </View>
             ) : (
-                /* Normal setup bottom sheet */
-                <View style={[styles.bottomSheet, { paddingBottom: spacing.sm }]}>
-                    {/* Address Bar with Radius Chip */}
-                    <View style={styles.addressRow}>
-                        <View style={styles.addressBarWrapper}>
-                            <AddressBar
-                                address={addressInfo.address}
-                                detail={addressInfo.detail}
-                                isLoading={isLoadingAddress}
-                            />
-                        </View>
-
-                        {/* Radius Chip - Tappable to show slider */}
-                        {centerLocation && (
-                            <Pressable
-                                style={[
-                                    styles.radiusChip,
-                                    showRadiusSlider && styles.radiusChipActive
-                                ]}
-                                onPress={() => {
-                                    setShowRadiusSlider(!showRadiusSlider);
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                }}
-                            >
-                                <Ionicons
-                                    name="radio-button-on"
-                                    size={14}
-                                    color={showRadiusSlider ? colors.surface : colors.primary}
-                                />
-                                <Text style={[
-                                    styles.radiusChipText,
-                                    showRadiusSlider && styles.radiusChipTextActive
-                                ]}>
-                                    {formatRadius(selectedRadius)}
-                                </Text>
-                            </Pressable>
-                        )}
-                    </View>
-
-                    {/* Supposed to be hide from UI */}
-                    {/* Radius Slider (shown when chip is tapped) */}
-                    {centerLocation && (
-                        <Animated.View
-                            style={[
-                                styles.radiusSliderContainer,
-                                {
-                                    maxHeight: sliderHeight.interpolate({
-                                        inputRange: [0, 1],
-                                        outputRange: [0, 120],
-                                    }),
-                                    opacity: sliderHeight,
-                                    marginBottom: sliderHeight.interpolate({
-                                        inputRange: [0, 1],
-                                        outputRange: [0, spacing.xs],
-                                    }),
-                                    padding: sliderHeight.interpolate({
-                                        inputRange: [0, 1],
-                                        outputRange: [0, spacing.md],
-                                    }),
-                                    overflow: 'hidden',
-                                }
-                            ]}
-                        >
-                            <View style={styles.radiusSliderHeader}>
-                                <Text style={styles.radiusSliderLabel}>{t('alarmSetup.radius')}</Text>
-                                <Text style={styles.radiusSliderValue}>{formatRadius(selectedRadius)}</Text>
-                            </View>
-                            <Slider
-                                style={styles.radiusSlider}
-                                minimumValue={50}
-                                maximumValue={2000}
-                                step={10}
-                                value={selectedRadius}
-                                onValueChange={handleRadiusChange}
-                                minimumTrackTintColor={colors.primary}
-                                maximumTrackTintColor={`${colors.textWeak}50`}
-                                thumbTintColor={colors.primary}
-                            />
-                            <View style={styles.radiusSliderLabels}>
-                                <Text style={styles.radiusSliderMinMax}>50m</Text>
-                                <Text style={styles.radiusSliderMinMax}>2km</Text>
-                            </View>
-                        </Animated.View>
-                    )}
-
-                    {/* Create Alarm Button */}
-                    {centerLocation && (
-                        <Pressable
-                            style={({ pressed }) => [
-                                styles.createButton,
-                                pressed && styles.createButtonPressed,
-                            ]}
-                            onPress={handleCreateAlarm}
-                        >
-                            <Text style={styles.createButtonText}>{t('home.createAlarm')}</Text>
-                            <Ionicons name="arrow-forward" size={20} color={colors.surface} />
-                        </Pressable>
-                    )}
-
-                    {/* Quick Actions - Favorite Places (Compact) */}
-                    <View style={styles.quickActionsCompact}>
-                        {favorites.map((fav) => (
-                            <Pressable
-                                key={fav.id}
-                                style={styles.quickChip}
-                                onPress={() => handleJumpToFavorite(fav)}
-                                onLongPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                                    Alert.alert(
-                                        t('home.deleteFavorite.title'),
-                                        t('home.deleteFavorite.message', { name: fav.label }),
-                                        [
-                                            { text: t('common.cancel'), style: 'cancel' },
-                                            { text: t('home.deleteFavorite.confirm'), style: 'destructive', onPress: () => deleteFavorite(fav.id) },
-                                        ]
-                                    );
-                                }}
-                            >
-                                <Ionicons name={fav.icon as any} size={16} color={colors.primary} />
-                                <Text style={styles.quickChipLabel}>{fav.label}</Text>
-                            </Pressable>
-                        ))}
-                        {favorites.length < 3 && (
-                            <Pressable
-                                style={styles.quickChipAdd}
-                                onPress={() => {
-                                    if (centerLocation) {
-                                        router.push({
-                                            pathname: '/favorite-place-setup',
-                                            params: {
-                                                latitude: centerLocation.latitude,
-                                                longitude: centerLocation.longitude,
-                                                address: addressInfo.address || '',
-                                                radius: selectedRadius.toString(),
-                                            },
-                                        });
-                                    }
-                                }}
-                            >
-                                <Ionicons name="add" size={16} color={colors.textWeak} />
-                                <Text style={styles.quickChipLabelAdd}>{t('home.favorites')}</Text>
-                            </Pressable>
-                        )}
-                    </View>
-                </View>
+                /* Normal setup bottom sheet - Draggable */
+                <BottomSheetDashboard
+                    animatedHeight={bottomSheetAnimatedHeight}
+                    centerLocation={centerLocation}
+                    addressInfo={addressInfo}
+                    isLoadingAddress={isLoadingAddress}
+                    selectedRadius={selectedRadius}
+                    onRadiusChange={handleRadiusChange}
+                    favorites={favorites}
+                    onFavoritePress={handleJumpToFavorite}
+                    onFavoriteDelete={deleteFavorite}
+                    onAddFavorite={() => {
+                        if (centerLocation) {
+                            router.push({
+                                pathname: '/favorite-place-setup',
+                                params: {
+                                    latitude: centerLocation.latitude,
+                                    longitude: centerLocation.longitude,
+                                    address: addressInfo.address || '',
+                                    radius: selectedRadius.toString(),
+                                },
+                            });
+                        }
+                    }}
+                    onCreateAlarm={handleCreateAlarm}
+                    expanded={bottomSheetExpanded}
+                    onExpandedChange={setBottomSheetExpanded}
+                />
             )}
         </View>
     );
@@ -1019,133 +914,5 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-    },
-    addressRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: spacing.xs,
-        gap: spacing.sm,
-    },
-    addressBarWrapper: {
-        flex: 1,
-    },
-    radiusChip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.background,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: 8,
-        borderRadius: radius.full,
-        gap: 6,
-        borderWidth: 1,
-        borderColor: colors.border,
-    },
-    radiusChipActive: {
-        backgroundColor: colors.primary,
-        borderColor: colors.primary,
-    },
-    radiusChipText: {
-        ...typography.caption,
-        color: colors.primary,
-        fontWeight: '700',
-    },
-    radiusChipTextActive: {
-        color: colors.surface,
-    },
-    //Animated.View Style
-    radiusSliderContainer: {
-        backgroundColor: colors.background,
-        borderRadius: radius.md,
-        // padding is animated inline
-    },
-    radiusSliderHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: spacing.xs,
-    },
-    radiusSliderLabel: {
-        ...typography.caption,
-        color: colors.textMedium,
-        fontWeight: '600',
-    },
-    radiusSliderValue: {
-        ...typography.heading,
-        color: colors.primary,
-        fontSize: 18,
-    },
-    radiusSlider: {
-        width: '100%',
-        height: 40,
-    },
-    radiusSliderLabels: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 10,
-    },
-    radiusSliderMinMax: {
-        ...typography.caption,
-        color: colors.textWeak,
-        fontSize: 10,
-    },
-    createButton: {
-        backgroundColor: colors.primary,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: spacing.sm,
-        borderRadius: radius.md,
-        gap: spacing.xs,
-        height: 52,
-        marginBottom: spacing.sm,
-        ...shadows.button,
-    },
-    createButtonPressed: {
-        opacity: 0.9,
-        transform: [{ scale: 0.98 }],
-    },
-    createButtonText: {
-        ...typography.body,
-        color: colors.surface,
-        fontWeight: '700',
-        fontSize: 16,
-    },
-    quickActionsCompact: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: spacing.sm,
-    },
-    quickChip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.background,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: 8,
-        borderRadius: radius.md,
-        gap: 6,
-        borderWidth: 1,
-        borderColor: colors.border,
-    },
-    quickChipAdd: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.background,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: 8,
-        borderRadius: radius.md,
-        gap: 6,
-        borderStyle: 'dashed',
-        borderWidth: 1,
-        borderColor: colors.textWeak,
-    },
-    quickChipLabel: {
-        ...typography.caption,
-        color: colors.textStrong,
-        fontWeight: '600',
-    },
-    quickChipLabelAdd: {
-        ...typography.caption,
-        color: colors.textWeak,
     },
 });

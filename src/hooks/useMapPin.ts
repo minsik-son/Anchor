@@ -1,21 +1,35 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Keyboard, Animated } from 'react-native';
+import { Keyboard } from 'react-native';
 import MapView, { Region, Details } from 'react-native-maps';
 import * as Haptics from 'expo-haptics';
 import { debouncedReverseGeocode, GeocodingResult } from '../services/geocoding';
+import { BOTTOM_SHEET_COLLAPSED } from '../components/home/BottomSheetDashboard';
 
 interface UseMapPinProps {
     mapRef: React.RefObject<MapView | null>;
     initialLocation: { latitude: number; longitude: number } | null;
     onLocationChange?: (location: { latitude: number; longitude: number }) => void;
     onAddressChange?: (address: GeocodingResult) => void;
+    screenHeight: number;
+    getBottomSheetHeight: () => number;
 }
+
+// Helper: Convert pixel offset to latitude
+const pixelToLatitude = (
+    pixelOffset: number,
+    screenHeight: number,
+    latitudeDelta: number
+): number => {
+    return (pixelOffset / screenHeight) * latitudeDelta;
+};
 
 export const useMapPin = ({
     mapRef,
     initialLocation,
     onLocationChange,
     onAddressChange,
+    screenHeight,
+    getBottomSheetHeight,
 }: UseMapPinProps) => {
     const [isDragging, setIsDragging] = useState(false);
     const [centerLocation, setCenterLocation] = useState<{ latitude: number; longitude: number } | null>(initialLocation);
@@ -60,8 +74,14 @@ export const useMapPin = ({
         isDraggingRef.current = false;
         setIsDragging(false);
 
+        // Calculate coordinate offset based on bottom sheet expansion
+        const sheetHeight = getBottomSheetHeight();
+        const sheetExpansion = sheetHeight - BOTTOM_SHEET_COLLAPSED;
+        const pixelOffset = sheetExpansion / 2;
+        const latOffset = pixelToLatitude(pixelOffset, screenHeight, region.latitudeDelta);
+
         const newLocation = {
-            latitude: region.latitude,
+            latitude: region.latitude - latOffset,  // Shift down to match visual pin position
             longitude: region.longitude,
         };
 
@@ -70,14 +90,14 @@ export const useMapPin = ({
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        // Reverse geocode
+        // Reverse geocode with offset-adjusted location
         setIsLoadingAddress(true);
-        debouncedReverseGeocode(region.latitude, region.longitude, (result) => {
+        debouncedReverseGeocode(newLocation.latitude, newLocation.longitude, (result) => {
             setAddressInfo(result);
             onAddressChange?.(result);
             setIsLoadingAddress(false);
         });
-    }, [onLocationChange, onAddressChange]);
+    }, [onLocationChange, onAddressChange, screenHeight, getBottomSheetHeight]);
 
     // Programmatic move with animation protection
     const moveToLocation = useCallback(async (

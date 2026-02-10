@@ -1,112 +1,79 @@
 /**
  * CenterPinMarker Component
- * Fixed pin at screen center with drag animations
- * Using React Native's built-in Animated API for Expo Go compatibility
+ * Fixed pin at screen center with drag animations and vertical offset
+ * Syncs with BottomSheetDashboard to stay centered in visible map area
  */
 
-import { useEffect, useRef, useMemo } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import { useMemo } from 'react';
+import { View, StyleSheet } from 'react-native';
+import Animated, {
+    useAnimatedStyle,
+    useDerivedValue,
+    withSpring,
+    interpolate,
+    SharedValue,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { colors as defaultColors, shadows, useThemeColors, ThemeColors } from '../../styles/theme';
+import { shadows, useThemeColors, ThemeColors } from '../../styles/theme';
+import { BOTTOM_SHEET_COLLAPSED } from '../home/BottomSheetDashboard';
 
 interface CenterPinMarkerProps {
     isDragging: boolean;
+    bottomSheetHeight: SharedValue<number>;
+    screenHeight: number;
 }
 
-export default function CenterPinMarker({ isDragging }: CenterPinMarkerProps) {
+export default function CenterPinMarker({
+    isDragging,
+    bottomSheetHeight,
+    screenHeight,
+}: CenterPinMarkerProps) {
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
-    const translateY = useRef(new Animated.Value(0)).current;
-    const scale = useRef(new Animated.Value(1)).current;
-    const shadowOpacity = useRef(new Animated.Value(0.15)).current;
-    const shadowScale = useRef(new Animated.Value(1)).current;
 
-    useEffect(() => {
-        if (isDragging) {
-            // Lift pin up
-            Animated.parallel([
-                Animated.spring(translateY, {
-                    toValue: -15,
-                    useNativeDriver: true,
-                    tension: 300,
-                    friction: 15,
-                }),
-                Animated.spring(scale, {
-                    toValue: 1.1,
-                    useNativeDriver: true,
-                    tension: 300,
-                    friction: 15,
-                }),
-                Animated.timing(shadowOpacity, {
-                    toValue: 0.3,
-                    duration: 150,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(shadowScale, {
-                    toValue: 1.5,
-                    duration: 150,
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        } else {
-            // Drop pin with bounce
-            Animated.parallel([
-                Animated.sequence([
-                    Animated.spring(translateY, {
-                        toValue: 0,
-                        useNativeDriver: true,
-                        tension: 400,
-                        friction: 8,
-                    }),
-                ]),
-                Animated.spring(scale, {
-                    toValue: 1,
-                    useNativeDriver: true,
-                    tension: 300,
-                    friction: 15,
-                }),
-                Animated.timing(shadowOpacity, {
-                    toValue: 0.15,
-                    duration: 150,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(shadowScale, {
-                    toValue: 1,
-                    duration: 150,
-                    useNativeDriver: true,
-                }),
-            ]).start();
-        }
-    }, [isDragging]);
+    // Derive vertical offset from bottom sheet height
+    // Pin shifts up by half the sheet expansion to stay centered in visible area
+    const containerStyle = useAnimatedStyle(() => {
+        const sheetExpansion = bottomSheetHeight.value - BOTTOM_SHEET_COLLAPSED;
+        const verticalOffset = sheetExpansion / 2;
+        return {
+            transform: [{ translateY: -verticalOffset }],
+        };
+    });
+
+    // Convert isDragging boolean to animated values using useDerivedValue
+    const dragProgress = useDerivedValue(() =>
+        withSpring(isDragging ? 1 : 0, { damping: 15, stiffness: 300 })
+    );
+
+    const pinStyle = useAnimatedStyle(() => ({
+        transform: [
+            { translateY: interpolate(dragProgress.value, [0, 1], [0, -15]) },
+            { scale: interpolate(dragProgress.value, [0, 1], [1, 1.1]) },
+        ],
+    }));
+
+    const shadowStyle = useAnimatedStyle(() => ({
+        opacity: interpolate(dragProgress.value, [0, 1], [0.15, 0.3]),
+        transform: [
+            { scaleX: interpolate(dragProgress.value, [0, 1], [1, 1.5]) },
+            { scaleY: 0.5 },
+        ],
+    }));
 
     return (
-        <View style={styles.container} pointerEvents="none">
+        <Animated.View style={[styles.container, containerStyle]} pointerEvents="none">
             {/* Pin Shadow */}
-            <Animated.View
-                style={[
-                    styles.shadow,
-                    {
-                        opacity: shadowOpacity,
-                        transform: [{ scaleX: shadowScale }, { scaleY: 0.5 }],
-                    }
-                ]}
-            />
+            <Animated.View style={[styles.shadow, shadowStyle]} />
 
             {/* Pin Icon */}
-            <Animated.View
-                style={[
-                    styles.pinContainer,
-                    {
-                        transform: [{ translateY }, { scale }]
-                    }
-                ]}
-            >
+            <Animated.View style={[styles.pinContainer, pinStyle]}>
                 <View style={styles.pinHead}>
                     <Ionicons name="location" size={32} color={colors.surface} />
                 </View>
                 <View style={styles.pinTail} />
             </Animated.View>
-        </View>
+        </Animated.View>
     );
 }
 
@@ -116,7 +83,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         top: '50%',
         left: '50%',
         marginLeft: -24,
-        marginTop: -28, // Adjusted to center the pin body (User reported it was too high at -56)
+        marginTop: -28,
         width: 48,
         height: 56,
         alignItems: 'center',

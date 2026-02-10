@@ -50,9 +50,9 @@ export const useFavoritePlaceStore = create<FavoritePlaceStore>((set, get) => ({
     addFavorite: async (place) => {
         const { favorites } = get();
 
-        // Max 3 favorites
-        if (favorites.length >= 3) {
-            throw new Error('Maximum 3 favorite places allowed');
+        // Max 10 favorites
+        if (favorites.length >= 10) {
+            throw new Error('Maximum 10 favorite places allowed');
         }
 
         const newPlace: FavoritePlace = {
