@@ -337,8 +337,14 @@ export default function Home() {
     };
 
     const handleRadiusChange = (value: number) => {
-        // Round to nearest 50m
-        const roundedValue = Math.round(value / 50) * 50;
+        let roundedValue;
+        if (value <= 100) {
+            // Round to nearest 10m
+            roundedValue = Math.round(value / 10) * 10;
+        } else {
+            // Round to nearest 50m
+            roundedValue = Math.round(value / 50) * 50;
+        }
         setSelectedRadius(roundedValue);
     };
 
@@ -457,6 +463,7 @@ export default function Home() {
                         <View style={styles.debugDot} />
                     </Marker>
                 )}
+                {/* Active alarm marker */}
                 {activeAlarm && (
                     <Marker
                         coordinate={{
@@ -781,7 +788,7 @@ export default function Home() {
                                 style={styles.radiusSlider}
                                 minimumValue={50}
                                 maximumValue={2000}
-                                step={50}
+                                step={10}
                                 value={selectedRadius}
                                 onValueChange={handleRadiusChange}
                                 minimumTrackTintColor={colors.primary}

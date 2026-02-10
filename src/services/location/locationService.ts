@@ -113,7 +113,11 @@ function determinePhase(
 
 TaskManager.defineTask(TASK_NAMES.GEOFENCE, async ({ data, error }) => {
     if (error) {
-        console.error('[LocationService] Geofence task error:', error);
+        if (error.message?.includes('kCLErrorDomain Code=0')) {
+            console.warn('[LocationService] Geofence task: Location unknown (possibly simulator set to None)');
+        } else {
+            console.error('[LocationService] Geofence task error:', error);
+        }
         return;
     }
     if (!data) return;
@@ -129,7 +133,12 @@ TaskManager.defineTask(TASK_NAMES.GEOFENCE, async ({ data, error }) => {
 
 TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
     if (error) {
-        console.error('[LocationService] Background task error:', error);
+        if (error.message?.includes('kCLErrorDomain Code=0')) {
+            // kCLErrorLocationUnknown: Common in simulator or when hardware can't get a lock
+            console.warn('[LocationService] Background update: Location unknown. Check simulator "Features > Location" settings.');
+        } else {
+            console.error('[LocationService] Background task error:', error);
+        }
         return;
     }
     if (!data) return;
@@ -269,9 +278,9 @@ async function transitionToPhase(newPhase: TrackingPhase): Promise<void> {
     currentServicePhase = newPhase;
 
     switch (newPhase) {
-        case 'GEOFENCING':       await setupGeofencing(); break;
+        case 'GEOFENCING': await setupGeofencing(); break;
         case 'ADAPTIVE_POLLING': await setupAdaptivePolling(); break;
-        case 'ACTIVE_TRACKING':  await setupActiveTracking(); break;
+        case 'ACTIVE_TRACKING': await setupActiveTracking(); break;
         case 'IDLE': break;
     }
 
