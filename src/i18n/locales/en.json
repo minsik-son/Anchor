@@ -103,6 +103,11 @@
         "empty": "No alarms yet",
         "emptyHint": "Create an alarm from the home screen!",
         "active": "Active",
+        "status": {
+            "inProgress": "Active",
+            "completed": "Complete",
+            "cancelled": "Cancelled"
+        },
         "detail": {
             "locationInfo": "Location Info",
             "loading": "Searching address...",

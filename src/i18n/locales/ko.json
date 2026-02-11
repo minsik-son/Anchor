@@ -103,6 +103,11 @@
         "empty": "아직 생성된 알람이 없습니다",
         "emptyHint": "홈 화면에서 알람을 만들어보세요!",
         "active": "활성화",
+        "status": {
+            "inProgress": "진행중",
+            "completed": "완료됨",
+            "cancelled": "취소됨"
+        },
         "detail": {
             "locationInfo": "위치 정보",
             "loading": "주소 검색 중...",

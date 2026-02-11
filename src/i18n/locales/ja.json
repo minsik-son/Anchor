@@ -103,6 +103,11 @@
         "empty": "まだアラームがありません",
         "emptyHint": "ホーム画面からアラームを作成してみましょう！",
         "active": "有効",
+        "status": {
+            "inProgress": "進行中",
+            "completed": "完了",
+            "cancelled": "キャンセル"
+        },
         "detail": {
             "locationInfo": "位置情報",
             "loading": "住所検索中...",

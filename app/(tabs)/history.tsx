@@ -18,6 +18,31 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const DELETE_THRESHOLD = 80;
 const DELETE_CONFIRM_THRESHOLD = 160;
 
+type AlarmStatus = 'in_progress' | 'completed' | 'cancelled';
+
+function getAlarmStatus(alarm: Alarm): AlarmStatus {
+    if (alarm.is_active) return 'in_progress';
+    if (alarm.arrived_at) return 'completed';
+    return 'cancelled';
+}
+
+function StatusBadge({ status, colors }: { status: AlarmStatus; colors: ThemeColors }) {
+    const { t } = useTranslation();
+    const styles = useMemo(() => createStyles(colors), [colors]);
+    const config = {
+        in_progress: { labelKey: 'history.status.inProgress', color: colors.success },
+        completed: { labelKey: 'history.status.completed', color: colors.primary },
+        cancelled: { labelKey: 'history.status.cancelled', color: colors.error },
+    } as const;
+    const { labelKey, color } = config[status];
+
+    return (
+        <View style={[styles.statusBadge, { backgroundColor: color }]}>
+            <Text style={styles.statusBadgeText}>{t(labelKey)}</Text>
+        </View>
+    );
+}
+
 function formatRelativeTime(dateString: string, t: any, i18n: any): string {
     const date = new Date(dateString);
     const now = new Date();
@@ -204,7 +229,10 @@ function SwipeableAlarmCard({
                             />
                             <Text style={styles.alarmTitle}>{alarm.title}</Text>
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
+                        <View style={styles.statusContainer}>
+                            <StatusBadge status={getAlarmStatus(alarm)} colors={colors} />
+                            <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
+                        </View>
                     </View>
 
                     <View style={styles.alarmDetails}>
@@ -216,12 +244,6 @@ function SwipeableAlarmCard({
                             {formatRelativeTime(alarm.created_at, t, i18n)}
                         </Text>
                     </View>
-
-                    {isActive && (
-                        <View style={styles.activeBadge}>
-                            <Text style={styles.activeBadgeText}>{t('history.active')}</Text>
-                        </View>
-                    )}
                 </Pressable>
             </Animated.View>
         </View>
@@ -319,6 +341,21 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         color: colors.textStrong,
         fontWeight: '600',
     },
+    statusContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+    },
+    statusBadge: {
+        paddingHorizontal: spacing.xs,
+        paddingVertical: 4,
+        borderRadius: radius.full,
+    },
+    statusBadgeText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#FFFFFF',
+    },
     alarmDetails: {
         flexDirection: 'row',
         gap: spacing.xs,
@@ -327,21 +364,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alarmDetail: {
         ...typography.caption,
         color: colors.textMedium,
-    },
-    activeBadge: {
-        position: 'absolute',
-        top: spacing.xs,
-        right: spacing.md + 20,
-        backgroundColor: colors.primary,
-        paddingHorizontal: spacing.xs,
-        paddingVertical: 4,
-        borderRadius: radius.sm,
-    },
-    activeBadgeText: {
-        ...typography.caption,
-        color: colors.surface,
-        fontSize: 11,
-        fontWeight: '700',
     },
     emptyState: {
         flex: 1,
