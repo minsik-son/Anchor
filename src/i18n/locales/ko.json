@@ -16,6 +16,7 @@
     "tabs": {
         "home": "홈",
         "routines": "루틴",
+        "activity": "활동",
         "history": "히스토리",
         "settings": "설정"
     },
@@ -327,5 +328,38 @@
         "title": "시간 선택",
         "hour": "시",
         "minute": "분"
+    },
+    "activity": {
+        "title": "활동",
+        "steps": "걸음",
+        "distance": "거리",
+        "calories": "칼로리",
+        "caloriesBurned": "오늘 {{kcal}}kcal 소모했어요",
+        "viewStats": "통계 보기",
+        "pedometerUnavailable": "이 기기에서는 만보기를 사용할 수 없습니다",
+        "noDataYet": "아직 데이터가 없습니다",
+        "noDataHint": "걸으면 활동 데이터가 여기에 표시됩니다!",
+        "stats": {
+            "title": "활동 통계",
+            "weekly": "주간",
+            "monthly": "월간",
+            "totalSteps": "총 걸음 수",
+            "dailyAvg": "일 평균",
+            "bestDay": "최고 기록",
+            "comparison": "이전 대비 {{percent}}% {{direction}}",
+            "more": "더 많이",
+            "less": "더 적게",
+            "noChange": "변화 없음",
+            "stepsUnit": "걸음",
+            "current": "이번",
+            "previous": "지난"
+        },
+        "messages": {
+            "ecoTrees": "오늘 걸은 거리로 나무 {{trees}}그루의 CO2를 상쇄했어요",
+            "carbonReduction": "걸어서 이동하며 {{grams}}g의 탄소 배출을 줄였어요",
+            "goalMotivation": "10,000보까지 {{remaining}}보 남았어요! 화이팅!",
+            "landmarkBurj": "오늘 걸은 총 거리가 부르즈 할리파({{height}}m) 높이를 넘었어요!",
+            "comparisonYesterday": "어제보다 {{percent}}% 더 많이 걸었어요!"
+        }
     }
 }

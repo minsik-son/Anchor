@@ -50,7 +50,8 @@
         "FOREGROUND_SERVICE_LOCATION",
         "VIBRATE",
         "RECEIVE_BOOT_COMPLETED",
-        "SYSTEM_ALERT_WINDOW"
+        "SYSTEM_ALERT_WINDOW",
+        "ACTIVITY_RECOGNITION"
       ]
     },
     "web": {
@@ -66,6 +67,13 @@
           "locationAlwaysAndWhenInUsePermission": "백그라운드에서도 목적지 도착을 알려드리기 위해 항상 위치 정보가 필요합니다.",
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ]
     ]

@@ -68,7 +68,6 @@ export const useMapPin = ({
     // Finalize location and trigger reverse geocoding
     const handleRegionChangeComplete = useCallback(async (region: Region) => {
         isDraggingRef.current = false;
-        setIsDragging(false);
 
         // Pin tip position in MapView's coordinate system
         // Uses actual map container height (excludes tab bar) for accurate coordinate calculation
@@ -102,6 +101,7 @@ export const useMapPin = ({
         }
 
         setCenterLocation(newLocation);
+        setIsDragging(false);  // Set after centerLocation to prevent circle position jump
         onLocationChange?.(newLocation);
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

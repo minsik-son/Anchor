@@ -16,6 +16,7 @@
     "tabs": {
         "home": "Home",
         "routines": "Routines",
+        "activity": "Activity",
         "history": "History",
         "settings": "Settings"
     },
@@ -327,5 +328,38 @@
         "title": "Select Time",
         "hour": "Hour",
         "minute": "Min"
+    },
+    "activity": {
+        "title": "Activity",
+        "steps": "Steps",
+        "distance": "Distance",
+        "calories": "Calories",
+        "caloriesBurned": "Burned {{kcal}}kcal today",
+        "viewStats": "View Stats",
+        "pedometerUnavailable": "Pedometer is not available on this device",
+        "noDataYet": "No data yet",
+        "noDataHint": "Your activity data will appear here once you start walking!",
+        "stats": {
+            "title": "Activity Stats",
+            "weekly": "Weekly",
+            "monthly": "Monthly",
+            "totalSteps": "Total Steps",
+            "dailyAvg": "Daily Avg",
+            "bestDay": "Best Day",
+            "comparison": "{{percent}}% {{direction}} than before",
+            "more": "more",
+            "less": "less",
+            "noChange": "No change",
+            "stepsUnit": "steps",
+            "current": "This",
+            "previous": "Last"
+        },
+        "messages": {
+            "ecoTrees": "You offset the CO2 of {{trees}} trees by walking today",
+            "carbonReduction": "You reduced {{grams}}g of carbon emissions by walking",
+            "goalMotivation": "{{remaining}} steps to 10,000! Keep going!",
+            "landmarkBurj": "Your total distance today exceeds the height of Burj Khalifa ({{height}}m)!",
+            "comparisonYesterday": "You walked {{percent}}% more than yesterday!"
+        }
     }
 }

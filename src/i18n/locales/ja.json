@@ -16,6 +16,7 @@
     "tabs": {
         "home": "ホーム",
         "routines": "ルーティン",
+        "activity": "アクティビティ",
         "history": "履歴",
         "settings": "設定"
     },
@@ -327,5 +328,38 @@
         "title": "時刻選択",
         "hour": "時",
         "minute": "分"
+    },
+    "activity": {
+        "title": "アクティビティ",
+        "steps": "歩数",
+        "distance": "距離",
+        "calories": "カロリー",
+        "caloriesBurned": "今日{{kcal}}kcal消費しました",
+        "viewStats": "統計を見る",
+        "pedometerUnavailable": "このデバイスでは歩数計を使用できません",
+        "noDataYet": "まだデータがありません",
+        "noDataHint": "歩き始めるとアクティビティデータがここに表示されます！",
+        "stats": {
+            "title": "アクティビティ統計",
+            "weekly": "週間",
+            "monthly": "月間",
+            "totalSteps": "総歩数",
+            "dailyAvg": "1日平均",
+            "bestDay": "最高記録",
+            "comparison": "前回より{{percent}}%{{direction}}",
+            "more": "多い",
+            "less": "少ない",
+            "noChange": "変化なし",
+            "stepsUnit": "歩",
+            "current": "今",
+            "previous": "前"
+        },
+        "messages": {
+            "ecoTrees": "今日歩いた距離で木{{trees}}本分のCO2を相殺しました",
+            "carbonReduction": "歩いて移動し{{grams}}gのCO2排出を削減しました",
+            "goalMotivation": "10,000歩まであと{{remaining}}歩！頑張って！",
+            "landmarkBurj": "今日の総距離がブルジュ・ハリファ（{{height}}m）の高さを超えました！",
+            "comparisonYesterday": "昨日より{{percent}}%多く歩きました！"
+        }
     }
 }

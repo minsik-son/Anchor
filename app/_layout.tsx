@@ -85,6 +85,7 @@ export default function RootLayout() {
                 />
                 <Stack.Screen name="alarm-setup" />
                 <Stack.Screen name="alarm-detail" />
+                <Stack.Screen name="activity-stats" />
                 <Stack.Screen name="routine-setup" options={{ headerShown: false }} />
                 <Stack.Screen
                     name="action-checklist"
