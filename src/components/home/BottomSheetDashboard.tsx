@@ -25,7 +25,7 @@ import { useThemeColors, ThemeColors, typography, spacing, radius, shadows } fro
 import { FavoritePlace } from '../../stores/favoritePlaceStore';
 
 // Exported constants for synchronization with map pin
-export const BOTTOM_SHEET_COLLAPSED = 200;
+export const BOTTOM_SHEET_COLLAPSED = 248;
 export const getBottomSheetExpanded = (screenHeight: number) => screenHeight * 0.5;
 
 interface BottomSheetDashboardProps {
@@ -155,7 +155,7 @@ function BottomSheetDashboard({
         paddingVertical: interpolate(
             animatedHeight.value,
             [BOTTOM_SHEET_COLLAPSED, EXPANDED_HEIGHT],
-            [0, spacing.md]
+            [0, spacing.xs]
         ),
         paddingHorizontal: interpolate(
             animatedHeight.value,
@@ -359,7 +359,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     handleContainer: {
         alignItems: 'center',
-        paddingVertical: spacing.xs,
+        paddingTop: spacing.xs,
+        paddingBottom: spacing.sm,
     },
     handle: {
         width: 36,
@@ -397,6 +398,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         backgroundColor: colors.background,
         borderRadius: radius.md,
         overflow: 'hidden',
+        marginTop: spacing.xs,
         // padding and marginBottom removed - now animated in radiusSliderStyle
     },
     radiusSliderHeader: {
@@ -438,6 +440,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         borderRadius: radius.md,
         gap: spacing.xs,
         height: 52,
+        marginTop: spacing.xs,
         marginBottom: spacing.sm,
         ...shadows.button,
     },
