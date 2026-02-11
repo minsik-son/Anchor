@@ -4,15 +4,9 @@
  * Syncs with BottomSheetDashboard to stay centered in visible map area
  */
 
-import { useMemo } from 'react';
-import { View, StyleSheet } from 'react-native';
-import Animated, {
-    useAnimatedStyle,
-    useDerivedValue,
-    withSpring,
-    interpolate,
-    SharedValue,
-} from 'react-native-reanimated';
+import { useMemo, useRef, useEffect } from 'react';
+import { View, StyleSheet, Animated as RNAnimated } from 'react-native';
+import Animated, { useAnimatedStyle, SharedValue } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { shadows, useThemeColors, ThemeColors } from '../../styles/theme';
 import { BOTTOM_SHEET_COLLAPSED } from '../home/BottomSheetDashboard';
@@ -31,8 +25,74 @@ export default function CenterPinMarker({
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
 
-    // Derive vertical offset from bottom sheet height
-    // Pin shifts up by half the sheet expansion to stay centered in visible area
+    // RN Animated values for drag animation
+    const translateY = useRef(new RNAnimated.Value(0)).current;
+    const scale = useRef(new RNAnimated.Value(1)).current;
+    const shadowOpacity = useRef(new RNAnimated.Value(0.15)).current;
+    const shadowScale = useRef(new RNAnimated.Value(1)).current;
+
+    // Drag animation using RN Animated API
+    useEffect(() => {
+        if (isDragging) {
+            // Pin Lift: responsive but firm
+            RNAnimated.parallel([
+                RNAnimated.spring(translateY, {
+                    toValue: -15,
+                    tension: 300,
+                    friction: 15,
+                    useNativeDriver: true,
+                }),
+                RNAnimated.spring(scale, {
+                    toValue: 1.1,
+                    tension: 300,
+                    friction: 15,
+                    useNativeDriver: true,
+                }),
+                RNAnimated.spring(shadowOpacity, {
+                    toValue: 0.3,
+                    tension: 300,
+                    friction: 15,
+                    useNativeDriver: true,
+                }),
+                RNAnimated.spring(shadowScale, {
+                    toValue: 1.5,
+                    tension: 300,
+                    friction: 15,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        } else {
+            // Pin Drop: snappier for solid landing
+            RNAnimated.parallel([
+                RNAnimated.spring(translateY, {
+                    toValue: 0,
+                    tension: 400,
+                    friction: 8,
+                    useNativeDriver: true,
+                }),
+                RNAnimated.spring(scale, {
+                    toValue: 1,
+                    tension: 400,
+                    friction: 8,
+                    useNativeDriver: true,
+                }),
+                RNAnimated.spring(shadowOpacity, {
+                    toValue: 0.15,
+                    tension: 400,
+                    friction: 8,
+                    useNativeDriver: true,
+                }),
+                RNAnimated.spring(shadowScale, {
+                    toValue: 1,
+                    tension: 400,
+                    friction: 8,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    }, [isDragging, translateY, scale, shadowOpacity, shadowScale]);
+
+    // Derive vertical offset from bottom sheet height (Reanimated for SharedValue sync)
     const containerStyle = useAnimatedStyle(() => {
         const sheetExpansion = bottomSheetHeight.value - BOTTOM_SHEET_COLLAPSED;
         const verticalOffset = sheetExpansion / 2;
@@ -41,38 +101,31 @@ export default function CenterPinMarker({
         };
     });
 
-    // Convert isDragging boolean to animated values using useDerivedValue
-    const dragProgress = useDerivedValue(() =>
-        withSpring(isDragging ? 1 : 0, { damping: 15, stiffness: 300 })
-    );
-
-    const pinStyle = useAnimatedStyle(() => ({
-        transform: [
-            { translateY: interpolate(dragProgress.value, [0, 1], [0, -15]) },
-            { scale: interpolate(dragProgress.value, [0, 1], [1, 1.1]) },
-        ],
-    }));
-
-    const shadowStyle = useAnimatedStyle(() => ({
-        opacity: interpolate(dragProgress.value, [0, 1], [0.15, 0.3]),
-        transform: [
-            { scaleX: interpolate(dragProgress.value, [0, 1], [1, 1.5]) },
-            { scaleY: 0.5 },
-        ],
-    }));
-
     return (
         <Animated.View style={[styles.container, containerStyle]} pointerEvents="none">
             {/* Pin Shadow */}
-            <Animated.View style={[styles.shadow, shadowStyle]} />
+            <RNAnimated.View
+                style={[
+                    styles.shadow,
+                    {
+                        opacity: shadowOpacity,
+                        transform: [{ scaleX: shadowScale }, { scaleY: 0.5 }],
+                    },
+                ]}
+            />
 
             {/* Pin Icon */}
-            <Animated.View style={[styles.pinContainer, pinStyle]}>
+            <RNAnimated.View
+                style={[
+                    styles.pinContainer,
+                    { transform: [{ translateY }, { scale }] },
+                ]}
+            >
                 <View style={styles.pinHead}>
                     <Ionicons name="location" size={32} color={colors.surface} />
                 </View>
                 <View style={styles.pinTail} />
-            </Animated.View>
+            </RNAnimated.View>
         </Animated.View>
     );
 }
