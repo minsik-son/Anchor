@@ -41,7 +41,8 @@ export default function Home() {
     const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && systemScheme === 'dark');
     const mapRef = useRef<MapView>(null);
     const searchBarOpacity = useRef(new Animated.Value(1)).current;
-    const { height: screenHeight } = useWindowDimensions();
+    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+    const [mapLayout, setMapLayout] = useState({ width: 0, height: 0 });
 
     // SharedValue for bottom sheet height - source of truth for both map and pin sync
     const bottomSheetAnimatedHeight = useSharedValue(BOTTOM_SHEET_COLLAPSED);
@@ -90,7 +91,8 @@ export default function Home() {
             latitude: currentLocation.coords.latitude,
             longitude: currentLocation.coords.longitude
         } : null,
-        screenHeight,
+        mapHeight: mapLayout.height || screenHeight,
+        screenWidth: mapLayout.width || screenWidth,
         getBottomSheetHeight,
     });
 
@@ -352,6 +354,10 @@ export default function Home() {
                     zoomEnabled={!isNavigating || true}
                     rotateEnabled={!isNavigating}
                     pitchEnabled={!isNavigating}
+                    onLayout={(event) => {
+                        const { width, height } = event.nativeEvent.layout;
+                        setMapLayout({ width, height });
+                    }}
                     onPress={(e) => {
                         // Disable interactions during navigation
                         if (isNavigating) return;
@@ -385,31 +391,6 @@ export default function Home() {
                         strokeWidth={2}
                         fillColor={`${colors.primary}20`}
                     />
-                )}
-
-                {/* Debug: Red dot at exact coordinates */}
-                {!activeAlarm && centerLocation && !isDragging && (
-                    <Marker
-                        coordinate={centerLocation}
-                        anchor={{ x: 0.5, y: 0.5 }}
-                        tracksViewChanges={false}
-                    >
-                        <View style={styles.debugDot} />
-                    </Marker>
-                )}
-                {/* Active alarm marker */}
-                {activeAlarm && (
-                    <Marker
-                        coordinate={{
-                            latitude: activeAlarm.latitude,
-                            longitude: activeAlarm.longitude,
-                        }}
-                        anchor={{ x: 0.5, y: 0.5 }}
-                        tracksViewChanges={false}
-                        zIndex={10}
-                    >
-                        <View style={styles.debugDot} />
-                    </Marker>
                 )}
 
                 {/* Active alarm marker */}
@@ -482,7 +463,7 @@ export default function Home() {
                 <CenterPinMarker
                     isDragging={isDragging}
                     bottomSheetHeight={bottomSheetAnimatedHeight}
-                    screenHeight={screenHeight}
+                    mapHeight={mapLayout.height || screenHeight}
                 />
             )}
 
@@ -893,14 +874,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         color: '#FFF',
         ...typography.caption,
         fontWeight: '600',
-    },
-    debugDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: '#FF0000',
-        borderWidth: 2,
-        borderColor: '#FFFFFF',
     },
     bottomSheet: {
         backgroundColor: colors.surface,

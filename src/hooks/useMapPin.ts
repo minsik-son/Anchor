@@ -3,32 +3,28 @@ import { Keyboard } from 'react-native';
 import MapView, { Region, Details } from 'react-native-maps';
 import * as Haptics from 'expo-haptics';
 import { debouncedReverseGeocode, GeocodingResult } from '../services/geocoding';
-import { BOTTOM_SHEET_COLLAPSED } from '../components/home/BottomSheetDashboard';
 
 interface UseMapPinProps {
     mapRef: React.RefObject<MapView | null>;
     initialLocation: { latitude: number; longitude: number } | null;
     onLocationChange?: (location: { latitude: number; longitude: number }) => void;
     onAddressChange?: (address: GeocodingResult) => void;
-    screenHeight: number;
+    mapHeight: number;
+    screenWidth: number;
     getBottomSheetHeight: () => number;
 }
 
-// Helper: Convert pixel offset to latitude
-const pixelToLatitude = (
-    pixelOffset: number,
-    screenHeight: number,
-    latitudeDelta: number
-): number => {
-    return (pixelOffset / screenHeight) * latitudeDelta;
-};
+// Pin tip offset from screen center (matches CenterPinMarker geometry)
+// Container has marginTop: -28, pin sits at bottom of container
+const PIN_TIP_OFFSET = 28;
 
 export const useMapPin = ({
     mapRef,
     initialLocation,
     onLocationChange,
     onAddressChange,
-    screenHeight,
+    mapHeight,
+    screenWidth,
     getBottomSheetHeight,
 }: UseMapPinProps) => {
     const [isDragging, setIsDragging] = useState(false);
@@ -70,34 +66,53 @@ export const useMapPin = ({
     }, []);
 
     // Finalize location and trigger reverse geocoding
-    const handleRegionChangeComplete = useCallback((region: Region) => {
+    const handleRegionChangeComplete = useCallback(async (region: Region) => {
         isDraggingRef.current = false;
         setIsDragging(false);
 
-        // Calculate coordinate offset based on bottom sheet expansion
-        const sheetHeight = getBottomSheetHeight();
-        const sheetExpansion = sheetHeight - BOTTOM_SHEET_COLLAPSED;
-        const pixelOffset = sheetExpansion / 2;
-        const latOffset = pixelToLatitude(pixelOffset, screenHeight, region.latitudeDelta);
-
-        const newLocation = {
-            latitude: region.latitude - latOffset,  // Shift down to match visual pin position
-            longitude: region.longitude,
+        // Pin tip position in MapView's coordinate system
+        // Uses actual map container height (excludes tab bar) for accurate coordinate calculation
+        const pinTipInMapView = {
+            x: screenWidth / 2,
+            y: mapHeight / 2 + PIN_TIP_OFFSET,
         };
+
+        let newLocation: { latitude: number; longitude: number };
+
+        try {
+            const coordinate = await mapRef.current?.coordinateForPoint(pinTipInMapView);
+            if (coordinate) {
+                newLocation = {
+                    latitude: coordinate.latitude,
+                    longitude: coordinate.longitude,
+                };
+            } else {
+                // Fallback to region center
+                newLocation = {
+                    latitude: region.latitude,
+                    longitude: region.longitude,
+                };
+            }
+        } catch {
+            // Fallback to region center
+            newLocation = {
+                latitude: region.latitude,
+                longitude: region.longitude,
+            };
+        }
 
         setCenterLocation(newLocation);
         onLocationChange?.(newLocation);
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        // Reverse geocode with offset-adjusted location
         setIsLoadingAddress(true);
         debouncedReverseGeocode(newLocation.latitude, newLocation.longitude, (result) => {
             setAddressInfo(result);
             onAddressChange?.(result);
             setIsLoadingAddress(false);
         });
-    }, [onLocationChange, onAddressChange, screenHeight, getBottomSheetHeight]);
+    }, [mapRef, onLocationChange, onAddressChange, screenWidth, mapHeight]);
 
     // Programmatic move with animation protection
     const moveToLocation = useCallback(async (

@@ -14,13 +14,13 @@ import { BOTTOM_SHEET_COLLAPSED } from '../home/BottomSheetDashboard';
 interface CenterPinMarkerProps {
     isDragging: boolean;
     bottomSheetHeight: SharedValue<number>;
-    screenHeight: number;
+    mapHeight: number;
 }
 
 export default function CenterPinMarker({
     isDragging,
     bottomSheetHeight,
-    screenHeight,
+    mapHeight,
 }: CenterPinMarkerProps) {
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
