@@ -4,8 +4,9 @@
  */
 
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Animated, PanResponder, Dimensions, Alert } from 'react-native';
-import ReAnimated, { useAnimatedStyle, useSharedValue, withTiming, withSpring, Easing } from 'react-native-reanimated';
+import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, Alert } from 'react-native';
+import ReAnimated, { useAnimatedStyle, useSharedValue, withTiming, withSpring, Easing, interpolate, runOnJS } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,8 +19,10 @@ import { useDistanceFormatter } from '../../src/utils/distanceFormatter';
 import { calculateDistance } from '../../src/services/location/geofence';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const DELETE_THRESHOLD = 80;
-const DELETE_CONFIRM_THRESHOLD = 160;
+const DELETE_BUTTON_WIDTH = 80;
+const SNAP_THRESHOLD = 70;
+const VELOCITY_THRESHOLD = 500;
+const SPRING_CONFIG = { damping: 20, stiffness: 300, mass: 0.5, overshootClamping: true };
 
 type AlarmStatus = 'in_progress' | 'completed' | 'cancelled';
 
@@ -136,7 +139,7 @@ function CollapsibleSection({ title, itemCount, isCollapsed, onToggle, children,
 
     const onLayout = useCallback((event: any) => {
         const height = event.nativeEvent.layout.height;
-        if (height > 0 && contentHeight === 0) {
+        if (height > 0 && height !== contentHeight) {
             setContentHeight(height);
             if (isFirstRender.current) {
                 animatedHeight.value = height;
@@ -175,7 +178,7 @@ function CollapsibleSection({ title, itemCount, isCollapsed, onToggle, children,
             </Pressable>
 
             <ReAnimated.View style={animatedContainerStyle}>
-                <View onLayout={contentHeight === 0 ? onLayout : undefined}>
+                <View onLayout={onLayout}>
                     {children}
                 </View>
             </ReAnimated.View>
@@ -328,7 +331,9 @@ function SwipeableAlarmCard({
     const { t, i18n } = useTranslation();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const { formatDistance } = useDistanceFormatter();
-    const translateX = useRef(new Animated.Value(0)).current;
+    const translateX = useSharedValue(0);
+    const contextX = useSharedValue(0);
+    const [isOpen, setIsOpen] = useState(false);
 
     const distance = useMemo(() => {
         if (alarm.start_latitude && alarm.start_longitude) {
@@ -339,92 +344,109 @@ function SwipeableAlarmCard({
         }
         return null;
     }, [alarm]);
-    const [isDeleteVisible, setIsDeleteVisible] = useState(false);
 
-    const panResponder = useRef(
-        PanResponder.create({
-            onMoveShouldSetPanResponder: (_, gestureState) => {
-                return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 10;
-            },
-            onPanResponderGrant: () => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            },
-            onPanResponderMove: (_, gestureState) => {
-                if (gestureState.dx < 0) {
-                    translateX.setValue(Math.max(gestureState.dx, -DELETE_CONFIRM_THRESHOLD));
-                } else if (isDeleteVisible) {
-                    translateX.setValue(Math.min(gestureState.dx - DELETE_THRESHOLD, 0));
-                }
-            },
-            onPanResponderRelease: (_, gestureState) => {
-                if (gestureState.dx < -DELETE_CONFIRM_THRESHOLD) {
-                    Animated.timing(translateX, {
-                        toValue: -SCREEN_WIDTH,
-                        duration: 200,
-                        useNativeDriver: true,
-                    }).start(() => onDelete());
-                } else if (gestureState.dx < -DELETE_THRESHOLD || (isDeleteVisible && gestureState.dx < 0)) {
-                    translateX.setValue(-DELETE_THRESHOLD);
-                    setIsDeleteVisible(true);
-                } else {
-                    translateX.setValue(0);
-                    setIsDeleteVisible(false);
-                }
-            },
+    const triggerHaptic = useCallback(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }, []);
+
+    const panGesture = Gesture.Pan()
+        .activeOffsetX([-10, 10])
+        .failOffsetY([-5, 5])
+        .onStart(() => {
+            contextX.value = translateX.value;
+            runOnJS(triggerHaptic)();
         })
-    ).current;
+        .onUpdate((e) => {
+            const newX = contextX.value + e.translationX;
+            translateX.value = Math.max(-DELETE_BUTTON_WIDTH * 2, Math.min(0, newX));
+        })
+        .onEnd((e) => {
+            const shouldOpen =
+                e.velocityX < -VELOCITY_THRESHOLD ||
+                (Math.abs(e.velocityX) <= VELOCITY_THRESHOLD && translateX.value < -SNAP_THRESHOLD);
 
-    const handleDeletePress = () => {
-        Animated.timing(translateX, {
-            toValue: -SCREEN_WIDTH,
-            duration: 200,
-            useNativeDriver: true,
-        }).start(() => onDelete());
-    };
+            if (shouldOpen) {
+                translateX.value = withSpring(-DELETE_BUTTON_WIDTH, SPRING_CONFIG);
+                runOnJS(setIsOpen)(true);
+            } else {
+                translateX.value = withSpring(0, SPRING_CONFIG);
+                runOnJS(setIsOpen)(false);
+            }
+        });
+
+    const cardAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{ translateX: translateX.value }],
+    }));
+
+    const deleteButtonStyle = useAnimatedStyle(() => {
+        const progress = interpolate(
+            -translateX.value,
+            [0, DELETE_BUTTON_WIDTH],
+            [0, 1],
+            'clamp'
+        );
+        return {
+            opacity: progress,
+            transform: [{ scale: interpolate(progress, [0, 1], [0.5, 1]) }],
+        };
+    });
+
+    const handleDeletePress = useCallback(() => {
+        translateX.value = withTiming(-SCREEN_WIDTH, { duration: 200 }, (finished) => {
+            if (finished) {
+                runOnJS(onDelete)();
+            }
+        });
+    }, [onDelete]);
+
+    const handlePress = useCallback(() => {
+        if (isOpen) {
+            translateX.value = withSpring(0, SPRING_CONFIG);
+            setIsOpen(false);
+        } else {
+            onPress();
+        }
+    }, [isOpen, onPress]);
 
     return (
         <View style={styles.swipeContainer}>
-            <View style={styles.deleteBackground}>
+            <ReAnimated.View style={[styles.deleteBackground, deleteButtonStyle]}>
                 <Pressable style={styles.deleteBackgroundButton} onPress={handleDeletePress}>
                     <Ionicons name="trash" size={24} color={colors.surface} />
                     <Text style={styles.deleteBackgroundText}>{t('common.delete')}</Text>
                 </Pressable>
-            </View>
+            </ReAnimated.View>
 
-            <Animated.View
-                style={[
-                    styles.alarmCard,
-                    { transform: [{ translateX }] }
-                ]}
-                {...panResponder.panHandlers}
-            >
-                <Pressable onPress={onPress} style={styles.alarmCardInner}>
-                    <View style={styles.alarmHeader}>
-                        <View style={styles.alarmTitleContainer}>
-                            <Ionicons
-                                name={isActive ? 'navigate-circle' : 'navigate-circle-outline'}
-                                size={24}
-                                color={isActive ? colors.primary : colors.textWeak}
-                            />
-                            <Text style={styles.alarmTitle}>{alarm.title}</Text>
+            <GestureDetector gesture={panGesture}>
+                <ReAnimated.View style={[styles.alarmCard, cardAnimatedStyle]}>
+                    <Pressable onPress={handlePress} style={styles.alarmCardInner}>
+                        <View style={styles.alarmHeader}>
+                            <View style={styles.alarmTitleContainer}>
+                                <Ionicons
+                                    name={isActive ? 'navigate-circle' : 'navigate-circle-outline'}
+                                    size={24}
+                                    color={isActive ? colors.primary : colors.textWeak}
+                                />
+                                <Text style={styles.alarmTitle}>{alarm.title}</Text>
+                            </View>
+                            <View style={styles.statusContainer}>
+                                <StatusBadge status={getAlarmStatus(alarm)} colors={colors} />
+                                <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
+                            </View>
                         </View>
-                        <View style={styles.statusContainer}>
-                            <StatusBadge status={getAlarmStatus(alarm)} colors={colors} />
-                            <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
-                        </View>
-                    </View>
 
-                    <View style={styles.alarmDetails}>
-                        <Text style={styles.alarmDetail}>
-                            {distance !== null ? formatDistance(distance) : '-'}
-                        </Text>
-                        <Text style={styles.alarmDetail}>•</Text>
-                        <Text style={styles.alarmDetail}>
-                            {formatRelativeTime(alarm.created_at, t, i18n)}
-                        </Text>
-                    </View>
-                </Pressable>
-            </Animated.View>
+                        <View style={styles.alarmDetails}>
+                            <Text style={styles.alarmDetail}>
+                                {distance !== null ? formatDistance(distance) : '-'}
+                            </Text>
+                            <Text style={styles.alarmDetail}>•</Text>
+                            <Text style={styles.alarmDetail}>
+                                {formatRelativeTime(alarm.created_at, t, i18n)}
+                            </Text>
+                        </View>
+                    </Pressable>
+                </ReAnimated.View>
+            </GestureDetector>
         </View>
     );
 }
@@ -505,7 +527,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         top: 0,
         right: 0,
         bottom: 0,
-        width: DELETE_THRESHOLD,
+        width: DELETE_BUTTON_WIDTH,
         backgroundColor: colors.error,
         borderRadius: radius.md,
         justifyContent: 'center',
