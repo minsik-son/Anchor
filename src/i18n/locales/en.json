@@ -268,14 +268,15 @@
     },
     "alarmTrigger": {
         "arrived": "You've arrived!",
+        "arrivedBadge": "Arrived",
         "dismiss": "Slide to dismiss",
         "dismissHint": "Slide all the way to dismiss",
         "checklist": "Checklist"
     },
     "actionChecklist": {
-        "title": "Things to do",
+        "title": "Don't Forget!",
         "subtitle": "You've arrived at {{destination}}!",
-        "done": "Done",
+        "done": "All Set",
         "allChecked": "All done! Great job.",
         "remaining": "{{count}} remaining"
     },
@@ -314,13 +315,13 @@
         "pleaseSelectLocation": "Please select a destination."
     },
     "days": {
-        "sun": "Sun",
-        "mon": "Mon",
-        "tue": "Tue",
-        "wed": "Wed",
-        "thu": "Thu",
-        "fri": "Fri",
-        "sat": "Sat",
+        "sun": "S",
+        "mon": "M",
+        "tue": "T",
+        "wed": "W",
+        "thu": "T",
+        "fri": "F",
+        "sat": "S",
         "sunFull": "Sunday",
         "monFull": "Monday",
         "tueFull": "Tuesday",
@@ -363,11 +364,16 @@
             "previous": "Last"
         },
         "messages": {
-            "ecoTrees": "You offset the CO2 of {{trees}} trees by walking today",
-            "carbonReduction": "You reduced {{grams}}g of carbon emissions by walking",
-            "goalMotivation": "{{remaining}} steps to 10,000! Keep going!",
-            "landmarkBurj": "Your total distance today exceeds the height of Burj Khalifa ({{height}})!",
-            "comparisonYesterday": "You walked {{percent}}% more than yesterday!"
+            "ecoTreesTitle": "Planted {{trees}} Trees!",
+            "ecoTreesSub": "CO2 offset based on today's steps",
+            "carbonReductionTitle": "Saved {{grams}}g of CO2!",
+            "carbonReductionSub": "Carbon emissions reduced by walking",
+            "goalMotivationTitle": "{{remaining}} Steps Left!",
+            "goalMotivationSub": "Keep going to reach 10,000 steps",
+            "landmarkBurjTitle": "Passed Burj Khalifa ({{height}})!",
+            "landmarkBurjSub": "Total distance today exceeded its height",
+            "comparisonYesterdayTitle": "{{percent}}% More Than Yesterday!",
+            "comparisonYesterdaySub": "You're doing better than yesterday"
         }
     }
 }

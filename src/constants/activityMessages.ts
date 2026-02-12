@@ -17,6 +17,7 @@ export interface ActivityMessage {
     id: string;
     category: MessageCategory;
     i18nKey: string;
+    i18nSubKey: string;
     condition: (ctx: MessageContext) => boolean;
     variables: (ctx: MessageContext) => Record<string, string | number>;
     icon: string;
@@ -26,7 +27,8 @@ const MESSAGES: ActivityMessage[] = [
     {
         id: 'eco_trees',
         category: 'eco',
-        i18nKey: 'activity.messages.ecoTrees',
+        i18nKey: 'activity.messages.ecoTreesTitle',
+        i18nSubKey: 'activity.messages.ecoTreesSub',
         condition: (ctx) => ctx.todayDistance >= 500,
         variables: (ctx) => ({
             trees: Math.round((ctx.todayDistance / 1000) * 0.22 * 100) / 100,
@@ -36,7 +38,8 @@ const MESSAGES: ActivityMessage[] = [
     {
         id: 'carbon_reduction',
         category: 'carbon',
-        i18nKey: 'activity.messages.carbonReduction',
+        i18nKey: 'activity.messages.carbonReductionTitle',
+        i18nSubKey: 'activity.messages.carbonReductionSub',
         condition: (ctx) => ctx.todaySteps >= 1000,
         variables: (ctx) => ({
             grams: Math.round(ctx.todayDistance / 1000 * 210),
@@ -46,7 +49,8 @@ const MESSAGES: ActivityMessage[] = [
     {
         id: 'goal_motivation',
         category: 'goal',
-        i18nKey: 'activity.messages.goalMotivation',
+        i18nKey: 'activity.messages.goalMotivationTitle',
+        i18nSubKey: 'activity.messages.goalMotivationSub',
         condition: (ctx) => ctx.todaySteps >= 5000 && ctx.todaySteps < 10000,
         variables: (ctx) => ({
             remaining: 10000 - ctx.todaySteps,
@@ -56,7 +60,8 @@ const MESSAGES: ActivityMessage[] = [
     {
         id: 'landmark_burj',
         category: 'landmark',
-        i18nKey: 'activity.messages.landmarkBurj',
+        i18nKey: 'activity.messages.landmarkBurjTitle',
+        i18nSubKey: 'activity.messages.landmarkBurjSub',
         condition: (ctx) => ctx.totalDistanceKm >= 0.828,
         variables: (ctx) => ({
             height: 828,
@@ -66,7 +71,8 @@ const MESSAGES: ActivityMessage[] = [
     {
         id: 'comparison_yesterday',
         category: 'comparison',
-        i18nKey: 'activity.messages.comparisonYesterday',
+        i18nKey: 'activity.messages.comparisonYesterdayTitle',
+        i18nSubKey: 'activity.messages.comparisonYesterdaySub',
         condition: (ctx) => ctx.yesterdaySteps > 0 && ctx.todaySteps > ctx.yesterdaySteps,
         variables: (ctx) => ({
             percent: Math.round(((ctx.todaySteps - ctx.yesterdaySteps) / ctx.yesterdaySteps) * 100),

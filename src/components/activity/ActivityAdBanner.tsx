@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { ThemeColors } from '../../styles/theme';
+import { ThemeColors, shadows, radius, spacing, typography } from '../../styles/theme';
 
 let BannerAd: any = null;
 let BannerAdSize: any = null;
@@ -31,7 +31,7 @@ export function ActivityAdBanner({ colors }: ActivityAdBannerProps) {
     if (!BannerAd || adFailed) {
         return (
             <View style={styles.container}>
-                <View style={[styles.placeholder, { borderColor: colors.border, backgroundColor: colors.background }]}>
+                <View style={[styles.placeholder, { backgroundColor: colors.surface }]}>
                     <Text style={[styles.placeholderLabel, { color: colors.textWeak }]}>AD</Text>
                     <Text style={[styles.placeholderSub, { color: colors.textWeak }]}>Sponsored Area</Text>
                 </View>
@@ -58,24 +58,22 @@ export function ActivityAdBanner({ colors }: ActivityAdBannerProps) {
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
-        marginVertical: 16,
+        marginVertical: spacing.sm,
     },
     placeholder: {
         width: 300,
         height: 250,
-        borderWidth: 1.5,
-        borderStyle: 'dashed',
-        borderRadius: 12,
+        borderRadius: radius.md,
         alignItems: 'center',
         justifyContent: 'center',
+        ...shadows.card,
     },
     placeholderLabel: {
-        fontSize: 20,
-        fontWeight: '700',
+        ...typography.heading,
         letterSpacing: 2,
     },
     placeholderSub: {
-        fontSize: 13,
+        ...typography.caption,
         marginTop: 4,
     },
 });

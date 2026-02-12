@@ -268,12 +268,13 @@
     },
     "alarmTrigger": {
         "arrived": "목적지에 도착했어요!",
+        "arrivedBadge": "도착",
         "dismiss": "밀어서 알람 끄기",
         "dismissHint": "끝까지 밀어서 알람을 끄세요",
         "checklist": "할 일 목록"
     },
     "actionChecklist": {
-        "title": "할 일 목록",
+        "title": "잊지 마세요!",
         "subtitle": "{{destination}}에 도착했어요!",
         "done": "완료",
         "allChecked": "모두 완료! 잘했어요.",
@@ -363,11 +364,16 @@
             "previous": "지난"
         },
         "messages": {
-            "ecoTrees": "오늘 걸은 거리로 나무 {{trees}}그루의 CO2를 상쇄했어요",
-            "carbonReduction": "걸어서 이동하며 {{grams}}g의 탄소 배출을 줄였어요",
-            "goalMotivation": "10,000보까지 {{remaining}}보 남았어요! 화이팅!",
-            "landmarkBurj": "오늘 걸은 총 거리가 부르즈 할리파({{height}}) 높이를 넘었어요!",
-            "comparisonYesterday": "어제보다 {{percent}}% 더 많이 걸었어요!"
+            "ecoTreesTitle": "나무 {{trees}}그루를 심었어요!",
+            "ecoTreesSub": "오늘 걸은 거리 기반 CO2 상쇄량",
+            "carbonReductionTitle": "{{grams}}g의 CO2를 줄였어요!",
+            "carbonReductionSub": "걸어서 이동하며 탄소 배출 감소",
+            "goalMotivationTitle": "{{remaining}}보 남았어요!",
+            "goalMotivationSub": "10,000보 목표까지 화이팅",
+            "landmarkBurjTitle": "부르즈 할리파({{height}}) 돌파!",
+            "landmarkBurjSub": "오늘 걸은 총 거리가 높이를 넘었어요",
+            "comparisonYesterdayTitle": "어제보다 {{percent}}% 더 걸었어요!",
+            "comparisonYesterdaySub": "어제보다 더 잘하고 있어요"
         }
     }
 }

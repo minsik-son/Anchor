@@ -268,12 +268,13 @@
     },
     "alarmTrigger": {
         "arrived": "目的地に到着しました！",
+        "arrivedBadge": "到着",
         "dismiss": "スライドしてアラームを消す",
         "dismissHint": "最後までスライドしてアラームを消す",
         "checklist": "チェックリスト"
     },
     "actionChecklist": {
-        "title": "やることリスト",
+        "title": "お忘れなく！",
         "subtitle": "{{destination}}に到着しました！",
         "done": "完了",
         "allChecked": "すべて完了！お疲れ様です。",
@@ -363,11 +364,16 @@
             "previous": "前"
         },
         "messages": {
-            "ecoTrees": "今日歩いた距離で木{{trees}}本分のCO2を相殺しました",
-            "carbonReduction": "歩いて移動し{{grams}}gのCO2排出を削減しました",
-            "goalMotivation": "10,000歩まであと{{remaining}}歩！頑張って！",
-            "landmarkBurj": "今日の総距離がブルジュ・ハリファ（{{height}}）の高さを超えました！",
-            "comparisonYesterday": "昨日より{{percent}}%多く歩きました！"
+            "ecoTreesTitle": "木{{trees}}本分を植えました！",
+            "ecoTreesSub": "今日の歩行距離によるCO2相殺量",
+            "carbonReductionTitle": "CO2を{{grams}}g削減！",
+            "carbonReductionSub": "歩いて移動し炭素排出を削減",
+            "goalMotivationTitle": "あと{{remaining}}歩！",
+            "goalMotivationSub": "10,000歩の目標まで頑張って",
+            "landmarkBurjTitle": "ブルジュ・ハリファ({{height}})突破！",
+            "landmarkBurjSub": "今日の総距離が高さを超えました",
+            "comparisonYesterdayTitle": "昨日より{{percent}}%多く歩きました！",
+            "comparisonYesterdaySub": "昨日より良い調子です"
         }
     }
 }

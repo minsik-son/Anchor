@@ -92,6 +92,8 @@ export default function RootLayout() {
                     options={{
                         animation: 'slide_from_bottom',
                         gestureEnabled: false,
+                        presentation: 'transparentModal',
+                        contentStyle: { backgroundColor: 'transparent' },
                     }}
                 />
             </Stack>

@@ -1,10 +1,10 @@
 /**
  * LocaAlert Alarm Trigger Screen
- * Full-screen alarm with slide-to-dismiss gesture, sound, and vibration
+ * Full-screen alarm with ripple animation, glassmorphism slider, and deep dark urgency
  */
 
 import { useMemo, useEffect, useCallback, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, LayoutChangeEvent, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, LayoutChangeEvent, ImageBackground } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,7 +16,6 @@ import Animated, {
     useAnimatedStyle,
     withSpring,
     withRepeat,
-    withSequence,
     withTiming,
     runOnJS,
     interpolate,
@@ -33,6 +32,9 @@ import { typography, spacing, radius, useThemeColors, ThemeColors } from '../src
 
 const THUMB_WIDTH = 64;
 const DISMISS_THRESHOLD = 0.85;
+const RIPPLE_COUNT = 3;
+const RIPPLE_DURATION = 2500;
+const ALARM_DARK_BG = '#121212';
 
 export default function AlarmTrigger() {
     const { activeAlarm, completeAlarm, loadMemos, currentMemos } = useAlarmStore();
@@ -53,7 +55,11 @@ export default function AlarmTrigger() {
 
     const [trackWidth, setTrackWidth] = useState(0);
     const translateX = useSharedValue(0);
-    const pulseScale = useSharedValue(1);
+
+    // Ripple shared values
+    const ripple0 = useSharedValue(0);
+    const ripple1 = useSharedValue(0);
+    const ripple2 = useSharedValue(0);
 
     const maxSlide = trackWidth > 0 ? trackWidth - THUMB_WIDTH : 0;
 
@@ -81,17 +87,36 @@ export default function AlarmTrigger() {
         };
     }, []);
 
-    // Pulse animation
+    // Ripple animation — 3 staggered rings
     useEffect(() => {
-        pulseScale.value = withRepeat(
-            withSequence(
-                withTiming(1.1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-                withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
-            ),
-            -1,
-            true
-        );
+        const timers: ReturnType<typeof setTimeout>[] = [];
+        [ripple0, ripple1, ripple2].forEach((val, i) => {
+            const delay = (RIPPLE_DURATION / RIPPLE_COUNT) * i;
+            timers.push(setTimeout(() => {
+                val.value = 0;
+                val.value = withRepeat(
+                    withTiming(1, { duration: RIPPLE_DURATION, easing: Easing.out(Easing.ease) }),
+                    -1, false
+                );
+            }, delay));
+        });
+        return () => timers.forEach(clearTimeout);
     }, []);
+
+    const rippleStyle0 = useAnimatedStyle(() => ({
+        transform: [{ scale: interpolate(ripple0.value, [0, 1], [0.3, 2.5]) }],
+        opacity: interpolate(ripple0.value, [0, 0.4, 1], [0.4, 0.2, 0]),
+    }));
+
+    const rippleStyle1 = useAnimatedStyle(() => ({
+        transform: [{ scale: interpolate(ripple1.value, [0, 1], [0.3, 2.5]) }],
+        opacity: interpolate(ripple1.value, [0, 0.4, 1], [0.4, 0.2, 0]),
+    }));
+
+    const rippleStyle2 = useAnimatedStyle(() => ({
+        transform: [{ scale: interpolate(ripple2.value, [0, 1], [0.3, 2.5]) }],
+        opacity: interpolate(ripple2.value, [0, 0.4, 1], [0.4, 0.2, 0]),
+    }));
 
     const handleDismiss = useCallback(async () => {
         if (!activeAlarm) return;
@@ -155,10 +180,6 @@ export default function AlarmTrigger() {
         return { opacity };
     });
 
-    const iconPulseStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: pulseScale.value }],
-    }));
-
     const handleTrackLayout = useCallback((event: LayoutChangeEvent) => {
         setTrackWidth(event.nativeEvent.layout.width);
     }, []);
@@ -168,19 +189,27 @@ export default function AlarmTrigger() {
             <StatusBar style="light" />
 
             <View style={styles.content}>
-                <Animated.View style={[styles.iconContainer, iconPulseStyle]}>
-                    <Ionicons name="checkmark-circle" size={120} color={colors.surface} />
-                </Animated.View>
+                {/* Ripple rings behind hero text */}
+                <View style={styles.rippleContainer}>
+                    <Animated.View style={[styles.rippleCircle, rippleStyle0]} />
+                    <Animated.View style={[styles.rippleCircle, rippleStyle1]} />
+                    <Animated.View style={[styles.rippleCircle, rippleStyle2]} />
+                </View>
 
-                <Text style={styles.title}>{t('alarmTrigger.arrived')}</Text>
+                {/* "Arrived" pill badge */}
+                <View style={styles.arrivedBadge}>
+                    <Text style={styles.arrivedBadgeText}>{t('alarmTrigger.arrivedBadge')}</Text>
+                </View>
 
+                {/* Hero destination name */}
                 {activeAlarm && (
-                    <Text style={styles.subtitle}>{activeAlarm.title}</Text>
+                    <Text style={styles.heroTitle} numberOfLines={3} adjustsFontSizeToFit>
+                        {activeAlarm.title}
+                    </Text>
                 )}
-
             </View>
 
-            {/* Slide to Dismiss */}
+            {/* Glassmorphism slider */}
             <View style={styles.dismissContainer}>
                 <View style={styles.sliderTrack} onLayout={handleTrackLayout}>
                     <Animated.Text style={[styles.sliderLabel, labelAnimatedStyle]}>
@@ -189,12 +218,10 @@ export default function AlarmTrigger() {
 
                     <GestureDetector gesture={panGesture}>
                         <Animated.View style={[styles.sliderThumb, thumbAnimatedStyle]}>
-                            <Ionicons name="chevron-forward" size={28} color={colors.error} />
+                            <Ionicons name="chevron-forward" size={28} color="#FFFFFF" />
                         </Animated.View>
                     </GestureDetector>
                 </View>
-
-                <Text style={styles.dismissHint}>{t('alarmTrigger.dismissHint')}</Text>
             </View>
         </>
     );
@@ -215,11 +242,11 @@ export default function AlarmTrigger() {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.error,
+        backgroundColor: ALARM_DARK_BG,
     },
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     content: {
         flex: 1,
@@ -227,27 +254,44 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: spacing.md,
     },
-    iconContainer: {
-        marginBottom: spacing.lg,
+    rippleContainer: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    title: {
-        ...typography.display,
-        fontSize: 32,
-        color: colors.surface,
-        textAlign: 'center',
-        marginBottom: spacing.xs,
-        textShadowColor: 'rgba(0, 0, 0, 0.7)',
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 4,
+    rippleCircle: {
+        position: 'absolute',
+        width: 200,
+        height: 200,
+        borderRadius: 100,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255, 255, 255, 0.25)',
     },
-    subtitle: {
-        ...typography.heading,
-        color: colors.surface,
+    arrivedBadge: {
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+        borderRadius: radius.full,
+        paddingHorizontal: 16,
+        paddingVertical: 6,
+        marginBottom: spacing.md,
+    },
+    arrivedBadgeText: {
+        ...typography.caption,
+        color: '#FFFFFF',
+        fontWeight: '600',
+        letterSpacing: 1,
+        textTransform: 'uppercase',
+    },
+    heroTitle: {
+        fontSize: 64,
+        fontWeight: '800',
+        color: '#FFFFFF',
+        lineHeight: 72,
         textAlign: 'center',
-        opacity: 0.9,
         textShadowColor: 'rgba(0, 0, 0, 0.7)',
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 4,
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 8,
     },
     dismissContainer: {
         paddingHorizontal: spacing.md,
@@ -258,13 +302,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         width: '100%',
         height: THUMB_WIDTH,
         borderRadius: radius.full,
-        backgroundColor: 'rgba(255, 255, 255, 0.25)',
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     sliderLabel: {
         ...typography.body,
-        color: colors.surface,
+        color: 'rgba(255, 255, 255, 0.7)',
         fontWeight: '600',
         position: 'absolute',
         textShadowColor: 'rgba(0, 0, 0, 0.7)',
@@ -275,19 +321,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         width: THUMB_WIDTH,
         height: THUMB_WIDTH,
         borderRadius: radius.full,
-        backgroundColor: colors.surface,
+        backgroundColor: colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
         position: 'absolute',
         left: 0,
-    },
-    dismissHint: {
-        ...typography.caption,
-        color: colors.surface,
-        marginTop: spacing.sm,
-        opacity: 0.7,
-        textShadowColor: 'rgba(0, 0, 0, 0.7)',
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 4,
     },
 });

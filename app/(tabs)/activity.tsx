@@ -4,8 +4,9 @@
  */
 
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, useColorScheme } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,22 +19,36 @@ import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } fro
 import { useThemeStore } from '../../src/stores/themeStore';
 import { useDistanceFormatter } from '../../src/utils/distanceFormatter';
 
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+
+function getWeekDates(): number[] {
+    const today = new Date();
+    const currentDay = today.getDay();
+    const dates: number[] = [];
+
+    for (let i = 0; i < 7; i++) {
+        const diff = i - currentDay;
+        const date = new Date(today);
+        date.setDate(today.getDate() + diff);
+        dates.push(date.getDate());
+    }
+
+    return dates;
+}
+
 export default function Activity() {
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
     const colors = useThemeColors();
+    const themeMode = useThemeStore((s) => s.mode);
+    const systemScheme = useColorScheme();
+    const isDarkMode = themeMode === 'system' ? systemScheme === 'dark' : themeMode === 'dark';
     const styles = useMemo(() => createStyles(colors), [colors]);
-    const mode = useThemeStore((s) => s.mode);
     const { formatDistance } = useDistanceFormatter();
 
     const { todaySteps, todayDistance, todayCalories, isPedometerAvailable, isLoading } = usePedometer();
     const getYesterdaySteps = useActivityStore((s) => s.getYesterdaySteps);
     const dailyRecords = useActivityStore((s) => s.dailyRecords);
-
-    const isDark = mode === 'dark';
-    const gradientColors = isDark
-        ? ['#1A2332', colors.background] as const
-        : ['#696cf3ff', '#d2d2f4ff'] as const;
 
     const totalDistanceKm = useMemo(() => {
         const totalMeters = dailyRecords.reduce((sum, r) => sum + r.distance, 0) + todayDistance;
@@ -52,6 +67,9 @@ export default function Activity() {
 
     const distanceDisplay = useMemo(() => formatDistance(todayDistance), [todayDistance, formatDistance]);
 
+    const weekDates = useMemo(() => getWeekDates(), []);
+    const todayDayIndex = new Date().getDay();
+
     if (isPedometerAvailable === false) {
         return (
             <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -64,15 +82,62 @@ export default function Activity() {
     }
 
     return (
-        <LinearGradient colors={gradientColors} style={styles.container}>
+        <View style={styles.container}>
+            {/* Background Gradient */}
+            <LinearGradient
+                colors={isDarkMode
+                    ? ['#1E293B', '#1E293B']
+                    : ['#F8FAFC', '#F1F5F9']
+                }
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={styles.backgroundGradient}
+            />
+
             <ScrollView
                 contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top, paddingBottom: insets.bottom + 20 }]}
                 showsVerticalScrollIndicator={false}
             >
+                {/* Weekly Calendar Strip */}
+                <View style={styles.calendarStrip}>
+                    {DAY_KEYS.map((dayKey, index) => {
+                        const isToday = index === todayDayIndex;
+                        return (
+                            <View key={dayKey} style={styles.calendarDay}>
+                                <Text style={[
+                                    styles.calendarDayText,
+                                    isToday && styles.calendarDayTextToday
+                                ]}>
+                                    {t(`days.${dayKey}`)}
+                                </Text>
+                                <View style={[
+                                    styles.calendarDayCircle,
+                                    isToday && styles.calendarDayCircleToday
+                                ]}>
+                                    <Text style={[
+                                        styles.calendarDateText,
+                                        isToday && styles.calendarDateTextToday
+                                    ]}>
+                                        {weekDates[index]}
+                                    </Text>
+                                </View>
+                            </View>
+                        );
+                    })}
+                </View>
+
                 <Pressable
                     style={styles.dashboardCard}
                     onPress={() => router.push('/activity-stats')}
                 >
+                    {/* Header with View Stats Icon */}
+                    <View style={styles.cardHeader}>
+                        <View style={{ flex: 1 }} />
+                        <View style={styles.viewStatsIcon}>
+                            <Ionicons name="stats-chart" size={14} color={colors.textWeak} />
+                        </View>
+                    </View>
+
                     <View style={styles.stepCountContainer}>
                         <Ionicons name="pulse" size={28} color={colors.primary} />
                         <Text style={styles.stepCount}>
@@ -91,17 +156,11 @@ export default function Activity() {
                             <Text style={styles.metricValue}>{distanceDisplay}</Text>
                             <Text style={styles.metricLabel}>{t('activity.distance')}</Text>
                         </View>
-                        <View style={styles.metricDivider} />
                         <View style={styles.metricItem}>
                             <Ionicons name="flame-outline" size={18} color={colors.warning} />
                             <Text style={styles.metricValue}>{Math.round(todayCalories)}</Text>
                             <Text style={styles.metricLabel}>{t('activity.calories')}</Text>
                         </View>
-                    </View>
-
-                    <View style={styles.viewStatsRow}>
-                        <Text style={styles.viewStatsText}>{t('activity.viewStats')}</Text>
-                        <Ionicons name="chevron-forward" size={16} color={colors.primary} />
                     </View>
                 </Pressable>
 
@@ -118,16 +177,17 @@ export default function Activity() {
                             return (
                                 <View key={msg.id} style={styles.messageCard}>
                                     <Text style={styles.messageIcon}>{msg.icon}</Text>
-                                    <Text style={styles.messageText}>
-                                        {t(msg.i18nKey, variables)}
-                                    </Text>
+                                    <View style={styles.messageContent}>
+                                        <Text style={styles.messageTitle}>{t(msg.i18nKey, variables)}</Text>
+                                        <Text style={styles.messageSub}>{t(msg.i18nSubKey)}</Text>
+                                    </View>
                                 </View>
                             );
                         })}
                     </View>
                 )}
             </ScrollView>
-        </LinearGradient>
+        </View>
     );
 }
 
@@ -135,8 +195,52 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
     },
+    backgroundGradient: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+    },
     scrollContent: {
-        paddingHorizontal: spacing.sm,
+        paddingHorizontal: spacing.md,
+    },
+    calendarStrip: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: spacing.sm,
+        marginBottom: spacing.sm,
+    },
+    calendarDay: {
+        alignItems: 'center',
+        gap: 4,
+    },
+    calendarDayText: {
+        ...typography.caption,
+        color: colors.textWeak,
+        fontSize: 11,
+    },
+    calendarDayTextToday: {
+        color: '#9594E8',
+        fontWeight: '600',
+    },
+    calendarDayCircle: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    calendarDayCircleToday: {
+        backgroundColor: '#9594E8',
+    },
+    calendarDateText: {
+        ...typography.body,
+        color: colors.textMedium,
+        fontWeight: '600',
+    },
+    calendarDateTextToday: {
+        color: '#FFFFFF',
     },
     dashboardCard: {
         backgroundColor: colors.surface,
@@ -186,22 +290,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         ...typography.caption,
         color: colors.textWeak,
     },
-    metricDivider: {
-        width: 1,
-        height: 40,
-        backgroundColor: colors.border,
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginBottom: spacing.xs,
     },
-    viewStatsRow: {
+    viewStatsIcon: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: spacing.sm,
         gap: 4,
-    },
-    viewStatsText: {
-        ...typography.caption,
-        color: colors.primary,
-        fontWeight: '600',
     },
     messagesContainer: {
         gap: spacing.xs,
@@ -212,16 +309,24 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         backgroundColor: colors.surface,
         borderRadius: radius.md,
         padding: spacing.sm,
-        gap: spacing.xs,
-        ...shadows.button,
+        gap: spacing.sm,
+        ...shadows.card,
     },
     messageIcon: {
-        fontSize: 24,
+        fontSize: 28,
     },
-    messageText: {
-        ...typography.body,
-        color: colors.textMedium,
+    messageContent: {
         flex: 1,
+    },
+    messageTitle: {
+        ...typography.body,
+        color: colors.textStrong,
+        fontWeight: '700',
+    },
+    messageSub: {
+        ...typography.caption,
+        color: colors.textWeak,
+        marginTop: 2,
     },
     unavailableContainer: {
         flex: 1,

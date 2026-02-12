@@ -1,10 +1,10 @@
 /**
  * Action Checklist Screen
- * Post-arrival checklist displayed after alarm dismissal when memos exist
+ * Modal card overlay with selectable action rows and disabled-until-done button
  */
 
 import { useMemo, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -14,7 +14,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { typography, spacing, radius, useThemeColors, ThemeColors } from '../src/styles/theme';
 
-const ITEM_HEIGHT = 56;
 const STAGGER_BASE_DELAY = 150;
 const STAGGER_PER_ITEM = 80;
 
@@ -51,85 +50,83 @@ export default function ActionChecklist() {
     }, []);
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
-            {/* Header */}
-            <View style={styles.header}>
-                <View style={styles.headerSpacer} />
-                <Text style={styles.headerTitle}>{t('actionChecklist.title')}</Text>
-                <Pressable onPress={handleDone} style={styles.headerDoneButton}>
-                    <Text style={styles.headerDoneText}>{t('actionChecklist.done')}</Text>
-                </Pressable>
-            </View>
+        <View style={styles.container}>
+            {/* Dark overlay top — tap to dismiss */}
+            <Pressable style={styles.overlayTop} onPress={handleDone} />
 
-            {/* Arrival Success Section */}
-            <View style={styles.arrivalSection}>
-                <View style={styles.arrivalIconWrapper}>
-                    <Ionicons name="checkmark-circle" size={64} color={colors.success} />
+            {/* Card from bottom */}
+            <View style={[styles.card, { paddingBottom: insets.bottom + spacing.md }]}>
+                {/* Handle indicator */}
+                <View style={styles.handleBar} />
+
+                {/* Header */}
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>{t('actionChecklist.title')}</Text>
                 </View>
-                <Text style={styles.arrivalSubtitle}>
-                    {t('actionChecklist.subtitle', { destination: alarmTitle || '' })}
-                </Text>
-            </View>
 
-            {/* Progress Section */}
-            <View style={styles.progressSection}>
-                <Text style={styles.progressText}>
-                    {allChecked
-                        ? t('actionChecklist.allChecked')
-                        : t('actionChecklist.remaining', { count: remainingCount })}
-                </Text>
-                <View style={styles.progressBarTrack}>
-                    <Animated.View
-                        style={[styles.progressBarFill, { width: `${progress * 100}%` }]}
-                        layout={Layout.springify()}
-                    />
+                {/* Progress Section */}
+                <View style={styles.progressSection}>
+                    <Text style={styles.progressText}>
+                        {allChecked
+                            ? t('actionChecklist.allChecked')
+                            : t('actionChecklist.remaining', { count: remainingCount })}
+                    </Text>
+                    <View style={styles.progressBarTrack}>
+                        <Animated.View
+                            style={[styles.progressBarFill, { width: `${progress * 100}%` }]}
+                            layout={Layout.springify()}
+                        />
+                    </View>
                 </View>
-            </View>
 
-            {/* Checklist Items */}
-            <View style={styles.listContainer}>
-                {currentMemos.map((memo, index) => (
-                    <Animated.View
-                        key={memo.id}
-                        entering={FadeInDown.delay(STAGGER_BASE_DELAY + index * STAGGER_PER_ITEM).springify()}
-                        layout={Layout.springify()}
-                    >
-                        <Pressable
-                            style={styles.checklistItem}
-                            onPress={() => handleToggle(memo.id, memo.is_checked)}
+                {/* Selectable Action Rows */}
+                <ScrollView style={styles.listContainer} contentContainerStyle={styles.listContent}>
+                    {currentMemos.map((memo, index) => (
+                        <Animated.View
+                            key={memo.id}
+                            entering={FadeInDown.delay(STAGGER_BASE_DELAY + index * STAGGER_PER_ITEM).springify()}
                         >
-                            <Ionicons
-                                name={memo.is_checked ? 'checkbox' : 'square-outline'}
-                                size={24}
-                                color={memo.is_checked ? colors.success : colors.textWeak}
-                            />
-                            <Text style={[
-                                styles.checklistText,
-                                memo.is_checked && styles.checklistTextDone,
-                            ]}>
-                                {memo.content}
-                            </Text>
-                        </Pressable>
-                    </Animated.View>
-                ))}
-            </View>
+                            <Pressable
+                                style={[
+                                    styles.checklistItem,
+                                    memo.is_checked && styles.checklistItemChecked,
+                                ]}
+                                onPress={() => handleToggle(memo.id, memo.is_checked)}
+                            >
+                                <Ionicons
+                                    name={memo.is_checked ? 'checkmark-circle' : 'ellipse-outline'}
+                                    size={24}
+                                    color={memo.is_checked ? colors.primary : colors.textWeak}
+                                />
+                                <Text style={[
+                                    styles.checklistText,
+                                    memo.is_checked && styles.checklistTextDone,
+                                ]}>
+                                    {memo.content}
+                                </Text>
+                            </Pressable>
+                        </Animated.View>
+                    ))}
+                </ScrollView>
 
-            {/* Bottom Done Button */}
-            <View style={[styles.bottomContainer, { paddingBottom: insets.bottom + spacing.md }]}>
-                <Pressable
-                    style={[
-                        styles.doneButton,
-                        { backgroundColor: allChecked ? colors.success : colors.primary },
-                    ]}
-                    onPress={handleDone}
-                >
-                    <Ionicons
-                        name={allChecked ? 'checkmark-done' : 'arrow-forward'}
-                        size={22}
-                        color="#FFFFFF"
-                    />
-                    <Text style={styles.doneButtonText}>{t('actionChecklist.done')}</Text>
-                </Pressable>
+                {/* Footer — disabled until all checked */}
+                <View style={styles.footerContainer}>
+                    <Pressable
+                        style={[
+                            styles.doneButton,
+                            { backgroundColor: allChecked ? colors.success : colors.border },
+                        ]}
+                        onPress={handleDone}
+                        disabled={!allChecked}
+                    >
+                        <Text style={[
+                            styles.doneButtonText,
+                            { color: allChecked ? '#FFFFFF' : colors.textWeak },
+                        ]}>
+                            {t('actionChecklist.done')}
+                        </Text>
+                    </Pressable>
+                </View>
             </View>
         </View>
     );
@@ -138,44 +135,34 @@ export default function ActionChecklist() {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    },
+    overlayTop: {
+        flex: 1,
+        minHeight: 120,
+    },
+    card: {
         backgroundColor: colors.background,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        maxHeight: '80%',
+    },
+    handleBar: {
+        width: 36,
+        height: 4,
+        backgroundColor: colors.border,
+        borderRadius: 2,
+        alignSelf: 'center',
+        marginTop: 12,
     },
     header: {
-        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: spacing.md,
-        height: 56,
-    },
-    headerSpacer: {
-        width: 60,
+        paddingTop: spacing.md,
+        paddingBottom: spacing.sm,
     },
     headerTitle: {
         ...typography.heading,
         color: colors.textStrong,
-        textAlign: 'center',
-        flex: 1,
-    },
-    headerDoneButton: {
-        width: 60,
-        alignItems: 'flex-end',
-    },
-    headerDoneText: {
-        ...typography.body,
-        color: colors.primary,
-        fontWeight: '600',
-    },
-    arrivalSection: {
-        alignItems: 'center',
-        paddingVertical: spacing.lg,
-        paddingHorizontal: spacing.md,
-    },
-    arrivalIconWrapper: {
-        marginBottom: spacing.sm,
-    },
-    arrivalSubtitle: {
-        ...typography.body,
-        color: colors.textMedium,
         textAlign: 'center',
     },
     progressSection: {
@@ -199,17 +186,23 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         borderRadius: radius.full,
     },
     listContainer: {
-        flex: 1,
         paddingHorizontal: spacing.md,
+    },
+    listContent: {
+        gap: spacing.xs,
     },
     checklistItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        height: ITEM_HEIGHT,
-        gap: spacing.sm,
-        paddingHorizontal: spacing.sm,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: colors.border,
+        minHeight: 56,
+        backgroundColor: colors.surface,
+        borderRadius: radius.md,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        gap: 16,
+    },
+    checklistItemChecked: {
+        backgroundColor: colors.primary + '14',
     },
     checklistText: {
         ...typography.body,
@@ -220,21 +213,18 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         color: colors.textWeak,
         textDecorationLine: 'line-through',
     },
-    bottomContainer: {
+    footerContainer: {
         paddingHorizontal: spacing.md,
         paddingTop: spacing.sm,
     },
     doneButton: {
-        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        height: 52,
+        height: 56,
         borderRadius: radius.md,
-        gap: spacing.xs,
     },
     doneButtonText: {
         ...typography.body,
-        color: '#FFFFFF',
-        fontWeight: '600',
+        fontWeight: '700',
     },
 });
