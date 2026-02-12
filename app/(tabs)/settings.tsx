@@ -5,12 +5,20 @@
 
 import { useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Switch, ScrollView, ActivityIndicator, Image } from 'react-native';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring,
+    FadeIn
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
 import { useThemeStore, ThemeMode } from '../../src/stores/themeStore';
+import { useUnitStore, DistanceUnit } from '../../src/stores/unitStore';
 import {
     useAlarmSettingsStore,
     AlertType,
@@ -37,6 +45,7 @@ export default function Settings() {
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const { mode, setMode } = useThemeStore();
+    const { distanceUnit, setDistanceUnit } = useUnitStore();
     const {
         alertType, selectedSound, setAlertType, setSelectedSound,
         shakeToDismiss, setShakeToDismiss,
@@ -51,6 +60,7 @@ export default function Settings() {
     const [showAlertTypeModal, setShowAlertTypeModal] = useState(false);
     const [showSoundPickerModal, setShowSoundPickerModal] = useState(false);
     const [showBackgroundModal, setShowBackgroundModal] = useState(false);
+    const [showUnitModal, setShowUnitModal] = useState(false);
 
     const currentLanguage = i18n.language;
     const hasSoundSetting = alertType === 'both' || alertType === 'sound';
@@ -92,6 +102,28 @@ export default function Settings() {
             case 'system': return t('settings.theme.system');
             default: return t('settings.theme.system');
         }
+    };
+
+    const getUnitLabel = (unit: DistanceUnit) => {
+        switch (unit) {
+            case 'metric': return t('settings.unit.metric');
+            case 'imperial': return t('settings.unit.imperial');
+            default: return t('settings.unit.metric');
+        }
+    };
+
+    const getUnitStatusText = (unit: DistanceUnit) => {
+        return unit === 'metric'
+            ? t('settings.unit.currentlyMetric')
+            : t('settings.unit.currentlyImperial');
+    };
+
+    const handleUnitChange = async (unit: DistanceUnit) => {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setDistanceUnit(unit);
+        setTimeout(() => {
+            setShowUnitModal(false);
+        }, 150);
     };
 
     const getAlertTypeLabel = (type: AlertType) => {
@@ -189,6 +221,17 @@ export default function Settings() {
                         label={t('settings.items.theme')}
                         description={getThemeLabel(mode)}
                         onPress={() => setShowThemeModal(true)}
+                        rightElement={
+                            <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
+                        }
+                        colors={colors}
+                    />
+
+                    <SettingItem
+                        icon="resize"
+                        label={t('settings.items.distanceUnit')}
+                        description={getUnitStatusText(distanceUnit)}
+                        onPress={() => setShowUnitModal(true)}
                         rightElement={
                             <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
                         }
@@ -394,6 +437,42 @@ export default function Settings() {
                 </Pressable>
             )}
 
+            {/* Unit Selection Modal */}
+            {showUnitModal && (
+                <Pressable style={styles.modalOverlay} onPress={() => setShowUnitModal(false)}>
+                    <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+                        <Text style={styles.modalTitle}>{t('settings.unit.title')}</Text>
+
+                        {[
+                            { code: 'metric' as DistanceUnit, label: t('settings.unit.metric'), icon: 'speedometer-outline' },
+                            { code: 'imperial' as DistanceUnit, label: t('settings.unit.imperial'), icon: 'speedometer' }
+                        ].map((item, index) => (
+                            <AnimatedOptionRow
+                                key={item.code}
+                                isSelected={distanceUnit === item.code}
+                                onPress={() => handleUnitChange(item.code)}
+                                index={index}
+                                colors={colors}
+                            >
+                                <View style={styles.optionLeft}>
+                                    <Ionicons
+                                        name={item.icon as any}
+                                        size={20}
+                                        color={distanceUnit === item.code ? colors.primary : colors.textMedium}
+                                    />
+                                    <Text style={[
+                                        styles.optionText,
+                                        distanceUnit === item.code && styles.optionTextSelected
+                                    ]}>
+                                        {item.label}
+                                    </Text>
+                                </View>
+                            </AnimatedOptionRow>
+                        ))}
+                    </Pressable>
+                </Pressable>
+            )}
+
             {/* Alert Type Modal */}
             {showAlertTypeModal && (
                 <Pressable style={styles.modalOverlay} onPress={() => setShowAlertTypeModal(false)}>
@@ -596,6 +675,53 @@ function SettingItem({
     );
 }
 
+interface AnimatedOptionRowProps {
+    isSelected: boolean;
+    onPress: () => void;
+    children: React.ReactNode;
+    index: number;
+    colors: ThemeColors;
+}
+
+function AnimatedOptionRow({ isSelected, onPress, children, index, colors }: AnimatedOptionRowProps) {
+    const styles = useMemo(() => createStyles(colors), [colors]);
+    const scale = useSharedValue(1);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+    }));
+
+    const handlePress = () => {
+        scale.value = withSpring(1.03, { damping: 15, stiffness: 300 });
+        setTimeout(() => {
+            scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+        }, 100);
+        onPress();
+    };
+
+    return (
+        <Animated.View
+            entering={FadeIn.delay(index * 50).duration(200)}
+            style={animatedStyle}
+        >
+            <Pressable
+                style={[
+                    styles.optionRow,
+                    isSelected && styles.optionRowSelected
+                ]}
+                onPress={handlePress}
+            >
+                {children}
+                {isSelected && (
+                    <Animated.View entering={FadeIn.duration(100)}>
+                        <Ionicons name="checkmark" size={20} color={colors.primary} />
+                    </Animated.View>
+                )}
+            </Pressable>
+        </Animated.View>
+    );
+}
+
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
@@ -714,6 +840,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     optionRowSelected: {
         backgroundColor: colors.background,
+        borderRadius: radius.sm,
     },
     optionLeft: {
         flexDirection: 'row',

@@ -26,7 +26,7 @@
             "google": "(Google)",
             "kakao": "(Kakao)"
         },
-        "radius": "半径 {{radius}}m",
+        "radius": "半径 {{radius}}",
         "createAlarm": "ここにアラーム設定",
         "favorites": "お気に入り",
         "addFavorite": "お気に入り追加",
@@ -54,9 +54,9 @@
         "cycling": "自転車",
         "routeOptions": "経路オプション",
         "radius": "アラーム半径",
-        "radiusValue": "{{radius}}m",
+        "radiusValue": "{{radius}}",
         "alarmPreview": {
-            "beforeRadius": "目的地半径 {{radius}}m 前",
+            "beforeRadius": "目的地半径 {{radius}} 前",
             "estimatedTime": "約 {{minutes}}分後にアラームが鳴ります"
         },
         "memo": "メモ (任意)",
@@ -112,7 +112,7 @@
         "detail": {
             "locationInfo": "位置情報",
             "loading": "住所検索中...",
-            "radius": "半径 {{radius}}m",
+            "radius": "半径 {{radius}}",
             "createdAt": "作成日時",
             "deleteAlarm": "アラーム削除",
             "title": "アラーム詳細",
@@ -156,7 +156,15 @@
             "alertType": "通知方法",
             "mapEngine": "地図エンジン",
             "theme": "画面テーマ",
-            "alarmBackground": "アラーム背景"
+            "alarmBackground": "アラーム背景",
+            "distanceUnit": "距離単位"
+        },
+        "unit": {
+            "title": "距離単位",
+            "metric": "メートル法 (km, m)",
+            "imperial": "ヤード・ポンド法 (mi, ft)",
+            "currentlyMetric": "現在: キロメートル",
+            "currentlyImperial": "現在: マイル"
         },
         "theme": {
             "title": "画面テーマ",
@@ -358,7 +366,7 @@
             "ecoTrees": "今日歩いた距離で木{{trees}}本分のCO2を相殺しました",
             "carbonReduction": "歩いて移動し{{grams}}gのCO2排出を削減しました",
             "goalMotivation": "10,000歩まであと{{remaining}}歩！頑張って！",
-            "landmarkBurj": "今日の総距離がブルジュ・ハリファ（{{height}}m）の高さを超えました！",
+            "landmarkBurj": "今日の総距離がブルジュ・ハリファ（{{height}}）の高さを超えました！",
             "comparisonYesterday": "昨日より{{percent}}%多く歩きました！"
         }
     }

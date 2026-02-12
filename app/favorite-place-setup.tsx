@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { useFavoritePlaceStore } from '../src/stores/favoritePlaceStore';
 import { colors, typography, spacing, radius, shadows } from '../src/styles/theme';
+import { useDistanceFormatter } from '../src/utils/distanceFormatter';
 
 // Available icons for selection
 const ICONS = [
@@ -35,6 +36,7 @@ export default function FavoritePlaceSetup() {
 
     const { t } = useTranslation();
     const { addFavorite, favorites } = useFavoritePlaceStore();
+    const { formatRadius } = useDistanceFormatter();
 
     const handleSave = async () => {
         if (!label.trim()) {
@@ -136,7 +138,7 @@ export default function FavoritePlaceSetup() {
                         </View>
                         <View style={styles.detailRow}>
                             <Ionicons name="radio-button-on-outline" size={20} color={colors.primary} />
-                            <Text style={styles.detailText}>{t('home.radius', { radius: savedRadius })}</Text>
+                            <Text style={styles.detailText}>{t('home.radius', { radius: formatRadius(savedRadius) })}</Text>
                         </View>
                     </View>
                 </View>

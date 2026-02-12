@@ -26,7 +26,7 @@
             "google": "(Google)",
             "kakao": "(Kakao)"
         },
-        "radius": "Radius {{radius}}m",
+        "radius": "Radius {{radius}}",
         "createAlarm": "Create Alarm",
         "favorites": "Favorites",
         "addFavorite": "Add Favorite",
@@ -54,9 +54,9 @@
         "cycling": "Cycling",
         "routeOptions": "Route Options",
         "radius": "Alarm Radius",
-        "radiusValue": "{{radius}}m",
+        "radiusValue": "{{radius}}",
         "alarmPreview": {
-            "beforeRadius": "{{radius}}m before destination",
+            "beforeRadius": "{{radius}} before destination",
             "estimatedTime": "Alarm will ring in about {{minutes}} minutes"
         },
         "memo": "Memo (Optional)",
@@ -112,7 +112,7 @@
         "detail": {
             "locationInfo": "Location Info",
             "loading": "Searching address...",
-            "radius": "Radius {{radius}}m",
+            "radius": "Radius {{radius}}",
             "createdAt": "Created At",
             "deleteAlarm": "Delete Alarm",
             "title": "Alarm Details",
@@ -156,7 +156,15 @@
             "alertType": "Alert Type",
             "mapEngine": "Map Engine",
             "theme": "Screen Theme",
-            "alarmBackground": "Alarm Background"
+            "alarmBackground": "Alarm Background",
+            "distanceUnit": "Distance Unit"
+        },
+        "unit": {
+            "title": "Distance Unit",
+            "metric": "Metric (km, m)",
+            "imperial": "Imperial (mi, ft)",
+            "currentlyMetric": "Currently: Kilometers",
+            "currentlyImperial": "Currently: Miles"
         },
         "theme": {
             "title": "Screen Theme",
@@ -358,7 +366,7 @@
             "ecoTrees": "You offset the CO2 of {{trees}} trees by walking today",
             "carbonReduction": "You reduced {{grams}}g of carbon emissions by walking",
             "goalMotivation": "{{remaining}} steps to 10,000! Keep going!",
-            "landmarkBurj": "Your total distance today exceeds the height of Burj Khalifa ({{height}}m)!",
+            "landmarkBurj": "Your total distance today exceeds the height of Burj Khalifa ({{height}})!",
             "comparisonYesterday": "You walked {{percent}}% more than yesterday!"
         }
     }

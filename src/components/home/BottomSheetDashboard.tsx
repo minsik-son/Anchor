@@ -23,6 +23,7 @@ import Slider from '@react-native-community/slider';
 import AddressBar from '../map/AddressBar';
 import { useThemeColors, ThemeColors, typography, spacing, radius, shadows } from '../../styles/theme';
 import { FavoritePlace } from '../../stores/favoritePlaceStore';
+import { useDistanceFormatter } from '../../utils/distanceFormatter';
 
 // Exported constants for synchronization with map pin
 export const BOTTOM_SHEET_COLLAPSED = 248;
@@ -70,6 +71,7 @@ function BottomSheetDashboard({
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const { height: screenHeight } = useWindowDimensions();
+    const { formatRadius, getRadiusLabels } = useDistanceFormatter();
 
     const EXPANDED_HEIGHT = getBottomSheetExpanded(screenHeight);
 
@@ -182,12 +184,7 @@ function BottomSheetDashboard({
         marginBottom: interpolate(animatedHeight.value, [BOTTOM_SHEET_COLLAPSED, EXPANDED_HEIGHT], [10, 0]),
     }));
 
-    const formatRadius = (meters: number) => {
-        if (meters >= 1000) {
-            return `${(meters / 1000).toFixed(1)}km`;
-        }
-        return `${meters}m`;
-    };
+    const radiusLabels = getRadiusLabels();
 
     const handleRadiusChipPress = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -271,8 +268,8 @@ function BottomSheetDashboard({
                             thumbTintColor={colors.primary}
                         />
                         <View style={styles.radiusSliderLabels}>
-                            <Text style={styles.radiusSliderMinMax}>50m</Text>
-                            <Text style={styles.radiusSliderMinMax}>2km</Text>
+                            <Text style={styles.radiusSliderMinMax}>{radiusLabels.min}</Text>
+                            <Text style={styles.radiusSliderMinMax}>{radiusLabels.max}</Text>
                         </View>
                     </Animated.View>
                 )}

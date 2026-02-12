@@ -16,7 +16,8 @@ import * as db from '../src/db/database';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useThemeStore } from '../src/stores/themeStore';
 import { reverseGeocode } from '../src/services/geocoding';
-import { calculateDistance, formatDistance } from '../src/services/location/geofence';
+import { calculateDistance } from '../src/services/location/geofence';
+import { useDistanceFormatter } from '../src/utils/distanceFormatter';
 import { mapDarkStyle } from '../src/constants/mapDarkStyle';
 import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../src/styles/theme';
 
@@ -39,6 +40,7 @@ export default function AlarmDetail() {
     const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && systemScheme === 'dark');
 
     const { deleteAlarm, loadAlarms } = useAlarmStore();
+    const { formatDistance, formatRadius } = useDistanceFormatter();
 
     const [alarm, setAlarm] = useState<Alarm | null>(null);
     const [memos, setMemos] = useState<ActionMemo[]>([]);
@@ -101,7 +103,7 @@ export default function AlarmDetail() {
             { latitude: alarm.latitude, longitude: alarm.longitude }
         );
         return formatDistance(meters);
-    }, [alarm]);
+    }, [alarm, formatDistance]);
 
     const mapRegion = useMemo(() => {
         if (!alarm) return undefined;
@@ -273,7 +275,7 @@ export default function AlarmDetail() {
                     <View style={styles.cardRow}>
                         <Ionicons name="radio-button-on-outline" size={20} color={colors.primary} />
                         <Text style={styles.cardRowValue}>
-                            {t('history.detail.radius', { radius: alarm.radius })}
+                            {t('history.detail.radius', { radius: formatRadius(alarm.radius) })}
                         </Text>
                     </View>
                 </View>

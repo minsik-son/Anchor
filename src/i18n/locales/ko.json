@@ -26,7 +26,7 @@
             "google": "(Google)",
             "kakao": "(Kakao)"
         },
-        "radius": "반경 {{radius}}m",
+        "radius": "반경 {{radius}}",
         "createAlarm": "여기로 알람 설정",
         "favorites": "즐겨찾기",
         "addFavorite": "즐겨찾기 추가",
@@ -54,9 +54,9 @@
         "cycling": "자전거",
         "routeOptions": "경로 옵션",
         "radius": "알람 반경",
-        "radiusValue": "{{radius}}m",
+        "radiusValue": "{{radius}}",
         "alarmPreview": {
-            "beforeRadius": "목적지 반경 {{radius}}m 전",
+            "beforeRadius": "목적지 반경 {{radius}} 전",
             "estimatedTime": "약 {{minutes}}분 뒤에 알람이 울립니다"
         },
         "memo": "메모 (선택사항)",
@@ -112,7 +112,7 @@
         "detail": {
             "locationInfo": "위치 정보",
             "loading": "주소 검색 중...",
-            "radius": "반경 {{radius}}m",
+            "radius": "반경 {{radius}}",
             "createdAt": "생성 시간",
             "deleteAlarm": "알람 삭제",
             "title": "알람 상세정보",
@@ -156,7 +156,15 @@
             "alertType": "알림 방식",
             "mapEngine": "지도 엔진",
             "theme": "화면 테마",
-            "alarmBackground": "알람 배경"
+            "alarmBackground": "알람 배경",
+            "distanceUnit": "거리 단위"
+        },
+        "unit": {
+            "title": "거리 단위",
+            "metric": "미터법 (km, m)",
+            "imperial": "야드파운드법 (mi, ft)",
+            "currentlyMetric": "현재: 킬로미터",
+            "currentlyImperial": "현재: 마일"
         },
         "theme": {
             "title": "화면 테마",
@@ -358,7 +366,7 @@
             "ecoTrees": "오늘 걸은 거리로 나무 {{trees}}그루의 CO2를 상쇄했어요",
             "carbonReduction": "걸어서 이동하며 {{grams}}g의 탄소 배출을 줄였어요",
             "goalMotivation": "10,000보까지 {{remaining}}보 남았어요! 화이팅!",
-            "landmarkBurj": "오늘 걸은 총 거리가 부르즈 할리파({{height}}m) 높이를 넘었어요!",
+            "landmarkBurj": "오늘 걸은 총 거리가 부르즈 할리파({{height}}) 높이를 넘었어요!",
             "comparisonYesterday": "어제보다 {{percent}}% 더 많이 걸었어요!"
         }
     }

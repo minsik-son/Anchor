@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 import { useLocationStore } from '../../stores/locationStore';
 import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../styles/theme';
+import { useDistanceFormatter } from '../../utils/distanceFormatter';
 
 interface NavigationPanelProps {
     onStopNavigation: () => void;
@@ -27,19 +28,7 @@ export default function NavigationPanel({ onStopNavigation }: NavigationPanelPro
         selectedRoute,
         targetRadius
     } = useLocationStore();
-
-    const formatDistance = (meters: number | null) => {
-        if (meters === null) return '--';
-        if (meters >= 1000) {
-            return `${(meters / 1000).toFixed(1)}km`;
-        }
-        return `${Math.round(meters)}m`;
-    };
-
-    const formatSpeed = (kmh: number | null) => {
-        if (kmh === null || kmh < 0) return '--';
-        return `${Math.round(kmh)}`;
-    };
+    const { formatDistance, formatSpeed } = useDistanceFormatter();
 
     const distanceToAlarm = distanceToTarget !== null
         ? Math.max(0, distanceToTarget - targetRadius)
@@ -76,7 +65,7 @@ export default function NavigationPanel({ onStopNavigation }: NavigationPanelPro
                     <Ionicons name="speedometer" size={20} color={colors.primary} />
                     <View>
                         <Text style={styles.statLabel}>{t('navigation.speed')}</Text>
-                        <Text style={styles.statValue}>{formatSpeed(speed)} <Text style={styles.statUnit}>km/h</Text></Text>
+                        <Text style={styles.statValue}>{formatSpeed(speed).value} <Text style={styles.statUnit}>{formatSpeed(speed).unit}</Text></Text>
                     </View>
                 </View>
 

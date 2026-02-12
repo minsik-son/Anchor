@@ -16,6 +16,7 @@ import { getActiveMessages, MessageContext } from '../../src/constants/activityM
 import { ActivityAdBanner } from '../../src/components/activity/ActivityAdBanner';
 import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
 import { useThemeStore } from '../../src/stores/themeStore';
+import { useDistanceFormatter } from '../../src/utils/distanceFormatter';
 
 export default function Activity() {
     const insets = useSafeAreaInsets();
@@ -23,6 +24,7 @@ export default function Activity() {
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const mode = useThemeStore((s) => s.mode);
+    const { formatDistance } = useDistanceFormatter();
 
     const { todaySteps, todayDistance, todayCalories, isPedometerAvailable, isLoading } = usePedometer();
     const getYesterdaySteps = useActivityStore((s) => s.getYesterdaySteps);
@@ -31,7 +33,7 @@ export default function Activity() {
     const isDark = mode === 'dark';
     const gradientColors = isDark
         ? ['#1A2332', colors.background] as const
-        : ['#D4F4FF', '#F0FAFF'] as const;
+        : ['#696cf3ff', '#d2d2f4ff'] as const;
 
     const totalDistanceKm = useMemo(() => {
         const totalMeters = dailyRecords.reduce((sum, r) => sum + r.distance, 0) + todayDistance;
@@ -48,21 +50,13 @@ export default function Activity() {
 
     const activeMessages = useMemo(() => getActiveMessages(messageContext), [messageContext]);
 
-    const distanceDisplay = useMemo(() => {
-        if (todayDistance >= 1000) {
-            return `${(todayDistance / 1000).toFixed(1)}km`;
-        }
-        return `${Math.round(todayDistance)}m`;
-    }, [todayDistance]);
+    const distanceDisplay = useMemo(() => formatDistance(todayDistance), [todayDistance, formatDistance]);
 
     if (isPedometerAvailable === false) {
         return (
             <View style={[styles.container, { paddingTop: insets.top }]}>
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>{t('activity.title')}</Text>
-                </View>
                 <View style={styles.unavailableContainer}>
-                    <Ionicons name="footsteps-outline" size={64} color={colors.textWeak} />
+                    <Ionicons name="pulse-outline" size={64} color={colors.textWeak} />
                     <Text style={styles.unavailableText}>{t('activity.pedometerUnavailable')}</Text>
                 </View>
             </View>
@@ -75,16 +69,12 @@ export default function Activity() {
                 contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top, paddingBottom: insets.bottom + 20 }]}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>{t('activity.title')}</Text>
-                </View>
-
                 <Pressable
                     style={styles.dashboardCard}
                     onPress={() => router.push('/activity-stats')}
                 >
                     <View style={styles.stepCountContainer}>
-                        <Ionicons name="footsteps" size={28} color={colors.primary} />
+                        <Ionicons name="pulse" size={28} color={colors.primary} />
                         <Text style={styles.stepCount}>
                             {isLoading ? '—' : todaySteps.toLocaleString()}
                         </Text>
@@ -119,14 +109,21 @@ export default function Activity() {
 
                 {activeMessages.length > 0 && (
                     <View style={styles.messagesContainer}>
-                        {activeMessages.map((msg) => (
-                            <View key={msg.id} style={styles.messageCard}>
-                                <Text style={styles.messageIcon}>{msg.icon}</Text>
-                                <Text style={styles.messageText}>
-                                    {t(msg.i18nKey, msg.variables(messageContext))}
-                                </Text>
-                            </View>
-                        ))}
+                        {activeMessages.map((msg) => {
+                            let variables = msg.variables(messageContext);
+                            // Format height for landmark_burj message with unit
+                            if (msg.id === 'landmark_burj') {
+                                variables = { ...variables, height: formatDistance(828) };
+                            }
+                            return (
+                                <View key={msg.id} style={styles.messageCard}>
+                                    <Text style={styles.messageIcon}>{msg.icon}</Text>
+                                    <Text style={styles.messageText}>
+                                        {t(msg.i18nKey, variables)}
+                                    </Text>
+                                </View>
+                            );
+                        })}
                     </View>
                 )}
             </ScrollView>
@@ -140,13 +137,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     scrollContent: {
         paddingHorizontal: spacing.sm,
-    },
-    header: {
-        paddingVertical: spacing.sm,
-    },
-    headerTitle: {
-        ...typography.display,
-        color: colors.textStrong,
     },
     dashboardCard: {
         backgroundColor: colors.surface,

@@ -17,6 +17,7 @@ import { startTracking as startServiceTracking } from '../src/services/location/
 import { useTranslation } from 'react-i18next';
 import { typography, spacing, radius, shadows, alarmDefaults, useThemeColors, ThemeColors } from '../src/styles/theme';
 import { isWithinRadius, calculateDistance } from '../src/services/location/geofence';
+import { useDistanceFormatter } from '../src/utils/distanceFormatter';
 
 const ALARM_ICONS = [
     { key: 'home', icon: 'home' },
@@ -41,6 +42,7 @@ export default function AlarmSetup() {
     const { t } = useTranslation();
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
+    const { formatRadius } = useDistanceFormatter();
 
     const [title, setTitle] = useState('');
     const [selectedIcon, setSelectedIcon] = useState('pin');
@@ -242,7 +244,7 @@ export default function AlarmSetup() {
                 <View style={styles.section}>
                     <View style={styles.row}>
                         <Text style={styles.label}>{t('alarmSetup.radius')}</Text>
-                        <Text style={styles.radiusValue}>{t('alarmSetup.radiusValue', { radius: alarmRadius })}</Text>
+                        <Text style={styles.radiusValue}>{t('alarmSetup.radiusValue', { radius: formatRadius(alarmRadius) })}</Text>
                     </View>
                     <Slider
                         style={styles.slider}
