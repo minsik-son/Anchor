@@ -66,52 +66,62 @@ export const useMapPin = ({
     }, []);
 
     // Finalize location and trigger reverse geocoding
-    const handleRegionChangeComplete = useCallback(async (region: Region) => {
+    // 2-phase approach: immediate render with region coords, then refine with precise coords
+    const handleRegionChangeComplete = useCallback((region: Region) => {
         isDraggingRef.current = false;
 
-        // Pin tip position in MapView's coordinate system
-        // Uses actual map container height (excludes tab bar) for accurate coordinate calculation
-        const pinTipInMapView = {
-            x: screenWidth / 2,
-            y: mapHeight / 2 + PIN_TIP_OFFSET,
+        // Phase 1: Immediate Circle rendering using region coordinates
+        const immediateLocation = {
+            latitude: region.latitude,
+            longitude: region.longitude,
         };
-
-        let newLocation: { latitude: number; longitude: number };
-
-        try {
-            const coordinate = await mapRef.current?.coordinateForPoint(pinTipInMapView);
-            if (coordinate) {
-                newLocation = {
-                    latitude: coordinate.latitude,
-                    longitude: coordinate.longitude,
-                };
-            } else {
-                // Fallback to region center
-                newLocation = {
-                    latitude: region.latitude,
-                    longitude: region.longitude,
-                };
-            }
-        } catch {
-            // Fallback to region center
-            newLocation = {
-                latitude: region.latitude,
-                longitude: region.longitude,
-            };
-        }
-
-        setCenterLocation(newLocation);
-        setIsDragging(false);  // Set after centerLocation to prevent circle position jump
-        onLocationChange?.(newLocation);
-
+        setCenterLocation(immediateLocation);
+        setIsDragging(false);
+        onLocationChange?.(immediateLocation);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        setIsLoadingAddress(true);
-        debouncedReverseGeocode(newLocation.latitude, newLocation.longitude, (result) => {
-            setAddressInfo(result);
-            onAddressChange?.(result);
-            setIsLoadingAddress(false);
-        });
+        // Phase 2: Async refinement with precise coordinates
+        const refineLocation = async () => {
+            const pinTipInMapView = {
+                x: screenWidth / 2,
+                y: mapHeight / 2 + PIN_TIP_OFFSET,
+            };
+
+            try {
+                const coordinate = await mapRef.current?.coordinateForPoint(pinTipInMapView);
+                if (coordinate) {
+                    const refinedLocation = {
+                        latitude: coordinate.latitude,
+                        longitude: coordinate.longitude,
+                    };
+                    setCenterLocation(refinedLocation);
+                    onLocationChange?.(refinedLocation);
+
+                    // Geocoding with precise coordinates
+                    debouncedReverseGeocode(refinedLocation.latitude, refinedLocation.longitude, (result) => {
+                        setAddressInfo(result);
+                        onAddressChange?.(result);
+                        setIsLoadingAddress(false);
+                    });
+                } else {
+                    // Fallback: geocode with region coordinates
+                    debouncedReverseGeocode(immediateLocation.latitude, immediateLocation.longitude, (result) => {
+                        setAddressInfo(result);
+                        onAddressChange?.(result);
+                        setIsLoadingAddress(false);
+                    });
+                }
+            } catch {
+                // Fallback: geocode with region coordinates
+                debouncedReverseGeocode(immediateLocation.latitude, immediateLocation.longitude, (result) => {
+                    setAddressInfo(result);
+                    onAddressChange?.(result);
+                    setIsLoadingAddress(false);
+                });
+            }
+        };
+
+        refineLocation();
     }, [mapRef, onLocationChange, onAddressChange, screenWidth, mapHeight]);
 
     // Programmatic move with animation protection
