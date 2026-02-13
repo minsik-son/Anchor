@@ -8,11 +8,11 @@ import { View, Text, StyleSheet, ScrollView, Pressable, TouchableOpacity } from 
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../src/styles/theme';
 
 interface ActiveChallenge {
     id: string;
-    title: string;
     icon: keyof typeof Ionicons.glyphMap;
     iconColor: string;
     iconBgColor: string;
@@ -23,17 +23,14 @@ interface ActiveChallenge {
 
 interface RecommendedChallenge {
     id: string;
-    title: string;
-    subtitle: string;
+    translationKey: string;
     icon: keyof typeof Ionicons.glyphMap;
     iconColor: string;
     iconBgColor: string;
-    participants: number;
 }
 
 const ACTIVE_CHALLENGE: ActiveChallenge = {
     id: 'active-1',
-    title: '헬스장 출석하기',
     icon: 'barbell',
     iconColor: '#3182F6',
     iconBgColor: '#E8F3FF',
@@ -45,43 +42,28 @@ const ACTIVE_CHALLENGE: ActiveChallenge = {
 const RECOMMENDED_CHALLENGES: RecommendedChallenge[] = [
     {
         id: '1',
-        title: '헬스왕',
-        subtitle: '주 3회 방문',
-        icon: 'barbell',
-        iconColor: '#3182F6',
-        iconBgColor: '#E8F3FF',
-        participants: 1234,
-    },
-    {
-        id: '2',
-        title: '아침 산책',
-        subtitle: '매일 공원 방문',
+        translationKey: 'walk',
         icon: 'walk',
         iconColor: '#00C853',
         iconBgColor: '#E6F9EE',
-        participants: 2345,
     },
     {
-        id: '3',
-        title: '도서관 집중',
-        subtitle: '주 5회 방문',
+        id: '2',
+        translationKey: 'study',
         icon: 'book',
         iconColor: '#FF9800',
         iconBgColor: '#FFF3E0',
-        participants: 987,
     },
     {
-        id: '4',
-        title: '에코 텀블러',
-        subtitle: '매일 카페 방문',
-        icon: 'cafe',
-        iconColor: '#795548',
-        iconBgColor: '#EFEBE9',
-        participants: 456,
+        id: '3',
+        translationKey: 'gym',
+        icon: 'barbell',
+        iconColor: '#3182F6',
+        iconBgColor: '#E8F3FF',
     },
 ];
 
-function ProgressBar({ progress, goal, colors }: { progress: number; goal: number; colors: ThemeColors }) {
+function ProgressBar({ progress, goal, colors, t }: { progress: number; goal: number; colors: ThemeColors; t: (key: string, options?: object) => string }) {
     const percentage = (progress / goal) * 100;
     const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -90,7 +72,9 @@ function ProgressBar({ progress, goal, colors }: { progress: number; goal: numbe
             <View style={styles.progressBarBackground}>
                 <View style={[styles.progressBarFill, { width: `${percentage}%` }]} />
             </View>
-            <Text style={styles.progressText}>{progress}/{goal} 완료</Text>
+            <Text style={styles.progressText}>
+                {t('challenge.activeChallenge.progress', { progress, goal })}
+            </Text>
         </View>
     );
 }
@@ -98,6 +82,7 @@ function ProgressBar({ progress, goal, colors }: { progress: number; goal: numbe
 export default function ChallengeLanding() {
     const insets = useSafeAreaInsets();
     const colors = useThemeColors();
+    const { t } = useTranslation();
     const styles = useMemo(() => createStyles(colors), [colors]);
 
     return (
@@ -107,7 +92,7 @@ export default function ChallengeLanding() {
                 <Pressable onPress={() => router.back()} hitSlop={8}>
                     <Ionicons name="chevron-back" size={24} color={colors.textStrong} />
                 </Pressable>
-                <Text style={styles.headerTitle}>Challenges</Text>
+                <Text style={styles.headerTitle}>{t('challenge.headerTitle')}</Text>
                 <View style={{ width: 24 }} />
             </View>
 
@@ -127,55 +112,66 @@ export default function ChallengeLanding() {
                             />
                         </View>
                         <View style={styles.activeChallengeInfo}>
-                            <Text style={styles.activeChallengeTitle}>{ACTIVE_CHALLENGE.title}</Text>
+                            <Text style={styles.activeChallengeTitle}>
+                                {t('challenge.activeChallenge.title')}
+                            </Text>
                         </View>
                         <View style={styles.dDayBadge}>
-                            <Text style={styles.dDayText}>D-{ACTIVE_CHALLENGE.daysLeft} 남음</Text>
+                            <Text style={styles.dDayText}>
+                                {t('challenge.activeChallenge.daysLeft', { days: ACTIVE_CHALLENGE.daysLeft })}
+                            </Text>
                         </View>
                     </View>
                     <ProgressBar
                         progress={ACTIVE_CHALLENGE.progress}
                         goal={ACTIVE_CHALLENGE.goal}
                         colors={colors}
+                        t={t}
                     />
                 </TouchableOpacity>
 
                 {/* Recommended Challenges Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>추천 챌린지</Text>
-                    <View style={styles.challengesList}>
-                        {RECOMMENDED_CHALLENGES.map((challenge, index) => (
-                            <TouchableOpacity
-                                key={challenge.id}
-                                style={[
-                                    styles.challengeRow,
-                                    index < RECOMMENDED_CHALLENGES.length - 1 && styles.challengeRowBorder,
-                                ]}
-                                activeOpacity={0.7}
-                            >
-                                <View style={[styles.iconBox, { backgroundColor: challenge.iconBgColor }]}>
-                                    <Ionicons
-                                        name={challenge.icon}
-                                        size={24}
-                                        color={challenge.iconColor}
-                                    />
-                                </View>
-                                <View style={styles.challengeInfo}>
-                                    <Text style={styles.challengeTitle}>{challenge.title}</Text>
-                                    <Text style={styles.challengeSubtitle}>
-                                        {challenge.participants.toLocaleString()}명 참여 중
-                                    </Text>
-                                </View>
-                                <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
-                            </TouchableOpacity>
-                        ))}
+                <View style={styles.recommendedCard}>
+                    {/* Card Header */}
+                    <View style={styles.recommendedHeader}>
+                        <Text style={styles.recommendedTitle}>{t('challenge.recommended.title')}</Text>
+                        <Text style={styles.recommendedSubtitle}>{t('challenge.recommended.subtitle')}</Text>
                     </View>
+
+                    {/* Challenge List */}
+                    {RECOMMENDED_CHALLENGES.map((challenge, index) => (
+                        <TouchableOpacity
+                            key={challenge.id}
+                            style={[
+                                styles.challengeRow,
+                                index < RECOMMENDED_CHALLENGES.length - 1 && styles.challengeRowBorder,
+                            ]}
+                            activeOpacity={0.7}
+                        >
+                            <View style={[styles.iconBox, { backgroundColor: challenge.iconBgColor }]}>
+                                <Ionicons name={challenge.icon} size={24} color={challenge.iconColor} />
+                            </View>
+                            <View style={styles.challengeInfo}>
+                                <Text style={styles.challengeTitle}>
+                                    {t(`challenge.challenges.${challenge.translationKey}.title`)}
+                                </Text>
+                                <Text style={styles.challengeSubtitle}>
+                                    {t(`challenge.challenges.${challenge.translationKey}.subtitle`)}
+                                </Text>
+                            </View>
+                            <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+                        </TouchableOpacity>
+                    ))}
                 </View>
 
                 {/* Create Custom Button */}
-                <TouchableOpacity style={styles.createCustomButton} activeOpacity={0.7}>
+                <TouchableOpacity
+                    style={styles.createCustomButton}
+                    activeOpacity={0.7}
+                    onPress={() => router.push('/challenge-create')}
+                >
                     <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
-                    <Text style={styles.createCustomText}>나만의 루틴 만들기</Text>
+                    <Text style={styles.createCustomText}>{t('challenge.createCustom')}</Text>
                 </TouchableOpacity>
             </ScrollView>
         </View>
@@ -270,21 +266,26 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         minWidth: 60,
         textAlign: 'right',
     },
-    // Section
-    section: {
+    // Recommended Card
+    recommendedCard: {
+        backgroundColor: colors.surface,
+        borderRadius: 24,
+        padding: 20,
         marginBottom: spacing.md,
+        ...shadows.card,
     },
-    sectionTitle: {
-        ...typography.body,
+    recommendedHeader: {
+        marginBottom: spacing.sm,
+    },
+    recommendedTitle: {
+        ...typography.heading,
         fontWeight: '700',
         color: colors.textStrong,
-        marginBottom: spacing.xs,
     },
-    // Challenge List
-    challengesList: {
-        backgroundColor: colors.surface,
-        borderRadius: radius.md,
-        ...shadows.card,
+    recommendedSubtitle: {
+        ...typography.caption,
+        color: colors.textWeak,
+        marginTop: 4,
     },
     challengeRow: {
         flexDirection: 'row',
@@ -306,7 +307,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     challengeSubtitle: {
         ...typography.caption,
-        color: colors.textWeak,
+        color: colors.textMedium,
         marginTop: 2,
     },
     // Create Custom Button

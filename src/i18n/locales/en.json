@@ -375,5 +375,55 @@
             "comparisonYesterdayTitle": "{{percent}}% More Than Yesterday!",
             "comparisonYesterdaySub": "You're doing better than yesterday"
         }
+    },
+    "challenge": {
+        "headerTitle": "Challenges",
+        "activeChallenge": {
+            "title": "Hit the Gym",
+            "daysLeft": "{{days}} days left",
+            "progress": "{{progress}}/{{goal}} done"
+        },
+        "recommended": {
+            "title": "Recommended Challenges",
+            "subtitle": "How about these goals?"
+        },
+        "challenges": {
+            "walk": {
+                "title": "Easy Daily Walks",
+                "subtitle": "3x/week • Parks • Beginner friendly"
+            },
+            "study": {
+                "title": "Study Grind Mode",
+                "subtitle": "5x/week • Build study habits"
+            },
+            "gym": {
+                "title": "Gym Newbie No More",
+                "subtitle": "3x/week • Consistent workouts"
+            }
+        },
+        "createCustom": "Create Your Own Routine"
+    },
+    "challengeCreate": {
+        "title": "Create Challenge",
+        "location": {
+            "label": "Target Location",
+            "select": "Select Place",
+            "change": "Change"
+        },
+        "goal": {
+            "label": "Goal Settings",
+            "duration": "Duration",
+            "week": "1 Week",
+            "month": "1 Month",
+            "frequency": "Frequency",
+            "timesPerWeek": "{{count}}x",
+            "repeat": "Repeat"
+        },
+        "identity": {
+            "iconLabel": "Icon",
+            "nameLabel": "Challenge Name",
+            "namePlaceholder": "e.g. Morning workout, Reading"
+        },
+        "start": "Start"
     }
 }

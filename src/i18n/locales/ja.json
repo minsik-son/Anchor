@@ -375,5 +375,55 @@
             "comparisonYesterdayTitle": "昨日より{{percent}}%多く歩きました！",
             "comparisonYesterdaySub": "昨日より良い調子です"
         }
+    },
+    "challenge": {
+        "headerTitle": "チャレンジ",
+        "activeChallenge": {
+            "title": "ジムに通う",
+            "daysLeft": "残り{{days}}日",
+            "progress": "{{progress}}/{{goal}} 達成"
+        },
+        "recommended": {
+            "title": "おすすめチャレンジ",
+            "subtitle": "こんな目標はいかが？"
+        },
+        "challenges": {
+            "walk": {
+                "title": "気軽にお散歩",
+                "subtitle": "週3回 • 公園 • 初心者向け"
+            },
+            "study": {
+                "title": "図書館通いで充実ライフ",
+                "subtitle": "週5回 • 勉強習慣づくり"
+            },
+            "gym": {
+                "title": "ジム初心者卒業",
+                "subtitle": "週3回 • コツコツ運動"
+            }
+        },
+        "createCustom": "オリジナルルーティンを作る"
+    },
+    "challengeCreate": {
+        "title": "チャレンジ作成",
+        "location": {
+            "label": "目標の場所",
+            "select": "場所を選択",
+            "change": "変更"
+        },
+        "goal": {
+            "label": "目標設定",
+            "duration": "期間",
+            "week": "1週間",
+            "month": "1ヶ月",
+            "frequency": "目標回数",
+            "timesPerWeek": "{{count}}回",
+            "repeat": "リピート設定"
+        },
+        "identity": {
+            "iconLabel": "アイコン",
+            "nameLabel": "チャレンジ名",
+            "namePlaceholder": "例：朝の運動、読書"
+        },
+        "start": "スタート"
     }
 }

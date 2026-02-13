@@ -375,5 +375,55 @@
             "comparisonYesterdayTitle": "어제보다 {{percent}}% 더 걸었어요!",
             "comparisonYesterdaySub": "어제보다 더 잘하고 있어요"
         }
+    },
+    "challenge": {
+        "headerTitle": "Challenges",
+        "activeChallenge": {
+            "title": "헬스장 출석하기",
+            "daysLeft": "D-{{days}} 남음",
+            "progress": "{{progress}}/{{goal}} 완료"
+        },
+        "recommended": {
+            "title": "추천 챌린지",
+            "subtitle": "이런 목표는 어때요?"
+        },
+        "challenges": {
+            "walk": {
+                "title": "가볍게 산책하기",
+                "subtitle": "주 3회 • 공원 • 초보자 추천"
+            },
+            "study": {
+                "title": "갓생 살기 (도서관/스터디카페)",
+                "subtitle": "주 5회 • 공부 습관 만들기"
+            },
+            "gym": {
+                "title": "헬린이 탈출",
+                "subtitle": "주 3회 • 꾸준한 운동"
+            }
+        },
+        "createCustom": "나만의 루틴 만들기"
+    },
+    "challengeCreate": {
+        "title": "챌린지 만들기",
+        "location": {
+            "label": "목표 장소",
+            "select": "장소 선택하기",
+            "change": "변경"
+        },
+        "goal": {
+            "label": "목표 설정",
+            "duration": "기간",
+            "week": "1주일",
+            "month": "1달",
+            "frequency": "목표 횟수",
+            "timesPerWeek": "{{count}}회",
+            "repeat": "반복 설정"
+        },
+        "identity": {
+            "iconLabel": "아이콘",
+            "nameLabel": "챌린지 이름",
+            "namePlaceholder": "예: 아침 운동, 독서하기"
+        },
+        "start": "시작하기"
     }
 }
