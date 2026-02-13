@@ -4,7 +4,7 @@
  */
 
 import { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, useColorScheme, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useTranslation } from 'react-i18next';
@@ -18,23 +18,6 @@ import { ActivityAdBanner } from '../../src/components/activity/ActivityAdBanner
 import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
 import { useThemeStore } from '../../src/stores/themeStore';
 import { useDistanceFormatter } from '../../src/utils/distanceFormatter';
-
-const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
-
-function getWeekDates(): number[] {
-    const today = new Date();
-    const currentDay = today.getDay();
-    const dates: number[] = [];
-
-    for (let i = 0; i < 7; i++) {
-        const diff = i - currentDay;
-        const date = new Date(today);
-        date.setDate(today.getDate() + diff);
-        dates.push(date.getDate());
-    }
-
-    return dates;
-}
 
 export default function Activity() {
     const insets = useSafeAreaInsets();
@@ -67,8 +50,15 @@ export default function Activity() {
 
     const distanceDisplay = useMemo(() => formatDistance(todayDistance), [todayDistance, formatDistance]);
 
-    const weekDates = useMemo(() => getWeekDates(), []);
-    const todayDayIndex = new Date().getDay();
+    const todayDateDisplay = useMemo(() => {
+        const today = new Date();
+        const month = today.getMonth() + 1;
+        const date = today.getDate();
+        const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+        const dayKey = dayKeys[today.getDay()];
+        const dayName = t(`days.${dayKey}`);
+        return `${month}월 ${date}일 ${dayName}`;
+    }, [t]);
 
     if (isPedometerAvailable === false) {
         return (
@@ -98,48 +88,13 @@ export default function Activity() {
                 contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top, paddingBottom: insets.bottom + 20 }]}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Weekly Calendar Strip */}
-                <View style={styles.calendarStrip}>
-                    {DAY_KEYS.map((dayKey, index) => {
-                        const isToday = index === todayDayIndex;
-                        return (
-                            <View key={dayKey} style={styles.calendarDay}>
-                                <Text style={[
-                                    styles.calendarDayText,
-                                    isToday && styles.calendarDayTextToday
-                                ]}>
-                                    {t(`days.${dayKey}`)}
-                                </Text>
-                                <View style={[
-                                    styles.calendarDayCircle,
-                                    isToday && styles.calendarDayCircleToday
-                                ]}>
-                                    <Text style={[
-                                        styles.calendarDateText,
-                                        isToday && styles.calendarDateTextToday
-                                    ]}>
-                                        {weekDates[index]}
-                                    </Text>
-                                </View>
-                            </View>
-                        );
-                    })}
-                </View>
-
                 <Pressable
                     style={styles.dashboardCard}
                     onPress={() => router.push('/activity-stats')}
                 >
-                    {/* Header with View Stats Icon */}
-                    <View style={styles.cardHeader}>
-                        <View style={{ flex: 1 }} />
-                        <View style={styles.viewStatsIcon}>
-                            <Ionicons name="stats-chart" size={14} color={colors.textWeak} />
-                        </View>
-                    </View>
+                    <Text style={styles.dateDisplay}>{todayDateDisplay}</Text>
 
                     <View style={styles.stepCountContainer}>
-                        <Ionicons name="pulse" size={28} color={colors.primary} />
                         <Text style={styles.stepCount}>
                             {isLoading ? '—' : todaySteps.toLocaleString()}
                         </Text>
@@ -165,6 +120,22 @@ export default function Activity() {
                 </Pressable>
 
                 <ActivityAdBanner colors={colors} />
+
+                {/* Challenge Start Card */}
+                <TouchableOpacity
+                    style={styles.startChallengeCard}
+                    onPress={() => router.push('/challenge-landing')}
+                    activeOpacity={0.7}
+                >
+                    <View style={styles.startChallengeIconBox}>
+                        <Ionicons name="trophy" size={24} color="#FFFFFF" />
+                    </View>
+                    <View style={styles.startChallengeContent}>
+                        <Text style={styles.startChallengeTitle}>챌린지 시작하기</Text>
+                        <Text style={styles.startChallengeSubtitle}>위치 기반 루틴을 만들어보세요</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
+                </TouchableOpacity>
 
                 {activeMessages.length > 0 && (
                     <View style={styles.messagesContainer}>
@@ -204,43 +175,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     scrollContent: {
         paddingHorizontal: spacing.md,
-    },
-    calendarStrip: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingVertical: spacing.sm,
-        marginBottom: spacing.sm,
-    },
-    calendarDay: {
-        alignItems: 'center',
-        gap: 4,
-    },
-    calendarDayText: {
-        ...typography.caption,
-        color: colors.textWeak,
-        fontSize: 11,
-    },
-    calendarDayTextToday: {
-        color: '#9594E8',
-        fontWeight: '600',
-    },
-    calendarDayCircle: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    calendarDayCircleToday: {
-        backgroundColor: '#9594E8',
-    },
-    calendarDateText: {
-        ...typography.body,
-        color: colors.textMedium,
-        fontWeight: '600',
-    },
-    calendarDateTextToday: {
-        color: '#FFFFFF',
     },
     dashboardCard: {
         backgroundColor: colors.surface,
@@ -290,15 +224,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         ...typography.caption,
         color: colors.textWeak,
     },
-    cardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
+    dateDisplay: {
+        ...typography.body,
+        fontWeight: '600',
+        color: colors.textStrong,
         marginBottom: spacing.xs,
-    },
-    viewStatsIcon: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
     },
     messagesContainer: {
         gap: spacing.xs,
@@ -339,5 +269,37 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         color: colors.textWeak,
         marginTop: spacing.sm,
         textAlign: 'center',
+    },
+    startChallengeCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.surface,
+        borderRadius: radius.md,
+        padding: spacing.sm,
+        marginTop: spacing.md,
+        marginBottom: spacing.sm,
+        ...shadows.card,
+    },
+    startChallengeIconBox: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    startChallengeContent: {
+        flex: 1,
+        marginLeft: spacing.sm,
+    },
+    startChallengeTitle: {
+        ...typography.body,
+        fontWeight: '600',
+        color: colors.textStrong,
+    },
+    startChallengeSubtitle: {
+        ...typography.caption,
+        color: colors.textWeak,
+        marginTop: 2,
     },
 });
