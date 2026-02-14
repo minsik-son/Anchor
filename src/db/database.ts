@@ -8,16 +8,19 @@ import {
     CREATE_ALARMS_TABLE,
     CREATE_ACTION_MEMOS_TABLE,
     CREATE_CUSTOM_ACTIONS_TABLE,
-    CREATE_ROUTINES_TABLE,
+    CREATE_CHALLENGES_TABLE,
+    CREATE_VISIT_RECORDS_TABLE,
     Alarm,
     ActionMemo,
     CustomAction,
-    RoutineRow,
+    ChallengeRow,
+    VisitRecordRow,
     CreateAlarmInput,
     CreateActionMemoInput,
     CreateCustomActionInput,
-    CreateRoutineInput,
-    UpdateRoutineInput,
+    CreateChallengeInput,
+    UpdateChallengeInput,
+    DayOfWeek,
 } from './schema';
 
 const DB_NAME = 'locaalert.db';
@@ -37,7 +40,8 @@ export async function initDatabase(): Promise<void> {
       ${CREATE_ALARMS_TABLE}
       ${CREATE_ACTION_MEMOS_TABLE}
       ${CREATE_CUSTOM_ACTIONS_TABLE}
-      ${CREATE_ROUTINES_TABLE}
+      ${CREATE_CHALLENGES_TABLE}
+      ${CREATE_VISIT_RECORDS_TABLE}
     `);
 
         await runMigrations(db);
@@ -212,104 +216,198 @@ export async function deleteCustomAction(id: number): Promise<void> {
     await database.runAsync('DELETE FROM custom_actions WHERE id = ?', [id]);
 }
 
-// ========== ROUTINE OPERATIONS ==========
+// ========== CHALLENGE OPERATIONS ==========
 
 /** Raw DB row before parsing JSON/boolean fields */
-interface RawRoutineRow {
-    id: number;
-    name: string;
+interface RawChallengeRow {
+    id: string;
+    name: string | null;
     icon: string;
-    location_name: string;
     latitude: number;
     longitude: number;
     radius: number;
-    start_time: string;
-    end_time: string;
-    repeat_days: string;
-    is_enabled: number;
-    sound: string;
-    memo: string;
+    place_name: string;
+    weekly_goal: number;
+    day_specific: number;
+    days: string | null;
+    duration_weeks: number;
+    repeat_mode: number;
+    dwell_time_enabled: number;
+    dwell_time_minutes: number | null;
+    current_week: number;
+    weekly_visits: number;
+    combo: number;
+    chances: number;
+    status: string;
     created_at: string;
+    graduated_at: string | null;
 }
 
-function parseRoutineRow(raw: RawRoutineRow): RoutineRow {
+function parseChallengeRow(raw: RawChallengeRow): ChallengeRow {
     return {
         ...raw,
-        repeat_days: JSON.parse(raw.repeat_days),
-        is_enabled: Boolean(raw.is_enabled),
+        icon: raw.icon as ChallengeRow['icon'],
+        day_specific: Boolean(raw.day_specific),
+        days: raw.days ? JSON.parse(raw.days) : null,
+        repeat_mode: Boolean(raw.repeat_mode),
+        dwell_time_enabled: Boolean(raw.dwell_time_enabled),
+        status: raw.status as ChallengeRow['status'],
     };
 }
 
-export async function createRoutine(input: CreateRoutineInput): Promise<number> {
+export async function createChallenge(input: CreateChallengeInput): Promise<string> {
     const database = getDatabase();
-    const result = await database.runAsync(
-        `INSERT INTO routines (name, icon, location_name, latitude, longitude, radius, start_time, end_time, repeat_days, sound, memo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    const id = `challenge_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    await database.runAsync(
+        `INSERT INTO challenges (id, name, icon, latitude, longitude, radius, place_name, weekly_goal, day_specific, days, duration_weeks, repeat_mode, dwell_time_enabled, dwell_time_minutes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-            input.name,
-            input.icon ?? 'business',
-            input.location_name,
+            id,
+            input.name ?? null,
+            input.icon,
             input.latitude,
             input.longitude,
-            input.radius ?? 500,
-            input.start_time,
-            input.end_time,
-            JSON.stringify(input.repeat_days),
-            input.sound ?? 'breeze',
-            input.memo ?? '',
+            input.radius,
+            input.place_name,
+            input.weekly_goal,
+            input.day_specific ? 1 : 0,
+            input.days ? JSON.stringify(input.days) : null,
+            input.duration_weeks,
+            input.repeat_mode ? 1 : 0,
+            input.dwell_time_enabled ? 1 : 0,
+            input.dwell_time_minutes ?? null,
+            new Date().toISOString(),
         ]
     );
-    return result.lastInsertRowId;
+    return id;
 }
 
-export async function getAllRoutines(): Promise<RoutineRow[]> {
+export async function getAllChallenges(): Promise<ChallengeRow[]> {
     const database = getDatabase();
-    const rows = await database.getAllAsync<RawRoutineRow>('SELECT * FROM routines ORDER BY created_at DESC');
-    return rows.map(parseRoutineRow);
+    const rows = await database.getAllAsync<RawChallengeRow>('SELECT * FROM challenges ORDER BY created_at DESC');
+    return rows.map(parseChallengeRow);
 }
 
-export async function getEnabledRoutines(): Promise<RoutineRow[]> {
+export async function getActiveChallenges(): Promise<ChallengeRow[]> {
     const database = getDatabase();
-    const rows = await database.getAllAsync<RawRoutineRow>('SELECT * FROM routines WHERE is_enabled = 1');
-    return rows.map(parseRoutineRow);
+    const rows = await database.getAllAsync<RawChallengeRow>(
+        `SELECT * FROM challenges WHERE status = 'active' ORDER BY created_at DESC`
+    );
+    return rows.map(parseChallengeRow);
 }
 
-export async function getRoutineById(id: number): Promise<RoutineRow | null> {
+export async function getChallengeById(id: string): Promise<ChallengeRow | null> {
     const database = getDatabase();
-    const row = await database.getFirstAsync<RawRoutineRow>('SELECT * FROM routines WHERE id = ?', [id]);
+    const row = await database.getFirstAsync<RawChallengeRow>('SELECT * FROM challenges WHERE id = ?', [id]);
     if (!row) return null;
-    return parseRoutineRow(row);
+    return parseChallengeRow(row);
 }
 
-export async function updateRoutine(id: number, updates: UpdateRoutineInput): Promise<void> {
+export async function updateChallenge(id: string, updates: UpdateChallengeInput): Promise<void> {
     const database = getDatabase();
     const fields: string[] = [];
     const values: any[] = [];
 
     if (updates.name !== undefined) { fields.push('name = ?'); values.push(updates.name); }
-    if (updates.icon !== undefined) { fields.push('icon = ?'); values.push(updates.icon); }
-    if (updates.location_name !== undefined) { fields.push('location_name = ?'); values.push(updates.location_name); }
-    if (updates.latitude !== undefined) { fields.push('latitude = ?'); values.push(updates.latitude); }
-    if (updates.longitude !== undefined) { fields.push('longitude = ?'); values.push(updates.longitude); }
-    if (updates.radius !== undefined) { fields.push('radius = ?'); values.push(updates.radius); }
-    if (updates.start_time !== undefined) { fields.push('start_time = ?'); values.push(updates.start_time); }
-    if (updates.end_time !== undefined) { fields.push('end_time = ?'); values.push(updates.end_time); }
-    if (updates.repeat_days !== undefined) { fields.push('repeat_days = ?'); values.push(JSON.stringify(updates.repeat_days)); }
-    if (updates.is_enabled !== undefined) { fields.push('is_enabled = ?'); values.push(updates.is_enabled ? 1 : 0); }
-    if (updates.sound !== undefined) { fields.push('sound = ?'); values.push(updates.sound); }
-    if (updates.memo !== undefined) { fields.push('memo = ?'); values.push(updates.memo); }
+    if (updates.current_week !== undefined) { fields.push('current_week = ?'); values.push(updates.current_week); }
+    if (updates.weekly_visits !== undefined) { fields.push('weekly_visits = ?'); values.push(updates.weekly_visits); }
+    if (updates.combo !== undefined) { fields.push('combo = ?'); values.push(updates.combo); }
+    if (updates.chances !== undefined) { fields.push('chances = ?'); values.push(updates.chances); }
+    if (updates.status !== undefined) { fields.push('status = ?'); values.push(updates.status); }
+    if (updates.graduated_at !== undefined) { fields.push('graduated_at = ?'); values.push(updates.graduated_at); }
 
     if (fields.length === 0) return;
     values.push(id);
 
-    await database.runAsync(`UPDATE routines SET ${fields.join(', ')} WHERE id = ?`, values);
+    await database.runAsync(`UPDATE challenges SET ${fields.join(', ')} WHERE id = ?`, values);
 }
 
-export async function deleteRoutine(id: number): Promise<void> {
+export async function deleteChallenge(id: string): Promise<void> {
     const database = getDatabase();
-    await database.runAsync('DELETE FROM routines WHERE id = ?', [id]);
+    await database.runAsync('DELETE FROM visit_records WHERE challenge_id = ?', [id]);
+    await database.runAsync('DELETE FROM challenges WHERE id = ?', [id]);
 }
 
-export async function deleteAllRoutines(): Promise<void> {
+// ========== VISIT RECORD OPERATIONS ==========
+
+interface RawVisitRecordRow {
+    id: string;
+    challenge_id: string;
+    entered_at: string;
+    exited_at: string | null;
+    dwell_minutes: number | null;
+    counted: number;
+    day_of_week: string;
+    week: number;
+}
+
+function parseVisitRecordRow(raw: RawVisitRecordRow): VisitRecordRow {
+    return {
+        ...raw,
+        counted: Boolean(raw.counted),
+        day_of_week: raw.day_of_week as DayOfWeek,
+    };
+}
+
+export async function createVisitRecord(record: {
+    challenge_id: string;
+    entered_at: string;
+    exited_at?: string | null;
+    dwell_minutes?: number | null;
+    counted: boolean;
+    day_of_week: DayOfWeek;
+    week: number;
+}): Promise<string> {
     const database = getDatabase();
-    await database.runAsync('DELETE FROM routines');
+    const id = `visit_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    await database.runAsync(
+        `INSERT INTO visit_records (id, challenge_id, entered_at, exited_at, dwell_minutes, counted, day_of_week, week) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+            id,
+            record.challenge_id,
+            record.entered_at,
+            record.exited_at ?? null,
+            record.dwell_minutes ?? null,
+            record.counted ? 1 : 0,
+            record.day_of_week,
+            record.week,
+        ]
+    );
+    return id;
+}
+
+export async function getVisitRecordsByChallengeId(challengeId: string): Promise<VisitRecordRow[]> {
+    const database = getDatabase();
+    const rows = await database.getAllAsync<RawVisitRecordRow>(
+        'SELECT * FROM visit_records WHERE challenge_id = ? ORDER BY entered_at DESC',
+        [challengeId]
+    );
+    return rows.map(parseVisitRecordRow);
+}
+
+export async function updateVisitRecord(
+    id: string,
+    updates: { exited_at?: string; dwell_minutes?: number; counted?: boolean }
+): Promise<void> {
+    const database = getDatabase();
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (updates.exited_at !== undefined) { fields.push('exited_at = ?'); values.push(updates.exited_at); }
+    if (updates.dwell_minutes !== undefined) { fields.push('dwell_minutes = ?'); values.push(updates.dwell_minutes); }
+    if (updates.counted !== undefined) { fields.push('counted = ?'); values.push(updates.counted ? 1 : 0); }
+
+    if (fields.length === 0) return;
+    values.push(id);
+
+    await database.runAsync(`UPDATE visit_records SET ${fields.join(', ')} WHERE id = ?`, values);
+}
+
+export async function getCountedVisitsToday(challengeId: string, todayIso: string): Promise<number> {
+    const database = getDatabase();
+    const datePrefix = todayIso.substring(0, 10);
+    const result = await database.getFirstAsync<{ count: number }>(
+        `SELECT COUNT(*) as count FROM visit_records WHERE challenge_id = ? AND counted = 1 AND entered_at LIKE ?`,
+        [challengeId, `${datePrefix}%`]
+    );
+    return result?.count ?? 0;
 }

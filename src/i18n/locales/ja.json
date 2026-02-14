@@ -15,7 +15,7 @@
     },
     "tabs": {
         "home": "ホーム",
-        "routines": "ルーティン",
+        "challenge": "チャレンジ",
         "activity": "アクティビティ",
         "history": "履歴",
         "settings": "設定"
@@ -280,39 +280,23 @@
         "allChecked": "すべて完了！お疲れ様です。",
         "remaining": "{{count}}件 残り"
     },
-    "routines": {
-        "title": "マイルーティン",
-        "total": "全 {{count}}件",
-        "empty": "ルーティンがありません",
-        "emptyHint": "よく行く場所に繰り返しアラームを設定してみましょう！",
-        "addRoutine": "ルーティン追加",
-        "deleteAll": {
-            "button": "すべて削除",
-            "title": "すべて削除",
-            "message": "すべてのルーティンを削除しますか？この操作は元に戻せません。",
-            "confirm": "すべて削除"
-        },
-        "timeRange": "{{start}} - {{end}}"
-    },
-    "routineSetup": {
-        "title": "ルーティン作成",
-        "nameLabel": "ルーティン名",
-        "namePlaceholder": "例：通勤、通学、ジム",
-        "iconLabel": "アイコン",
-        "locationLabel": "目的地",
-        "selectLocation": "地図から選択",
-        "timeLabel": "有効時間",
-        "startTime": "開始時刻",
-        "endTime": "終了時刻",
-        "repeatLabel": "繰り返し曜日",
-        "soundLabel": "アラーム音",
-        "memoLabel": "メモ (任意)",
-        "memoPlaceholder": "例：出口番号、持ち物など",
-        "save": "保存する",
-        "noName": "名前が必要です",
-        "pleaseEnterName": "ルーティン名を入力してください。",
-        "noLocation": "目的地が必要です",
-        "pleaseSelectLocation": "目的地を選択してください。"
+    "devDebug": {
+        "title": "デバッグパネル",
+        "timeSection": "時間オフセット",
+        "currentTime": "現在時刻",
+        "offsetDays": "{{days}}日オフセット",
+        "resetTime": "リセット",
+        "visitSection": "訪問シミュレーター",
+        "simulateVisit": "出席記録",
+        "simulateVisitDesc": "選択したチャレンジに訪問記録を追加",
+        "stateSection": "状態オーバーライド",
+        "combo": "コンボ",
+        "chances": "チャンス",
+        "week": "週",
+        "apply": "適用",
+        "noActiveChallenge": "アクティブなチャレンジがありません",
+        "visitSuccess": "訪問を記録しました",
+        "visitFailed": "訪問記録失敗: {{reason}}"
     },
     "days": {
         "sun": "日",
@@ -363,6 +347,8 @@
             "current": "今",
             "previous": "前"
         },
+        "startChallenge": "チャレンジを始める",
+        "startChallengeDesc": "訪問目標を設定して達成しましょう",
         "messages": {
             "ecoTreesTitle": "木{{trees}}本分を植えました！",
             "ecoTreesSub": "今日の歩行距離によるCO2相殺量",
@@ -378,11 +364,7 @@
     },
     "challenge": {
         "headerTitle": "チャレンジ",
-        "activeChallenge": {
-            "title": "ジムに通う",
-            "daysLeft": "残り{{days}}日",
-            "progress": "{{progress}}/{{goal}} 達成"
-        },
+        "welcome": "場所への訪問目標を設定して\n継続的に達成しましょう！",
         "recommended": {
             "title": "おすすめチャレンジ",
             "subtitle": "こんな目標はいかが？"
@@ -401,28 +383,71 @@
                 "subtitle": "週3回 • コツコツ運動"
             }
         },
-        "createCustom": "オリジナルルーティンを作る"
+        "createCustom": "オリジナルチャレンジを作る",
+        "combo": "{{count}}コンボ",
+        "chances": "チャンス {{count}}回",
+        "weekComplete": "今週の目標達成！",
+        "oneMore": "あと1回！",
+        "remainingVisits": "あと{{count}}回訪問してください",
+        "weekInfo": "{{current}}週目/{{total}}週",
+        "limitTitle": "チャレンジ制限",
+        "limitMessage": "アクティブなチャレンジは最大2つまでです。",
+        "status": {
+            "active": "進行中",
+            "graduated": "卒業",
+            "failed": "失敗"
+        },
+        "graduated": {
+            "title": "おめでとうございます！",
+            "subtitle": "チャレンジを無事に達成しました",
+            "newChallenge": "新しいチャレンジを始める"
+        },
+        "detail": {
+            "title": "チャレンジ詳細",
+            "week": "{{current}}週目 / {{total}}週",
+            "visitRecords": "訪問記録 ({{count}})",
+            "noVisits": "まだ訪問記録がありません",
+            "min": "分",
+            "counted": "認定",
+            "notCounted": "未認定",
+            "delete": "チャレンジを削除",
+            "deleteTitle": "チャレンジを削除",
+            "deleteMessage": "このチャレンジを削除しますか？この操作は元に戻せません。"
+        }
     },
     "challengeCreate": {
         "title": "チャレンジ作成",
         "location": {
             "label": "目標の場所",
             "select": "場所を選択",
-            "change": "変更"
+            "change": "変更",
+            "searchTitle": "場所検索",
+            "searchPlaceholder": "場所を検索してください"
         },
         "goal": {
             "label": "目標設定",
             "duration": "期間",
             "week": "1週間",
             "month": "1ヶ月",
-            "frequency": "目標回数",
-            "timesPerWeek": "{{count}}回",
-            "repeat": "リピート設定"
+            "frequency": "週間目標回数",
+            "timesPerWeek": "週{{count}}回",
+            "repeat": "リピートモード",
+            "daySpecific": "曜日指定",
+            "daySpecificDesc": "選択した曜日のみ訪問を認定します",
+            "daySpecificError": "{{selected}}個選択中 / {{required}}個必要",
+            "weeksCount": "{{count}}週間"
         },
         "identity": {
             "iconLabel": "アイコン",
             "nameLabel": "チャレンジ名",
             "namePlaceholder": "例：朝の運動、読書"
+        },
+        "dwell": {
+            "label": "滞在時間",
+            "toggle": "滞在時間の確認",
+            "description": "一定時間以上滞在しないと出席として認定されません",
+            "minutes": "{{count}}分",
+            "hours": "{{count}}時間"
         },
         "start": "スタート"
     }

@@ -15,7 +15,7 @@
     },
     "tabs": {
         "home": "홈",
-        "routines": "루틴",
+        "challenge": "챌린지",
         "activity": "활동",
         "history": "히스토리",
         "settings": "설정"
@@ -280,39 +280,23 @@
         "allChecked": "모두 완료! 잘했어요.",
         "remaining": "{{count}}개 남음"
     },
-    "routines": {
-        "title": "나의 루틴",
-        "total": "총 {{count}}개",
-        "empty": "등록된 루틴이 없습니다",
-        "emptyHint": "자주 가는 장소에 반복 알람을 설정해보세요!",
-        "addRoutine": "루틴 추가",
-        "deleteAll": {
-            "button": "전체 삭제",
-            "title": "전체 삭제",
-            "message": "모든 루틴을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
-            "confirm": "전체 삭제"
-        },
-        "timeRange": "{{start}} - {{end}}"
-    },
-    "routineSetup": {
-        "title": "루틴 만들기",
-        "nameLabel": "루틴 이름",
-        "namePlaceholder": "예: 출근길, 퇴근길, 학원 가기",
-        "iconLabel": "아이콘",
-        "locationLabel": "목적지",
-        "selectLocation": "지도에서 선택",
-        "timeLabel": "활성화 시간",
-        "startTime": "시작 시간",
-        "endTime": "종료 시간",
-        "repeatLabel": "반복 요일",
-        "soundLabel": "알람 사운드",
-        "memoLabel": "메모 (선택사항)",
-        "memoPlaceholder": "예: 출구 번호, 준비물 등",
-        "save": "저장하기",
-        "noName": "루틴 이름 필요",
-        "pleaseEnterName": "루틴 이름을 입력해주세요.",
-        "noLocation": "목적지 필요",
-        "pleaseSelectLocation": "목적지를 선택해주세요."
+    "devDebug": {
+        "title": "디버그 패널",
+        "timeSection": "시간 오프셋",
+        "currentTime": "현재 시간",
+        "offsetDays": "{{days}}일 오프셋",
+        "resetTime": "초기화",
+        "visitSection": "방문 시뮬레이터",
+        "simulateVisit": "출석 기록",
+        "simulateVisitDesc": "선택한 챌린지에 방문 기록 추가",
+        "stateSection": "상태 오버라이드",
+        "combo": "콤보",
+        "chances": "찬스",
+        "week": "주차",
+        "apply": "적용",
+        "noActiveChallenge": "활성 챌린지가 없습니다",
+        "visitSuccess": "방문 기록 완료",
+        "visitFailed": "방문 기록 실패: {{reason}}"
     },
     "days": {
         "sun": "일",
@@ -363,6 +347,8 @@
             "current": "이번",
             "previous": "지난"
         },
+        "startChallenge": "챌린지 시작하기",
+        "startChallengeDesc": "장소 방문 목표를 세우고 달성해보세요",
         "messages": {
             "ecoTreesTitle": "나무 {{trees}}그루를 심었어요!",
             "ecoTreesSub": "오늘 걸은 거리 기반 CO2 상쇄량",
@@ -377,12 +363,8 @@
         }
     },
     "challenge": {
-        "headerTitle": "Challenges",
-        "activeChallenge": {
-            "title": "헬스장 출석하기",
-            "daysLeft": "D-{{days}} 남음",
-            "progress": "{{progress}}/{{goal}} 완료"
-        },
+        "headerTitle": "챌린지",
+        "welcome": "장소 방문 목표를 세우고\n꾸준히 달성해보세요!",
         "recommended": {
             "title": "추천 챌린지",
             "subtitle": "이런 목표는 어때요?"
@@ -401,28 +383,71 @@
                 "subtitle": "주 3회 • 꾸준한 운동"
             }
         },
-        "createCustom": "나만의 루틴 만들기"
+        "createCustom": "나만의 챌린지 만들기",
+        "combo": "{{count}}콤보",
+        "chances": "찬스 {{count}}회",
+        "weekComplete": "이번 주 목표 달성!",
+        "oneMore": "한 번만 더!",
+        "remainingVisits": "{{count}}번 더 방문하세요",
+        "weekInfo": "{{current}}주차/{{total}}주",
+        "limitTitle": "챌린지 제한",
+        "limitMessage": "활성 챌린지는 최대 2개까지 가능합니다.",
+        "status": {
+            "active": "진행중",
+            "graduated": "졸업",
+            "failed": "실패"
+        },
+        "graduated": {
+            "title": "축하합니다!",
+            "subtitle": "챌린지를 성공적으로 완료했어요",
+            "newChallenge": "새 챌린지 시작하기"
+        },
+        "detail": {
+            "title": "챌린지 상세",
+            "week": "{{current}}주차 / {{total}}주",
+            "visitRecords": "방문 기록 ({{count}})",
+            "noVisits": "아직 방문 기록이 없습니다",
+            "min": "분",
+            "counted": "인정",
+            "notCounted": "미인정",
+            "delete": "챌린지 삭제",
+            "deleteTitle": "챌린지 삭제",
+            "deleteMessage": "이 챌린지를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+        }
     },
     "challengeCreate": {
         "title": "챌린지 만들기",
         "location": {
             "label": "목표 장소",
             "select": "장소 선택하기",
-            "change": "변경"
+            "change": "변경",
+            "searchTitle": "장소 검색",
+            "searchPlaceholder": "장소를 검색하세요"
         },
         "goal": {
             "label": "목표 설정",
             "duration": "기간",
             "week": "1주일",
             "month": "1달",
-            "frequency": "목표 횟수",
-            "timesPerWeek": "{{count}}회",
-            "repeat": "반복 설정"
+            "frequency": "주간 목표 횟수",
+            "timesPerWeek": "주 {{count}}회",
+            "repeat": "반복 모드",
+            "daySpecific": "요일 지정",
+            "daySpecificDesc": "특정 요일에만 방문을 인정합니다",
+            "daySpecificError": "{{selected}}개 선택됨 / {{required}}개 필요",
+            "weeksCount": "{{count}}주"
         },
         "identity": {
             "iconLabel": "아이콘",
             "nameLabel": "챌린지 이름",
             "namePlaceholder": "예: 아침 운동, 독서하기"
+        },
+        "dwell": {
+            "label": "체류 시간",
+            "toggle": "체류 시간 확인",
+            "description": "일정 시간 이상 머물러야 출석으로 인정됩니다",
+            "minutes": "{{count}}분",
+            "hours": "{{count}}시간"
         },
         "start": "시작하기"
     }

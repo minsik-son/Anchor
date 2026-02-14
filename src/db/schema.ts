@@ -1,6 +1,6 @@
 /**
  * LocaAlert Database Schema
- * SQLite tables for Alarms, ActionMemos, and CustomActions
+ * SQLite tables for Alarms, ActionMemos, CustomActions, Challenges, and VisitRecords
  */
 
 export const CREATE_ALARMS_TABLE = `
@@ -97,69 +97,109 @@ export interface CreateCustomActionInput {
     order_index?: number;
 }
 
-// ========== ROUTINE SCHEMA ==========
+// ========== CHALLENGE SCHEMA ==========
 
-export const CREATE_ROUTINES_TABLE = `
-CREATE TABLE IF NOT EXISTS routines (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  icon TEXT NOT NULL DEFAULT 'business',
-  location_name TEXT NOT NULL DEFAULT '',
+export type ChallengeIcon = 'fitness' | 'walk' | 'book' | 'cafe' | 'bicycle';
+export type DayOfWeek = 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' | 'SUN';
+export type ChallengeStatus = 'active' | 'graduated' | 'failed';
+
+export const CREATE_CHALLENGES_TABLE = `
+CREATE TABLE IF NOT EXISTS challenges (
+  id TEXT PRIMARY KEY,
+  name TEXT,
+  icon TEXT NOT NULL,
   latitude REAL NOT NULL,
   longitude REAL NOT NULL,
-  radius INTEGER DEFAULT 500,
-  start_time TEXT NOT NULL,
-  end_time TEXT NOT NULL,
-  repeat_days TEXT NOT NULL DEFAULT '[]',
-  is_enabled INTEGER DEFAULT 1,
-  sound TEXT DEFAULT 'breeze',
-  memo TEXT DEFAULT '',
-  created_at TEXT DEFAULT (datetime('now', 'localtime'))
+  radius INTEGER NOT NULL,
+  place_name TEXT NOT NULL,
+  weekly_goal INTEGER NOT NULL,
+  day_specific INTEGER NOT NULL DEFAULT 0,
+  days TEXT,
+  duration_weeks INTEGER NOT NULL,
+  repeat_mode INTEGER NOT NULL DEFAULT 0,
+  dwell_time_enabled INTEGER NOT NULL DEFAULT 0,
+  dwell_time_minutes INTEGER,
+  current_week INTEGER NOT NULL DEFAULT 1,
+  weekly_visits INTEGER NOT NULL DEFAULT 0,
+  combo INTEGER NOT NULL DEFAULT 0,
+  chances INTEGER NOT NULL DEFAULT 1,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TEXT NOT NULL,
+  graduated_at TEXT
 );
 `;
 
-export interface RoutineRow {
-    id: number;
-    name: string;
-    icon: string;
-    location_name: string;
+export const CREATE_VISIT_RECORDS_TABLE = `
+CREATE TABLE IF NOT EXISTS visit_records (
+  id TEXT PRIMARY KEY,
+  challenge_id TEXT NOT NULL,
+  entered_at TEXT NOT NULL,
+  exited_at TEXT,
+  dwell_minutes REAL,
+  counted INTEGER NOT NULL DEFAULT 0,
+  day_of_week TEXT NOT NULL,
+  week INTEGER NOT NULL,
+  FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE
+);
+`;
+
+export interface ChallengeRow {
+    id: string;
+    name: string | null;
+    icon: ChallengeIcon;
     latitude: number;
     longitude: number;
     radius: number;
-    start_time: string;
-    end_time: string;
-    repeat_days: number[];
-    is_enabled: boolean;
-    sound: string;
-    memo: string;
+    place_name: string;
+    weekly_goal: number;
+    day_specific: boolean;
+    days: DayOfWeek[] | null;
+    duration_weeks: number;
+    repeat_mode: boolean;
+    dwell_time_enabled: boolean;
+    dwell_time_minutes: number | null;
+    current_week: number;
+    weekly_visits: number;
+    combo: number;
+    chances: number;
+    status: ChallengeStatus;
     created_at: string;
+    graduated_at: string | null;
 }
 
-export interface CreateRoutineInput {
-    name: string;
-    icon?: string;
-    location_name: string;
+export interface VisitRecordRow {
+    id: string;
+    challenge_id: string;
+    entered_at: string;
+    exited_at: string | null;
+    dwell_minutes: number | null;
+    counted: boolean;
+    day_of_week: DayOfWeek;
+    week: number;
+}
+
+export interface CreateChallengeInput {
+    name?: string;
+    icon: ChallengeIcon;
     latitude: number;
     longitude: number;
-    radius?: number;
-    start_time: string;
-    end_time: string;
-    repeat_days: number[];
-    sound?: string;
-    memo?: string;
+    radius: number;
+    place_name: string;
+    weekly_goal: number;
+    day_specific?: boolean;
+    days?: DayOfWeek[];
+    duration_weeks: number;
+    repeat_mode?: boolean;
+    dwell_time_enabled?: boolean;
+    dwell_time_minutes?: number | null;
 }
 
-export interface UpdateRoutineInput {
+export interface UpdateChallengeInput {
     name?: string;
-    icon?: string;
-    location_name?: string;
-    latitude?: number;
-    longitude?: number;
-    radius?: number;
-    start_time?: string;
-    end_time?: string;
-    repeat_days?: number[];
-    is_enabled?: boolean;
-    sound?: string;
-    memo?: string;
+    current_week?: number;
+    weekly_visits?: number;
+    combo?: number;
+    chances?: number;
+    status?: ChallengeStatus;
+    graduated_at?: string | null;
 }

@@ -3,8 +3,9 @@
  * App settings and preferences
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Switch, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { router } from 'expo-router';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -53,6 +54,23 @@ export default function Settings() {
         setBackgroundType, setSelectedPreset, setCustomImageUri,
     } = useAlarmSettingsStore();
     const { play: previewSound, stop: stopPreview } = useAlarmSound();
+
+    const versionTapCount = useRef(0);
+    const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleVersionTap = useCallback(() => {
+        if (!__DEV__) return;
+        versionTapCount.current += 1;
+        if (versionTapTimer.current) clearTimeout(versionTapTimer.current);
+        if (versionTapCount.current >= 5) {
+            versionTapCount.current = 0;
+            router.push('/dev-debug');
+        } else {
+            versionTapTimer.current = setTimeout(() => {
+                versionTapCount.current = 0;
+            }, 2000);
+        }
+    }, []);
 
     const [isLoading, setIsLoading] = useState(false);
     const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -196,7 +214,9 @@ export default function Settings() {
                         </View>
                         <View>
                             <Text style={styles.appName}>LocaAlert</Text>
-                            <Text style={styles.appVersion}>{t('settings.items.version')} 1.0.0</Text>
+                            <Pressable onPress={handleVersionTap}>
+                                <Text style={styles.appVersion}>{t('settings.items.version')} 1.0.0</Text>
+                            </Pressable>
                         </View>
                     </View>
                 </View>
@@ -246,14 +266,14 @@ export default function Settings() {
                     <SettingItem
                         icon="navigate"
                         label={t('settings.items.backgroundLocation') || '백그라운드 위치 추적'}
-                        rightElement={<Switch value={true} trackColor={{ false: colors.textWeak, true: colors.primary }} />}
+                        rightElement={<Switch value={true} trackColor={{ false: colors.textMedium, true: colors.primary }} ios_backgroundColor={colors.textMedium} />}
                         colors={colors}
                     />
 
                     <SettingItem
                         icon="battery-charging"
                         label={t('settings.items.batterySaving') || '배터리 세이빙 모드'}
-                        rightElement={<Switch value={true} trackColor={{ false: colors.textWeak, true: colors.primary }} />}
+                        rightElement={<Switch value={true} trackColor={{ false: colors.textMedium, true: colors.primary }} ios_backgroundColor={colors.textMedium} />}
                         colors={colors}
                     />
                 </View>
@@ -293,7 +313,8 @@ export default function Settings() {
                             <Switch
                                 value={shakeToDismiss}
                                 onValueChange={setShakeToDismiss}
-                                trackColor={{ false: colors.textWeak, true: colors.primary }}
+                                trackColor={{ false: colors.textMedium, true: colors.primary }}
+                                ios_backgroundColor={colors.textMedium}
                             />
                         }
                         colors={colors}

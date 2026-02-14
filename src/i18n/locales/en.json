@@ -15,7 +15,7 @@
     },
     "tabs": {
         "home": "Home",
-        "routines": "Routines",
+        "challenge": "Challenge",
         "activity": "Activity",
         "history": "History",
         "settings": "Settings"
@@ -280,39 +280,23 @@
         "allChecked": "All done! Great job.",
         "remaining": "{{count}} remaining"
     },
-    "routines": {
-        "title": "My Routines",
-        "total": "{{count}} total",
-        "empty": "No routines yet",
-        "emptyHint": "Set up recurring alarms for places you visit regularly!",
-        "addRoutine": "Add Routine",
-        "deleteAll": {
-            "button": "Delete All",
-            "title": "Delete All",
-            "message": "Delete all routines? This cannot be undone.",
-            "confirm": "Delete All"
-        },
-        "timeRange": "{{start}} - {{end}}"
-    },
-    "routineSetup": {
-        "title": "Create Routine",
-        "nameLabel": "Routine Name",
-        "namePlaceholder": "e.g. Morning Commute, Gym, School",
-        "iconLabel": "Icon",
-        "locationLabel": "Destination",
-        "selectLocation": "Select from Map",
-        "timeLabel": "Active Hours",
-        "startTime": "Start Time",
-        "endTime": "End Time",
-        "repeatLabel": "Repeat Days",
-        "soundLabel": "Alarm Sound",
-        "memoLabel": "Memo (Optional)",
-        "memoPlaceholder": "e.g. Exit number, things to bring",
-        "save": "Save",
-        "noName": "Name Required",
-        "pleaseEnterName": "Please enter a routine name.",
-        "noLocation": "Location Required",
-        "pleaseSelectLocation": "Please select a destination."
+    "devDebug": {
+        "title": "Debug Panel",
+        "timeSection": "Time Offset",
+        "currentTime": "Current Time",
+        "offsetDays": "{{days}} day offset",
+        "resetTime": "Reset",
+        "visitSection": "Visit Simulator",
+        "simulateVisit": "Record Visit",
+        "simulateVisitDesc": "Add a visit record for the selected challenge",
+        "stateSection": "State Override",
+        "combo": "Combo",
+        "chances": "Chances",
+        "week": "Week",
+        "apply": "Apply",
+        "noActiveChallenge": "No active challenges",
+        "visitSuccess": "Visit recorded",
+        "visitFailed": "Visit failed: {{reason}}"
     },
     "days": {
         "sun": "S",
@@ -363,6 +347,8 @@
             "current": "This",
             "previous": "Last"
         },
+        "startChallenge": "Start a Challenge",
+        "startChallengeDesc": "Set visit goals and achieve them",
         "messages": {
             "ecoTreesTitle": "Planted {{trees}} Trees!",
             "ecoTreesSub": "CO2 offset based on today's steps",
@@ -378,11 +364,7 @@
     },
     "challenge": {
         "headerTitle": "Challenges",
-        "activeChallenge": {
-            "title": "Hit the Gym",
-            "daysLeft": "{{days}} days left",
-            "progress": "{{progress}}/{{goal}} done"
-        },
+        "welcome": "Set visit goals for your\nfavorite places and stay consistent!",
         "recommended": {
             "title": "Recommended Challenges",
             "subtitle": "How about these goals?"
@@ -401,28 +383,71 @@
                 "subtitle": "3x/week • Consistent workouts"
             }
         },
-        "createCustom": "Create Your Own Routine"
+        "createCustom": "Create Your Own Challenge",
+        "combo": "{{count}} Combo",
+        "chances": "{{count}} Chances",
+        "weekComplete": "Weekly goal achieved!",
+        "oneMore": "One more to go!",
+        "remainingVisits": "{{count}} more visits needed",
+        "weekInfo": "Week {{current}}/{{total}}",
+        "limitTitle": "Challenge Limit",
+        "limitMessage": "You can have up to 2 active challenges.",
+        "status": {
+            "active": "Active",
+            "graduated": "Graduated",
+            "failed": "Failed"
+        },
+        "graduated": {
+            "title": "Congratulations!",
+            "subtitle": "You've successfully completed the challenge",
+            "newChallenge": "Start New Challenge"
+        },
+        "detail": {
+            "title": "Challenge Detail",
+            "week": "Week {{current}} / {{total}}",
+            "visitRecords": "Visit Records ({{count}})",
+            "noVisits": "No visit records yet",
+            "min": "min",
+            "counted": "Counted",
+            "notCounted": "Not counted",
+            "delete": "Delete Challenge",
+            "deleteTitle": "Delete Challenge",
+            "deleteMessage": "Delete this challenge? This cannot be undone."
+        }
     },
     "challengeCreate": {
         "title": "Create Challenge",
         "location": {
             "label": "Target Location",
             "select": "Select Place",
-            "change": "Change"
+            "change": "Change",
+            "searchTitle": "Search Place",
+            "searchPlaceholder": "Search for a place"
         },
         "goal": {
             "label": "Goal Settings",
             "duration": "Duration",
             "week": "1 Week",
             "month": "1 Month",
-            "frequency": "Frequency",
-            "timesPerWeek": "{{count}}x",
-            "repeat": "Repeat"
+            "frequency": "Weekly Goal",
+            "timesPerWeek": "{{count}}x / week",
+            "repeat": "Repeat Mode",
+            "daySpecific": "Day-Specific",
+            "daySpecificDesc": "Only count visits on selected days",
+            "daySpecificError": "{{selected}} selected / {{required}} required",
+            "weeksCount": "{{count}} weeks"
         },
         "identity": {
             "iconLabel": "Icon",
             "nameLabel": "Challenge Name",
             "namePlaceholder": "e.g. Morning workout, Reading"
+        },
+        "dwell": {
+            "label": "Dwell Time",
+            "toggle": "Require Dwell Time",
+            "description": "Must stay for a minimum duration to count as a visit",
+            "minutes": "{{count}} min",
+            "hours": "{{count}} hr"
         },
         "start": "Start"
     }

@@ -124,15 +124,15 @@ export default function Activity() {
                 {/* Challenge Start Card */}
                 <TouchableOpacity
                     style={styles.startChallengeCard}
-                    onPress={() => router.push('/challenge-landing')}
+                    onPress={() => router.push('/(tabs)/challenge')}
                     activeOpacity={0.7}
                 >
                     <View style={styles.startChallengeIconBox}>
                         <Ionicons name="trophy" size={24} color="#FFFFFF" />
                     </View>
                     <View style={styles.startChallengeContent}>
-                        <Text style={styles.startChallengeTitle}>챌린지 시작하기</Text>
-                        <Text style={styles.startChallengeSubtitle}>위치 기반 루틴을 만들어보세요</Text>
+                        <Text style={styles.startChallengeTitle}>{t('activity.startChallenge')}</Text>
+                        <Text style={styles.startChallengeSubtitle}>{t('activity.startChallengeDesc')}</Text>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
                 </TouchableOpacity>

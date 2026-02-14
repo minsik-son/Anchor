@@ -45,11 +45,11 @@ export default function TabsLayout() {
                 }}
             />
             <Tabs.Screen
-                name="routines"
+                name="challenge"
                 options={{
-                    title: t('tabs.routines'),
+                    title: t('tabs.challenge'),
                     tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="repeat" size={size} color={color} />
+                        <Ionicons name="trophy" size={size} color={color} />
                     ),
                 }}
             />

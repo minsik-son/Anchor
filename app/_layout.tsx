@@ -12,9 +12,7 @@ import { useColorScheme } from 'react-native';
 import { initDatabase } from '../src/db/database';
 import { colors as defaultColors, useThemeColors } from '../src/styles/theme';
 import { useThemeStore } from '../src/stores/themeStore';
-import { useRoutineStore } from '../src/stores/routineStore';
-import { evaluate } from '../src/services/routineManager';
-import { registerLocationTickCallback } from '../src/services/location/locationService';
+import { useChallengeStore } from '../src/stores/challengeStore';
 import '../src/i18n'; // Initialize i18n
 
 export default function RootLayout() {
@@ -31,7 +29,7 @@ export default function RootLayout() {
         async function initialize() {
             try {
                 await initDatabase();
-                await useRoutineStore.getState().loadRoutines();
+                await useChallengeStore.getState().loadChallenges();
                 setIsReady(true);
             } catch (err) {
                 console.error('[RootLayout] Initialization failed:', err);
@@ -41,15 +39,14 @@ export default function RootLayout() {
         initialize();
     }, []);
 
-    // Routine evaluation: foreground + background location ticks
+    // Reload challenges when app returns to foreground
     useEffect(() => {
         if (!isReady) return;
 
-        registerLocationTickCallback(() => evaluate());
-        evaluate();
-
         const subscription = AppState.addEventListener('change', (state) => {
-            if (state === 'active') evaluate();
+            if (state === 'active') {
+                useChallengeStore.getState().loadChallenges();
+            }
         });
 
         return () => subscription.remove();
@@ -86,7 +83,11 @@ export default function RootLayout() {
                 <Stack.Screen name="alarm-setup" />
                 <Stack.Screen name="alarm-detail" />
                 <Stack.Screen name="activity-stats" />
-                <Stack.Screen name="routine-setup" options={{ headerShown: false }} />
+                <Stack.Screen name="challenge-landing" options={{ headerShown: false }} />
+                <Stack.Screen name="challenge-create" options={{ headerShown: false }} />
+                <Stack.Screen name="challenge-detail" options={{ headerShown: false }} />
+                <Stack.Screen name="challenge-location-picker" options={{ headerShown: false }} />
+                {__DEV__ && <Stack.Screen name="dev-debug" options={{ headerShown: false }} />}
                 <Stack.Screen
                     name="action-checklist"
                     options={{

@@ -18,6 +18,8 @@ import {
     ACTIVE_TRACKING_CONFIG,
     TASK_NAMES,
 } from '../../constants/trackingConfig';
+import { processLocationUpdate as processChallengeLocation } from './dwellTracker';
+import { useChallengeStore } from '../../stores/challengeStore';
 
 // ---------------------------------------------------------------------------
 // Module-level state (the service is the "brain")
@@ -182,7 +184,20 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
         }
     }
 
-    // Notify routine manager of location tick
+    // Challenge geofence check — process location for dwell tracking
+    const challengeStore = useChallengeStore.getState();
+    if (challengeStore.activeChallenges.length > 0) {
+        processChallengeLocation(
+            {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                accuracy: location.coords.accuracy ?? undefined,
+            },
+            challengeStore.activeChallenges,
+        );
+    }
+
+    // Notify callback of location tick
     onLocationTickCallback?.();
 
     console.log('[LocationService] Update:', {

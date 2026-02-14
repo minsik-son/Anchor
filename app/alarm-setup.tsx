@@ -285,7 +285,8 @@ export default function AlarmSetup() {
                         <Switch
                             value={smartBattery}
                             onValueChange={setSmartBattery}
-                            trackColor={{ false: colors.textWeak, true: colors.primary }}
+                            trackColor={{ false: colors.textMedium, true: colors.primary }}
+                            ios_backgroundColor={colors.textMedium}
                         />
                     </View>
 
@@ -301,7 +302,8 @@ export default function AlarmSetup() {
                         <Switch
                             value={shakeToDismiss}
                             onValueChange={setShakeToDismiss}
-                            trackColor={{ false: colors.textWeak, true: colors.primary }}
+                            trackColor={{ false: colors.textMedium, true: colors.primary }}
+                            ios_backgroundColor={colors.textMedium}
                         />
                     </View>
                 </View>
