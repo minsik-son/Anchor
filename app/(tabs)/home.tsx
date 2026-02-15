@@ -208,6 +208,47 @@ export default function Home() {
         }
     }, [activeAlarm]);
 
+    // Fit map to show both current location and destination when alarm is active
+    // Uses a 2-step animation: first zoom out to midpoint, then fit to both coordinates
+    useEffect(() => {
+        if (!activeAlarm || !currentLocation || !mapRef.current || isNavigating) return;
+
+        const userCoord = {
+            latitude: currentLocation.coords.latitude,
+            longitude: currentLocation.coords.longitude,
+        };
+        const destCoord = {
+            latitude: activeAlarm.latitude,
+            longitude: activeAlarm.longitude,
+        };
+        const coordinates = [userCoord, destCoord];
+
+        // Step 1: Animate camera to midpoint with a wider zoom first
+        const midLat = (userCoord.latitude + destCoord.latitude) / 2;
+        const midLng = (userCoord.longitude + destCoord.longitude) / 2;
+        const latDiff = Math.abs(userCoord.latitude - destCoord.latitude);
+        const lngDiff = Math.abs(userCoord.longitude - destCoord.longitude);
+        const delta = Math.max(latDiff, lngDiff) * 1.8;
+
+        mapRef.current.animateToRegion(
+            {
+                latitude: midLat,
+                longitude: midLng,
+                latitudeDelta: Math.max(delta, 0.02),
+                longitudeDelta: Math.max(delta, 0.02),
+            },
+            600,
+        );
+
+        // Step 2: After first animation, fine-tune with fitToCoordinates
+        setTimeout(() => {
+            mapRef.current?.fitToCoordinates(coordinates, {
+                edgePadding: { top: 180, right: 100, bottom: BOTTOM_SHEET_COLLAPSED + 80, left: 100 },
+                animated: true,
+            });
+        }, 700);
+    }, [activeAlarm?.id, !!currentLocation]);
+
     // Fit map to route when navigation starts
     useEffect(() => {
         if (isNavigating && selectedRoute && mapRef.current) {
