@@ -4,8 +4,8 @@
  */
 
 import React, { useEffect, useState, useMemo, useCallback, memo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, Alert, ActivityIndicator, LayoutAnimation, UIManager, Platform } from 'react-native';
-import ReAnimated, { useAnimatedStyle, useSharedValue, withTiming, withSpring, interpolate, runOnJS } from 'react-native-reanimated';
+import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, Alert, ActivityIndicator } from 'react-native';
+import ReAnimated, { useAnimatedStyle, useSharedValue, withTiming, withSpring, interpolate, runOnJS, FadeInDown, FadeOutUp, LinearTransition } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,10 +15,6 @@ import { router } from 'expo-router';
 import { useAlarmStore } from '../../src/stores/alarmStore';
 import { Alarm } from '../../src/db/schema';
 import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
-
-if (Platform.OS === 'android') {
-    UIManager.setLayoutAnimationEnabledExperimental?.(true);
-}
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DELETE_BUTTON_WIDTH = 80;
@@ -148,7 +144,7 @@ interface CollapsibleSectionProps {
 
 function CollapsibleSection({ title, itemCount, isCollapsed, onToggle, children, colors, styles }: CollapsibleSectionProps) {
     return (
-        <View style={styles.sectionContainer}>
+        <ReAnimated.View style={styles.sectionContainer} layout={LinearTransition.duration(250)}>
             <Pressable style={styles.sectionHeader} onPress={onToggle}>
                 <View style={styles.sectionHeaderLeft}>
                     <AnimatedChevron isCollapsed={isCollapsed} color={colors.textWeak} />
@@ -157,8 +153,15 @@ function CollapsibleSection({ title, itemCount, isCollapsed, onToggle, children,
                 <Text style={styles.sectionHeaderCount}>{itemCount}</Text>
             </Pressable>
 
-            {!isCollapsed && children}
-        </View>
+            {!isCollapsed && (
+                <ReAnimated.View
+                    entering={FadeInDown.duration(300).damping(18).stiffness(200)}
+                    exiting={FadeOutUp.duration(200)}
+                >
+                    {children}
+                </ReAnimated.View>
+            )}
+        </ReAnimated.View>
     );
 }
 
@@ -193,12 +196,6 @@ export default function History() {
     const sections = useMemo(() => groupAlarmsByDate(alarms, i18n), [alarms, i18n]);
 
     const toggleSection = useCallback((dateKey: string) => {
-        LayoutAnimation.configureNext({
-            duration: 250,
-            update: { type: LayoutAnimation.Types.easeInEaseOut },
-            delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
-            create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
-        });
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setCollapsedSections((prev) => {
             const next = new Set(prev);
