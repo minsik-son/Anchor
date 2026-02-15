@@ -225,7 +225,15 @@
             "notification": "알림 권한 필요",
             "notificationDesc": "도착 전 알림을 받을 수 있습니다"
         },
+        "features": {
+            "battery": "스마트 배터리 절약",
+            "location": "정확한 위치 기반 알람",
+            "checklist": "할 일 체크리스트"
+        },
         "start": "시작하기",
+        "requesting": "권한 요청 중...",
+        "permissionNote": "위치 권한 허용이 필요합니다",
+        "permissionFailed": "권한 요청에 실패했습니다. 다시 시도해주세요.",
         "later": "나중에",
         "toSettings": "설정으로",
         "expoGo": {

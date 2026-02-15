@@ -225,7 +225,15 @@
             "notification": "通知の権限が必要",
             "notificationDesc": "到着前に通知を受け取ることができます"
         },
+        "features": {
+            "battery": "スマートバッテリー節約",
+            "location": "正確な位置ベースアラーム",
+            "checklist": "やることチェックリスト"
+        },
         "start": "始める",
+        "requesting": "権限をリクエスト中...",
+        "permissionNote": "位置情報の許可が必要です",
+        "permissionFailed": "権限リクエストに失敗しました。もう一度お試しください。",
         "later": "あとで",
         "toSettings": "設定へ",
         "expoGo": {

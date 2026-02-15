@@ -87,6 +87,10 @@ export function getDatabase(): SQLite.SQLiteDatabase {
 // ========== ALARM OPERATIONS ==========
 
 export async function createAlarm(input: CreateAlarmInput): Promise<number> {
+    if (!input.title?.trim()) throw new Error('Title is required');
+    if (isNaN(input.latitude) || isNaN(input.longitude)) throw new Error('Invalid coordinates');
+    if (input.radius !== undefined && (isNaN(input.radius) || input.radius <= 0)) throw new Error('Invalid radius');
+
     const database = getDatabase();
     const result = await database.runAsync(
         `INSERT INTO alarms (title, latitude, longitude, radius, sound_uri, started_at, start_latitude, start_longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,

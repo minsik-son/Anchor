@@ -54,14 +54,22 @@ export default function FavoritePlaceSetup() {
             return;
         }
 
+        const lat = parseFloat(params.latitude);
+        const lng = parseFloat(params.longitude);
+
+        if (isNaN(lat) || isNaN(lng)) {
+            Alert.alert(t('common.error'), t('alarmSetup.locationError'));
+            return;
+        }
+
         try {
             await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
             await addFavorite({
                 label: label.trim(),
                 icon: selectedIcon,
-                latitude: parseFloat(params.latitude),
-                longitude: parseFloat(params.longitude),
+                latitude: lat,
+                longitude: lng,
                 radius: savedRadius,
             });
 

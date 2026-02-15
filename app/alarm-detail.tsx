@@ -53,6 +53,10 @@ export default function AlarmDetail() {
             if (!params.alarmId) return;
 
             const alarmId = parseInt(params.alarmId);
+            if (isNaN(alarmId)) {
+                router.back();
+                return;
+            }
             const alarmData = await db.getAlarmById(alarmId);
             if (!alarmData) {
                 router.back();

@@ -74,7 +74,7 @@ export default function Onboarding() {
                     ]
                 );
             } else {
-                Alert.alert(t('common.error'), t('common.error'));
+                Alert.alert(t('common.error'), t('onboarding.permissionFailed'));
                 setIsLoading(false);
             }
         }
@@ -103,9 +103,9 @@ export default function Onboarding() {
 
             {/* Features */}
             <View style={styles.features}>
-                <FeatureItem icon="🔋" text="스마트 배터리 절약" styles={styles} />
-                <FeatureItem icon="🎯" text="정확한 위치 기반 알람" styles={styles} />
-                <FeatureItem icon="📝" text="할 일 체크리스트" styles={styles} />
+                <FeatureItem icon="🔋" text={t('onboarding.features.battery')} styles={styles} />
+                <FeatureItem icon="🎯" text={t('onboarding.features.location')} styles={styles} />
+                <FeatureItem icon="📝" text={t('onboarding.features.checklist')} styles={styles} />
             </View>
 
             {/* CTA Button */}
@@ -119,12 +119,12 @@ export default function Onboarding() {
                     disabled={isLoading}
                 >
                     <Text style={styles.ctaText}>
-                        {isLoading ? '권한 요청 중...' : '시작하기'}
+                        {isLoading ? t('onboarding.requesting') : t('onboarding.start')}
                     </Text>
                 </Pressable>
 
                 <Text style={styles.permissionNote}>
-                    위치 권한 허용이 필요합니다
+                    {t('onboarding.permissionNote')}
                 </Text>
             </View>
             <Text style={styles.permissionNote}>

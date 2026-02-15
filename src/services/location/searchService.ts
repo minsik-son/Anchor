@@ -131,7 +131,7 @@ async function searchKakao(query: string, limit: number = 10): Promise<SearchRes
             longitude: parseFloat(item.x),
             source: 'KAKAO' as const,
             relevanceScore: 100 - index,
-        }));
+        })).filter(r => !isNaN(r.latitude!) && !isNaN(r.longitude!));
     } catch (error) {
         console.error('[SearchService] Kakao search error:', error);
         return [];
@@ -217,7 +217,7 @@ async function searchApple(
             longitude: item.coordinate.longitude,
             source: 'APPLE' as const,
             relevanceScore: 100 - index,
-        }));
+        })).filter(r => r.latitude != null && r.longitude != null && !isNaN(r.latitude) && !isNaN(r.longitude));
     } catch (error) {
         console.error('[SearchService] Apple search error:', error);
         // Fallback to expo-location on error

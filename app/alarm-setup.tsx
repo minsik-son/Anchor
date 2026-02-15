@@ -90,6 +90,12 @@ export default function AlarmSetup() {
         const lat = parseFloat(params.latitude);
         const lng = parseFloat(params.longitude);
 
+        if (isNaN(lat) || isNaN(lng)) {
+            Alert.alert(t('common.error'), t('alarmSetup.locationError'));
+            setIsCreating(false);
+            return;
+        }
+
         // Fetch fresh GPS — capture return value as local variable (store update may not be visible this tick)
         const location = await getCurrentLocation();
 

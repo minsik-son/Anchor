@@ -225,7 +225,15 @@
             "notification": "Notification Permission Required",
             "notificationDesc": "Receive alerts before arrival"
         },
+        "features": {
+            "battery": "Smart Battery Saving",
+            "location": "Precise Location Alarm",
+            "checklist": "To-do Checklist"
+        },
         "start": "Get Started",
+        "requesting": "Requesting permissions...",
+        "permissionNote": "Location permission is required",
+        "permissionFailed": "Permission request failed. Please try again.",
         "later": "Later",
         "toSettings": "To Settings",
         "expoGo": {
