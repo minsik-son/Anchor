@@ -3,9 +3,9 @@
  * Recent alarms history with swipe-to-delete, bulk delete, and detail navigation
  */
 
-import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, Alert } from 'react-native';
-import ReAnimated, { useAnimatedStyle, useSharedValue, withTiming, withSpring, Easing, interpolate, runOnJS } from 'react-native-reanimated';
+import React, { useEffect, useState, useMemo, useCallback, memo } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Dimensions, Alert, ActivityIndicator, LayoutAnimation, UIManager, Platform } from 'react-native';
+import ReAnimated, { useAnimatedStyle, useSharedValue, withTiming, withSpring, interpolate, runOnJS } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,8 +15,10 @@ import { router } from 'expo-router';
 import { useAlarmStore } from '../../src/stores/alarmStore';
 import { Alarm } from '../../src/db/schema';
 import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
-import { useDistanceFormatter } from '../../src/utils/distanceFormatter';
-import { calculateDistance } from '../../src/services/location/geofence';
+
+if (Platform.OS === 'android') {
+    UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DELETE_BUTTON_WIDTH = 80;
@@ -25,6 +27,7 @@ const VELOCITY_THRESHOLD = 500;
 const SPRING_CONFIG = { damping: 20, stiffness: 300, mass: 0.5, overshootClamping: true };
 
 type AlarmStatus = 'in_progress' | 'completed' | 'cancelled';
+type Styles = ReturnType<typeof createStyles>;
 
 function getAlarmStatus(alarm: Alarm): AlarmStatus {
     if (alarm.is_active) return 'in_progress';
@@ -32,9 +35,8 @@ function getAlarmStatus(alarm: Alarm): AlarmStatus {
     return 'cancelled';
 }
 
-function StatusBadge({ status, colors }: { status: AlarmStatus; colors: ThemeColors }) {
+const StatusBadge = memo(function StatusBadge({ status, colors }: { status: AlarmStatus; colors: ThemeColors }) {
     const { t } = useTranslation();
-    const styles = useMemo(() => createStyles(colors), [colors]);
     const config = {
         in_progress: { labelKey: 'history.status.inProgress', color: colors.success },
         completed: { labelKey: 'history.status.completed', color: colors.primary },
@@ -43,11 +45,24 @@ function StatusBadge({ status, colors }: { status: AlarmStatus; colors: ThemeCol
     const { labelKey, color } = config[status];
 
     return (
-        <View style={[styles.statusBadge, { backgroundColor: color }]}>
-            <Text style={styles.statusBadgeText}>{t(labelKey)}</Text>
+        <View style={[statusBadgeStyles.badge, { backgroundColor: color }]}>
+            <Text style={statusBadgeStyles.text}>{t(labelKey)}</Text>
         </View>
     );
-}
+});
+
+const statusBadgeStyles = StyleSheet.create({
+    badge: {
+        paddingHorizontal: spacing.xs,
+        paddingVertical: 4,
+        borderRadius: radius.full,
+    },
+    text: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#FFFFFF',
+    },
+});
 
 function formatRelativeTime(dateString: string, t: any, i18n: any): string {
     const date = new Date(dateString);
@@ -128,45 +143,10 @@ interface CollapsibleSectionProps {
     onToggle: () => void;
     children: React.ReactNode;
     colors: ThemeColors;
+    styles: Styles;
 }
 
-function CollapsibleSection({ title, itemCount, isCollapsed, onToggle, children, colors }: CollapsibleSectionProps) {
-    const styles = useMemo(() => createStyles(colors), [colors]);
-    const [contentHeight, setContentHeight] = useState(0);
-    const animatedHeight = useSharedValue(0);
-    const animatedOpacity = useSharedValue(1);
-    const isFirstRender = useRef(true);
-
-    const onLayout = useCallback((event: any) => {
-        const height = event.nativeEvent.layout.height;
-        if (height > 0 && height !== contentHeight) {
-            setContentHeight(height);
-            if (isFirstRender.current) {
-                animatedHeight.value = height;
-                isFirstRender.current = false;
-            }
-        }
-    }, [contentHeight]);
-
-    useEffect(() => {
-        if (contentHeight > 0 && !isFirstRender.current) {
-            const targetHeight = isCollapsed ? 0 : contentHeight;
-            animatedHeight.value = withTiming(targetHeight, {
-                duration: 300,
-                easing: Easing.bezier(0.4, 0, 0.2, 1),
-            });
-            animatedOpacity.value = withTiming(isCollapsed ? 0 : 1, {
-                duration: 200,
-            });
-        }
-    }, [isCollapsed, contentHeight]);
-
-    const animatedContainerStyle = useAnimatedStyle(() => ({
-        height: contentHeight === 0 ? undefined : animatedHeight.value,
-        opacity: animatedOpacity.value,
-        overflow: 'hidden',
-    }));
-
+function CollapsibleSection({ title, itemCount, isCollapsed, onToggle, children, colors, styles }: CollapsibleSectionProps) {
     return (
         <View style={styles.sectionContainer}>
             <Pressable style={styles.sectionHeader} onPress={onToggle}>
@@ -177,11 +157,7 @@ function CollapsibleSection({ title, itemCount, isCollapsed, onToggle, children,
                 <Text style={styles.sectionHeaderCount}>{itemCount}</Text>
             </Pressable>
 
-            <ReAnimated.View style={animatedContainerStyle}>
-                <View onLayout={onLayout}>
-                    {children}
-                </View>
-            </ReAnimated.View>
+            {!isCollapsed && children}
         </View>
     );
 }
@@ -209,14 +185,20 @@ function groupAlarmsByDate(alarms: Alarm[], i18n: any): AlarmSection[] {
 export default function History() {
     const insets = useSafeAreaInsets();
     const { t, i18n } = useTranslation();
-    const { alarms, loadAlarms, deleteAlarm, deleteAllAlarms } = useAlarmStore();
+    const { alarms, isLoading, loadAlarms, deleteAlarm, deleteAllAlarms } = useAlarmStore();
     const colors = useThemeColors();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
     const sections = useMemo(() => groupAlarmsByDate(alarms, i18n), [alarms, i18n]);
 
-    const toggleSection = (dateKey: string) => {
+    const toggleSection = useCallback((dateKey: string) => {
+        LayoutAnimation.configureNext({
+            duration: 250,
+            update: { type: LayoutAnimation.Types.easeInEaseOut },
+            delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+            create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+        });
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setCollapsedSections((prev) => {
             const next = new Set(prev);
@@ -227,23 +209,23 @@ export default function History() {
             }
             return next;
         });
-    };
+    }, []);
 
     useEffect(() => {
         loadAlarms();
     }, []);
 
-    const handleAlarmPress = (alarm: Alarm) => {
+    const handleAlarmPress = useCallback((alarm: Alarm) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push({ pathname: '/alarm-detail', params: { alarmId: alarm.id.toString() } });
-    };
+    }, []);
 
-    const handleDeleteAlarm = (alarm: Alarm) => {
+    const handleDeleteAlarm = useCallback((alarm: Alarm) => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         deleteAlarm(alarm.id);
-    };
+    }, [deleteAlarm]);
 
-    const handleDeleteAll = () => {
+    const handleDeleteAll = useCallback(() => {
         Alert.alert(
             t('history.deleteAll.title'),
             t('history.deleteAll.message'),
@@ -259,7 +241,7 @@ export default function History() {
                 },
             ]
         );
-    };
+    }, [t, deleteAllAlarms]);
 
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -280,7 +262,11 @@ export default function History() {
                 contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 20 }]}
                 showsVerticalScrollIndicator={false}
             >
-                {sections.length === 0 ? (
+                {isLoading && alarms.length === 0 ? (
+                    <View style={styles.emptyState}>
+                        <ActivityIndicator size="large" color={colors.primary} />
+                    </View>
+                ) : sections.length === 0 ? (
                     <View style={styles.emptyState}>
                         <Ionicons name="time-outline" size={64} color={colors.textWeak} />
                         <Text style={styles.emptyText}>{t('history.empty')}</Text>
@@ -296,15 +282,17 @@ export default function History() {
                             isCollapsed={collapsedSections.has(section.dateKey)}
                             onToggle={() => toggleSection(section.dateKey)}
                             colors={colors}
+                            styles={styles}
                         >
                             {section.data.map((alarm) => (
                                 <SwipeableAlarmCard
                                     key={alarm.id}
                                     alarm={alarm}
                                     isActive={alarm.is_active}
-                                    onPress={() => handleAlarmPress(alarm)}
-                                    onDelete={() => handleDeleteAlarm(alarm)}
+                                    onPress={handleAlarmPress}
+                                    onDelete={handleDeleteAlarm}
                                     colors={colors}
+                                    styles={styles}
                                 />
                             ))}
                         </CollapsibleSection>
@@ -315,35 +303,25 @@ export default function History() {
     );
 }
 
-function SwipeableAlarmCard({
+const SwipeableAlarmCard = memo(function SwipeableAlarmCard({
     alarm,
     isActive,
     onPress,
     onDelete,
-    colors
+    colors,
+    styles,
 }: {
     alarm: Alarm;
     isActive: boolean;
-    onPress: () => void;
-    onDelete: () => void;
+    onPress: (alarm: Alarm) => void;
+    onDelete: (alarm: Alarm) => void;
     colors: ThemeColors;
+    styles: Styles;
 }) {
     const { t, i18n } = useTranslation();
-    const styles = useMemo(() => createStyles(colors), [colors]);
-    const { formatDistance } = useDistanceFormatter();
     const translateX = useSharedValue(0);
     const contextX = useSharedValue(0);
     const [isOpen, setIsOpen] = useState(false);
-
-    const distance = useMemo(() => {
-        if (alarm.start_latitude && alarm.start_longitude) {
-            return calculateDistance(
-                { latitude: alarm.start_latitude, longitude: alarm.start_longitude },
-                { latitude: alarm.latitude, longitude: alarm.longitude }
-            );
-        }
-        return null;
-    }, [alarm]);
 
     const triggerHaptic = useCallback(() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -394,19 +372,19 @@ function SwipeableAlarmCard({
     const handleDeletePress = useCallback(() => {
         translateX.value = withTiming(-SCREEN_WIDTH, { duration: 200 }, (finished) => {
             if (finished) {
-                runOnJS(onDelete)();
+                runOnJS(onDelete)(alarm);
             }
         });
-    }, [onDelete]);
+    }, [onDelete, alarm]);
 
     const handlePress = useCallback(() => {
         if (isOpen) {
             translateX.value = withSpring(0, SPRING_CONFIG);
             setIsOpen(false);
         } else {
-            onPress();
+            onPress(alarm);
         }
-    }, [isOpen, onPress]);
+    }, [isOpen, onPress, alarm]);
 
     return (
         <View style={styles.swipeContainer}>
@@ -437,10 +415,6 @@ function SwipeableAlarmCard({
 
                         <View style={styles.alarmDetails}>
                             <Text style={styles.alarmDetail}>
-                                {distance !== null ? formatDistance(distance) : '-'}
-                            </Text>
-                            <Text style={styles.alarmDetail}>•</Text>
-                            <Text style={styles.alarmDetail}>
                                 {formatRelativeTime(alarm.created_at, t, i18n)}
                             </Text>
                         </View>
@@ -449,7 +423,7 @@ function SwipeableAlarmCard({
             </GestureDetector>
         </View>
     );
-}
+});
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
@@ -574,16 +548,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: spacing.xs,
-    },
-    statusBadge: {
-        paddingHorizontal: spacing.xs,
-        paddingVertical: 4,
-        borderRadius: radius.full,
-    },
-    statusBadgeText: {
-        fontSize: 11,
-        fontWeight: '600',
-        color: '#FFFFFF',
     },
     alarmDetails: {
         flexDirection: 'row',

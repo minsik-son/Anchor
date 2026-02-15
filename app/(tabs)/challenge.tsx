@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -113,6 +113,13 @@ export default function ChallengeTab() {
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>{t('challenge.headerTitle')}</Text>
                 </View>
+
+                {/* Loading state */}
+                {isLoading && challenges.length === 0 && (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color={colors.primary} />
+                    </View>
+                )}
 
                 {/* State 1: No active challenges */}
                 {!hasActiveChallenges && !hasRecentGraduation && (
@@ -258,6 +265,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingTop: 100,
     },
     scrollContent: {
         paddingHorizontal: spacing.md,

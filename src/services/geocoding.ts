@@ -4,6 +4,7 @@
  */
 
 import * as Location from 'expo-location';
+import i18n from '../i18n';
 
 export interface GeocodingResult {
     address: string;      // Full address
@@ -42,12 +43,12 @@ export async function reverseGeocode(
         });
 
         if (results.length === 0) {
-            return { address: '주소를 찾을 수 없습니다' };
+            return { address: i18n.t('geocoding.addressNotFound') };
         }
 
         const result = results[0];
 
-        // Build Korean-style address
+        // Build address from parts
         const addressParts: string[] = [];
 
         if (result.city) addressParts.push(result.city);
@@ -58,7 +59,7 @@ export async function reverseGeocode(
         const geocodingResult: GeocodingResult = {
             address: addressParts.length > 0
                 ? addressParts.join(' ')
-                : result.formattedAddress || '주소를 찾을 수 없습니다',
+                : result.formattedAddress || i18n.t('geocoding.addressNotFound'),
             detail: result.name || undefined,
             city: result.city || undefined,
             district: result.district || undefined,
@@ -70,7 +71,7 @@ export async function reverseGeocode(
         return geocodingResult;
     } catch (error) {
         console.error('[Geocoding] Error:', error);
-        return { address: '주소를 불러올 수 없습니다' };
+        return { address: i18n.t('geocoding.failedToLoad') };
     }
 }
 

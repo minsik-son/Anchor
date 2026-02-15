@@ -3,6 +3,8 @@
  * Check if user is within alarm radius
  */
 
+import i18n from '../../i18n';
+
 export interface Coordinate {
     latitude: number;
     longitude: number;
@@ -72,7 +74,7 @@ export function calculateBearing(from: Coordinate, to: Coordinate): number {
  * Get cardinal direction from bearing
  */
 export function getCardinalDirection(bearing: number): string {
-    const directions = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
+    const keys = ['north', 'northEast', 'east', 'southEast', 'south', 'southWest', 'west', 'northWest'];
     const index = Math.round(bearing / 45) % 8;
-    return directions[index];
+    return i18n.t(`geofence.directions.${keys[index]}`);
 }

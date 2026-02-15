@@ -33,6 +33,7 @@
         "addFavorite": "お気に入り追加",
         "hint": "地図を動かして位置を決めてください",
         "recentDestinations": "最近の目的地",
+        "searching": "検索中...",
         "activeAlarm": {
             "calculating": "目的地までの距離を計算中..."
         },
@@ -210,7 +211,8 @@
         "locationLabel": "位置",
         "save": "保存する",
         "noName": "名前が必要です",
-        "pleaseEnterName": "お気に入りの名前を入力してください。"
+        "pleaseEnterName": "お気に入りの名前を入力してください。",
+        "maxLimitReached": "お気に入りは最大3件まで登録できます。"
     },
     "onboarding": {
         "welcome": "到着1km前に\nお知らせします",
@@ -274,7 +276,8 @@
         "arrivedBadge": "到着",
         "dismiss": "スライドしてアラームを消す",
         "dismissHint": "最後までスライドしてアラームを消す",
-        "checklist": "チェックリスト"
+        "checklist": "チェックリスト",
+        "shakeHint": "振ってアラームを解除できます"
     },
     "actionChecklist": {
         "title": "お忘れなく！",
@@ -417,6 +420,22 @@
             "deleteTitle": "チャレンジを削除",
             "deleteMessage": "このチャレンジを削除しますか？この操作は元に戻せません。"
         }
+    },
+    "geofence": {
+        "directions": {
+            "north": "北",
+            "northEast": "北東",
+            "east": "東",
+            "southEast": "南東",
+            "south": "南",
+            "southWest": "南西",
+            "west": "西",
+            "northWest": "北西"
+        }
+    },
+    "geocoding": {
+        "addressNotFound": "住所が見つかりません",
+        "failedToLoad": "住所を読み込めませんでした"
     },
     "challengeCreate": {
         "title": "チャレンジ作成",

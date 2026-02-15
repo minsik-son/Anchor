@@ -23,7 +23,6 @@ import NavigationPanel from '../../src/components/navigation/NavigationPanel';
 import BottomSheetDashboard, {
     BOTTOM_SHEET_COLLAPSED,
 } from '../../src/components/home/BottomSheetDashboard';
-import { isInKorea } from '../../src/services/location/searchService';
 import { formatDistance, calculateDistance, isWithinRadius } from '../../src/services/location/geofence';
 import { startTracking as startServiceTracking } from '../../src/services/location/locationService';
 import { mapDarkStyle } from '../../src/constants/mapDarkStyle';
@@ -446,9 +445,7 @@ export default function Home() {
                 {/* OSM Tile Overlay for Android */}
                 {Platform.OS === 'android' && (
                     <UrlTile
-                        urlTemplate={centerLocation && isInKorea(centerLocation.latitude, centerLocation.longitude)
-                            ? "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            : "https://tile.openstreetmap.org/{z}/{x}/{y}.png"}
+                        urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
                         maximumZ={19}
                         flipY={false}
                         zIndex={-1}
@@ -612,7 +609,7 @@ export default function Home() {
                     ) : searchState.isSearching ? (
                         <View style={styles.searchLoadingContainer}>
                             <ActivityIndicator size="small" color={colors.primary} />
-                            <Text style={styles.searchLoadingText}>검색 중...</Text>
+                            <Text style={styles.searchLoadingText}>{t('home.searching')}</Text>
                         </View>
                     ) : searchState.results.length > 0 ? (
                         <FlatList

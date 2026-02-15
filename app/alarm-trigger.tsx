@@ -218,6 +218,10 @@ export default function AlarmTrigger() {
                         </Animated.View>
                     </GestureDetector>
                 </View>
+
+                {shakeToDismiss && (
+                    <Text style={styles.shakeHint}>{t('alarmTrigger.shakeHint')}</Text>
+                )}
             </View>
         </>
     );
@@ -288,6 +292,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         textShadowColor: 'rgba(0, 0, 0, 0.7)',
         textShadowOffset: { width: 0, height: 2 },
         textShadowRadius: 8,
+    },
+    shakeHint: {
+        ...typography.caption,
+        color: 'rgba(255, 255, 255, 0.6)',
+        textAlign: 'center',
+        marginTop: spacing.sm,
     },
     dismissContainer: {
         paddingHorizontal: spacing.md,

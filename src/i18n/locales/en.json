@@ -33,6 +33,7 @@
         "addFavorite": "Add Favorite",
         "hint": "Move the map to set a location",
         "recentDestinations": "Recent Destinations",
+        "searching": "Searching...",
         "activeAlarm": {
             "calculating": "Calculating distance..."
         },
@@ -210,7 +211,8 @@
         "locationLabel": "Location",
         "save": "Save",
         "noName": "Name Required",
-        "pleaseEnterName": "Please enter a favorite name."
+        "pleaseEnterName": "Please enter a favorite name.",
+        "maxLimitReached": "You can add up to 3 favorites."
     },
     "onboarding": {
         "welcome": "We'll wake you up\n1km before arrival",
@@ -274,7 +276,8 @@
         "arrivedBadge": "Arrived",
         "dismiss": "Slide to dismiss",
         "dismissHint": "Slide all the way to dismiss",
-        "checklist": "Checklist"
+        "checklist": "Checklist",
+        "shakeHint": "Or shake to dismiss"
     },
     "actionChecklist": {
         "title": "Don't Forget!",
@@ -417,6 +420,22 @@
             "deleteTitle": "Delete Challenge",
             "deleteMessage": "Delete this challenge? This cannot be undone."
         }
+    },
+    "geofence": {
+        "directions": {
+            "north": "N",
+            "northEast": "NE",
+            "east": "E",
+            "southEast": "SE",
+            "south": "S",
+            "southWest": "SW",
+            "west": "W",
+            "northWest": "NW"
+        }
+    },
+    "geocoding": {
+        "addressNotFound": "Address not found",
+        "failedToLoad": "Failed to load address"
     },
     "challengeCreate": {
         "title": "Create Challenge",

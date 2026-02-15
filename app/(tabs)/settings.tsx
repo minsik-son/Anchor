@@ -261,15 +261,15 @@ export default function Settings() {
 
                 {/* Location Settings */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{t('settings.items.backgroundLocation') || '위치 설정'}</Text>
+                    <Text style={styles.sectionTitle}>{t('settings.items.backgroundLocation')}</Text>
 
                     <SettingItem
                         icon="navigate"
-                        label={t('settings.items.backgroundLocation') || '백그라운드 위치 추적'}
-                        description={t('settings.items.backgroundLocationDesc') || '알람 활성화 시 자동으로 위치를 추적합니다.'}
+                        label={t('settings.items.backgroundLocation')}
+                        description={t('settings.items.backgroundLocationDesc')}
                         rightElement={
                             <View style={{ backgroundColor: colors.primary + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
-                                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn') || '항상 활성'}</Text>
+                                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn')}</Text>
                             </View>
                         }
                         colors={colors}
@@ -277,11 +277,11 @@ export default function Settings() {
 
                     <SettingItem
                         icon="battery-charging"
-                        label={t('settings.items.batterySaving') || '스마트 배터리 절약'}
-                        description={t('alarmSetup.smartBatteryDesc') || '거리에 따라 위치 확인 주기를 자동 조절합니다.'}
+                        label={t('settings.items.batterySaving')}
+                        description={t('alarmSetup.smartBatteryDesc')}
                         rightElement={
                             <View style={{ backgroundColor: colors.primary + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
-                                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn') || '항상 활성'}</Text>
+                                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn')}</Text>
                             </View>
                         }
                         colors={colors}
@@ -344,11 +344,11 @@ export default function Settings() {
 
                 {/* Map Settings */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{t('settings.sections.map') || '지도 설정'}</Text>
+                    <Text style={styles.sectionTitle}>{t('settings.sections.map')}</Text>
 
                     <SettingItem
                         icon="map"
-                        label={t('settings.items.mapEngine') || '지도 엔진'}
+                        label={t('settings.items.mapEngine')}
                         description="Google Maps"
                         rightElement={
                             <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />

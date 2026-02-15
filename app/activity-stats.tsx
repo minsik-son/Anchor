@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,7 +22,7 @@ export default function ActivityStats() {
     const styles = useMemo(() => createStyles(colors), [colors]);
 
     const [period, setPeriod] = useState<Period>('weekly');
-    const { getWeeklyData, getMonthlyData, loadHistoricalData, dailyRecords } = useActivityStore();
+    const { getWeeklyData, getMonthlyData, loadHistoricalData, dailyRecords, isLoading } = useActivityStore();
 
     useEffect(() => {
         loadHistoricalData(60);
@@ -90,7 +90,11 @@ export default function ActivityStats() {
                     </Pressable>
                 </View>
 
-                {!hasData ? (
+                {isLoading && dailyRecords.length === 0 ? (
+                    <View style={styles.emptyState}>
+                        <ActivityIndicator size="large" color={colors.primary} />
+                    </View>
+                ) : !hasData ? (
                     <View style={styles.emptyState}>
                         <Ionicons name="bar-chart-outline" size={64} color={colors.textWeak} />
                         <Text style={styles.emptyText}>{t('activity.noDataYet')}</Text>

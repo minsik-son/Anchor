@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Alert, Switch, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -51,6 +51,7 @@ export default function AlarmSetup() {
         params.radius ? parseInt(params.radius) : alarmDefaults.radius
     );
     const [memo, setMemo] = useState('');
+    const [isCreating, setIsCreating] = useState(false);
 
 
     const { createAlarm, addMemo } = useAlarmStore();
@@ -72,6 +73,8 @@ export default function AlarmSetup() {
     };
 
     const handleCreateAlarm = async () => {
+        if (isCreating) return;
+
         if (!title.trim()) {
             Alert.alert(t('alarmSetup.noTitle'), t('alarmSetup.pleaseEnterTitle'));
             return;
@@ -81,6 +84,8 @@ export default function AlarmSetup() {
             Alert.alert(t('common.error'), t('alarmSetup.locationError'));
             return;
         }
+
+        setIsCreating(true);
 
         const lat = parseFloat(params.latitude);
         const lng = parseFloat(params.longitude);
@@ -157,6 +162,8 @@ export default function AlarmSetup() {
             }
         } catch (error) {
             Alert.alert(t('common.error'), t('alarmSetup.createFailed'));
+        } finally {
+            setIsCreating(false);
         }
     };
 
@@ -284,7 +291,7 @@ export default function AlarmSetup() {
                             </View>
                         </View>
                         <View style={{ backgroundColor: colors.primary + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
-                            <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn') || '항상 활성'}</Text>
+                            <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn')}</Text>
                         </View>
                     </View>
 
@@ -311,11 +318,17 @@ export default function AlarmSetup() {
                 <Pressable
                     style={({ pressed }) => [
                         styles.createButton,
-                        pressed && styles.createButtonPressed,
+                        isCreating && { opacity: 0.6 },
+                        pressed && !isCreating && styles.createButtonPressed,
                     ]}
                     onPress={handleCreateAlarm}
+                    disabled={isCreating}
                 >
-                    <Text style={styles.createButtonText}>{t('alarmSetup.startAlarm')}</Text>
+                    {isCreating ? (
+                        <ActivityIndicator size="small" color={colors.surface} />
+                    ) : (
+                        <Text style={styles.createButtonText}>{t('alarmSetup.startAlarm')}</Text>
+                    )}
                 </Pressable>
             </View>
         </View>

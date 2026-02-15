@@ -1,0 +1,6 @@
+{
+  "NSLocationWhenInUseUsageDescription": "アラームの目的地までの距離を計算するために位置情報が必要です。",
+  "NSLocationAlwaysAndWhenInUseUsageDescription": "バックグラウンドでも目的地到着をお知らせするために、常に位置情報が必要です。",
+  "NSLocationAlwaysUsageDescription": "バックグラウンドでも目的地到着をお知らせするために、常に位置情報が必要です。",
+  "NSPhotoLibraryUsageDescription": "アラーム背景画像を選択するためにギャラリーアクセスが必要です。"
+}

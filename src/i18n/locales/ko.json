@@ -33,6 +33,7 @@
         "addFavorite": "즐겨찾기 추가",
         "hint": "지도를 움직여 위치를 정해보세요",
         "recentDestinations": "최근 목적지",
+        "searching": "검색 중...",
         "activeAlarm": {
             "calculating": "목적지까지 계산 중..."
         },
@@ -210,7 +211,8 @@
         "locationLabel": "위치",
         "save": "저장하기",
         "noName": "이름 필요",
-        "pleaseEnterName": "즐겨찾기 이름을 입력해주세요."
+        "pleaseEnterName": "즐겨찾기 이름을 입력해주세요.",
+        "maxLimitReached": "즐겨찾기는 최대 3개까지 등록할 수 있습니다."
     },
     "onboarding": {
         "welcome": "도착 1km 전,\n미리 깨워드릴게요",
@@ -274,7 +276,8 @@
         "arrivedBadge": "도착",
         "dismiss": "밀어서 알람 끄기",
         "dismissHint": "끝까지 밀어서 알람을 끄세요",
-        "checklist": "할 일 목록"
+        "checklist": "할 일 목록",
+        "shakeHint": "흔들어서 해제할 수 있어요"
     },
     "actionChecklist": {
         "title": "잊지 마세요!",
@@ -417,6 +420,22 @@
             "deleteTitle": "챌린지 삭제",
             "deleteMessage": "이 챌린지를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
         }
+    },
+    "geofence": {
+        "directions": {
+            "north": "북",
+            "northEast": "북동",
+            "east": "동",
+            "southEast": "남동",
+            "south": "남",
+            "southWest": "남서",
+            "west": "서",
+            "northWest": "북서"
+        }
+    },
+    "geocoding": {
+        "addressNotFound": "주소를 찾을 수 없습니다",
+        "failedToLoad": "주소를 불러올 수 없습니다"
     },
     "challengeCreate": {
         "title": "챌린지 만들기",
