@@ -20,6 +20,8 @@ import {
 } from '../../constants/trackingConfig';
 import { processLocationUpdate as processChallengeLocation } from './dwellTracker';
 import { useChallengeStore } from '../../stores/challengeStore';
+import { useAlarmStore } from '../../stores/alarmStore';
+import { sendArrivalNotification, isAppInForeground } from '../notification/notificationService';
 
 // ---------------------------------------------------------------------------
 // Module-level state (the service is the "brain")
@@ -170,7 +172,19 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
     // Check alarm trigger (user within target radius)
     if (store.checkGeofence()) {
         console.log('[LocationService] User arrived! Distance:', store.distanceToTarget);
-        router.push('/alarm-trigger');
+
+        // Always send a local notification (works in both foreground & background)
+        const alarmStore = useAlarmStore.getState();
+        const alarmTitle = alarmStore.activeAlarm?.title ?? '';
+        const alarmId = alarmStore.activeAlarm?.id;
+        sendArrivalNotification(alarmTitle, alarmId).catch(err =>
+            console.warn('[LocationService] Failed to send notification:', err),
+        );
+
+        // If app is in foreground, also navigate directly to alarm screen
+        if (isAppInForeground()) {
+            router.push('/alarm-trigger');
+        }
         return;
     }
 

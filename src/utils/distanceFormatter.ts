@@ -71,10 +71,10 @@ export function formatSpeed(
  */
 export function getRadiusLabels(unit: DistanceUnit): { min: string; max: string } {
     if (unit === 'metric') {
-        return { min: '50m', max: '2km' };
+        return { min: '50m', max: '1km' };
     }
-    // 50m = ~164ft, 2000m = ~1.24mi
-    return { min: '164ft', max: '1.2mi' };
+    // 50m = ~164ft, 1000m = ~0.62mi
+    return { min: '164ft', max: '0.6mi' };
 }
 
 /**

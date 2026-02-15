@@ -13,6 +13,12 @@ import { initDatabase } from '../src/db/database';
 import { colors as defaultColors, useThemeColors } from '../src/styles/theme';
 import { useThemeStore } from '../src/stores/themeStore';
 import { useChallengeStore } from '../src/stores/challengeStore';
+import { useAlarmStore } from '../src/stores/alarmStore';
+import {
+    initNotifications,
+    setupNotificationResponseHandler,
+    removeNotificationResponseHandler,
+} from '../src/services/notification/notificationService';
 import '../src/i18n'; // Initialize i18n
 
 export default function RootLayout() {
@@ -29,7 +35,9 @@ export default function RootLayout() {
         async function initialize() {
             try {
                 await initDatabase();
+                await useAlarmStore.getState().loadActiveAlarm();
                 await useChallengeStore.getState().loadChallenges();
+                await initNotifications();
                 setIsReady(true);
             } catch (err) {
                 console.error('[RootLayout] Initialization failed:', err);
@@ -39,6 +47,13 @@ export default function RootLayout() {
         initialize();
     }, []);
 
+    // Set up notification tap handler
+    useEffect(() => {
+        if (!isReady) return;
+        setupNotificationResponseHandler();
+        return () => removeNotificationResponseHandler();
+    }, [isReady]);
+
     // Reload challenges when app returns to foreground
     useEffect(() => {
         if (!isReady) return;
@@ -46,6 +61,7 @@ export default function RootLayout() {
         const subscription = AppState.addEventListener('change', (state) => {
             if (state === 'active') {
                 useChallengeStore.getState().loadChallenges();
+                useAlarmStore.getState().loadActiveAlarm();
             }
         });
 

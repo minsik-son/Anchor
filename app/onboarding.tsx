@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
+import { requestNotificationPermission } from '../src/services/notification/notificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors as defaultColors, typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../src/styles/theme';
 import { useTranslation } from 'react-i18next';
@@ -54,6 +55,9 @@ export default function Onboarding() {
                 );
                 return;
             }
+
+            // Request notification permission (non-blocking — proceed even if denied)
+            await requestNotificationPermission();
 
             await completeOnboarding();
         } catch (error: any) {

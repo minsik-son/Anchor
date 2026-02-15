@@ -25,7 +25,8 @@
         "NSLocationAlwaysUsageDescription": "백그라운드에서도 목적지 도착을 알려드리기 위해 항상 위치 정보가 필요합니다.",
         "UIBackgroundModes": [
           "location",
-          "fetch"
+          "fetch",
+          "remote-notification"
         ],
         "NSPhotoLibraryUsageDescription": "알람 배경 이미지를 선택하기 위해 갤러리 접근이 필요합니다."
       }
@@ -67,6 +68,17 @@
           "locationAlwaysAndWhenInUsePermission": "백그라운드에서도 목적지 도착을 알려드리기 위해 항상 위치 정보가 필요합니다.",
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "sounds": [
+            "./assets/sounds/breeze.wav",
+            "./assets/sounds/alert.wav",
+            "./assets/sounds/digital.wav",
+            "./assets/sounds/crystal.wav"
+          ]
         }
       ],
       [

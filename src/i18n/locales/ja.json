@@ -11,7 +11,8 @@
         "success": "成功",
         "retry": "再試行",
         "saveFailed": "保存に失敗しました",
-        "noResults": "検索結果がありません"
+        "noResults": "検索結果がありません",
+        "alwaysOn": "常時有効"
     },
     "tabs": {
         "home": "ホーム",
@@ -31,6 +32,7 @@
         "favorites": "お気に入り",
         "addFavorite": "お気に入り追加",
         "hint": "地図を動かして位置を決めてください",
+        "recentDestinations": "最近の目的地",
         "activeAlarm": {
             "calculating": "目的地までの距離を計算中..."
         },
@@ -150,7 +152,8 @@
             "version": "バージョン",
             "licenses": "オープンソースライセンス",
             "backgroundLocation": "バックグラウンド位置追跡",
-            "batterySaving": "バッテリー節約モード",
+            "backgroundLocationDesc": "アラームが有効な場合、自動的に位置を追跡します。",
+            "batterySaving": "スマートバッテリー節約",
             "smartVolume": "スマートボリューム",
             "shakeToOff": "振ってアラーム停止",
             "alertType": "通知方法",

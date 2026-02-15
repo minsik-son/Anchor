@@ -162,6 +162,30 @@ export async function deleteAllAlarms(): Promise<void> {
     await database.runAsync('DELETE FROM alarms');
 }
 
+/**
+ * Get recent unique destinations from completed alarms.
+ * Used for "recent destinations" dropdown in search bar.
+ */
+export interface RecentDestination {
+    title: string;
+    latitude: number;
+    longitude: number;
+}
+
+export async function getRecentDestinations(limit: number = 4): Promise<RecentDestination[]> {
+    const database = getDatabase();
+    const rows = await database.getAllAsync<RecentDestination>(
+        `SELECT title, latitude, longitude
+         FROM alarms
+         WHERE arrived_at IS NOT NULL
+         GROUP BY ROUND(latitude, 3), ROUND(longitude, 3)
+         ORDER BY MAX(arrived_at) DESC
+         LIMIT ?`,
+        [limit],
+    );
+    return rows;
+}
+
 // ========== ACTION MEMO OPERATIONS ==========
 
 export async function createActionMemo(input: CreateActionMemoInput): Promise<number> {

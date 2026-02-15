@@ -11,7 +11,8 @@
         "success": "Success",
         "retry": "Retry",
         "saveFailed": "Failed to save",
-        "noResults": "No results found"
+        "noResults": "No results found",
+        "alwaysOn": "Always On"
     },
     "tabs": {
         "home": "Home",
@@ -31,6 +32,7 @@
         "favorites": "Favorites",
         "addFavorite": "Add Favorite",
         "hint": "Move the map to set a location",
+        "recentDestinations": "Recent Destinations",
         "activeAlarm": {
             "calculating": "Calculating distance..."
         },
@@ -150,7 +152,8 @@
             "version": "Version",
             "licenses": "Open Source Licenses",
             "backgroundLocation": "Background Location",
-            "batterySaving": "Battery Saving Mode",
+            "backgroundLocationDesc": "Automatically tracks your location when an alarm is active.",
+            "batterySaving": "Smart Battery Saving",
             "smartVolume": "Smart Volume",
             "shakeToOff": "Shake to Turn Off",
             "alertType": "Alert Type",

@@ -25,6 +25,33 @@ import { useThemeColors, ThemeColors, typography, spacing, radius, shadows } fro
 import { FavoritePlace } from '../../stores/favoritePlaceStore';
 import { useDistanceFormatter } from '../../utils/distanceFormatter';
 
+// Non-linear radius steps: 50-150m (10m), 150-500m (50m), 500-1000m (100m)
+export const RADIUS_STEPS: number[] = (() => {
+    const steps: number[] = [];
+    for (let v = 50; v <= 150; v += 10) steps.push(v);
+    for (let v = 200; v <= 500; v += 50) steps.push(v);
+    for (let v = 600; v <= 1000; v += 100) steps.push(v);
+    return steps;
+})();
+
+export function radiusToIndex(radius: number): number {
+    let closest = 0;
+    let minDiff = Math.abs(RADIUS_STEPS[0] - radius);
+    for (let i = 1; i < RADIUS_STEPS.length; i++) {
+        const diff = Math.abs(RADIUS_STEPS[i] - radius);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closest = i;
+        }
+    }
+    return closest;
+}
+
+export function indexToRadius(index: number): number {
+    const clamped = Math.round(Math.max(0, Math.min(RADIUS_STEPS.length - 1, index)));
+    return RADIUS_STEPS[clamped];
+}
+
 // Exported constants for synchronization with map pin
 export const BOTTOM_SHEET_COLLAPSED = 248;
 export const getBottomSheetExpanded = (screenHeight: number) => screenHeight * 0.5;
@@ -258,11 +285,11 @@ function BottomSheetDashboard({
                         </View>
                         <Slider
                             style={styles.radiusSlider}
-                            minimumValue={50}
-                            maximumValue={2000}
-                            step={10}
-                            value={selectedRadius}
-                            onValueChange={onRadiusChange}
+                            minimumValue={0}
+                            maximumValue={RADIUS_STEPS.length - 1}
+                            step={1}
+                            value={radiusToIndex(selectedRadius)}
+                            onValueChange={(index: number) => onRadiusChange(indexToRadius(index))}
                             minimumTrackTintColor={colors.primary}
                             maximumTrackTintColor={`${colors.textWeak}50`}
                             thumbTintColor={colors.primary}

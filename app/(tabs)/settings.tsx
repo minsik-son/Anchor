@@ -266,14 +266,24 @@ export default function Settings() {
                     <SettingItem
                         icon="navigate"
                         label={t('settings.items.backgroundLocation') || '백그라운드 위치 추적'}
-                        rightElement={<Switch value={true} trackColor={{ false: colors.textMedium, true: colors.primary }} ios_backgroundColor={colors.textMedium} />}
+                        description={t('settings.items.backgroundLocationDesc') || '알람 활성화 시 자동으로 위치를 추적합니다.'}
+                        rightElement={
+                            <View style={{ backgroundColor: colors.primary + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn') || '항상 활성'}</Text>
+                            </View>
+                        }
                         colors={colors}
                     />
 
                     <SettingItem
                         icon="battery-charging"
-                        label={t('settings.items.batterySaving') || '배터리 세이빙 모드'}
-                        rightElement={<Switch value={true} trackColor={{ false: colors.textMedium, true: colors.primary }} ios_backgroundColor={colors.textMedium} />}
+                        label={t('settings.items.batterySaving') || '스마트 배터리 절약'}
+                        description={t('alarmSetup.smartBatteryDesc') || '거리에 따라 위치 확인 주기를 자동 조절합니다.'}
+                        rightElement={
+                            <View style={{ backgroundColor: colors.primary + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn') || '항상 활성'}</Text>
+                            </View>
+                        }
                         colors={colors}
                     />
                 </View>

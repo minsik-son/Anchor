@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { typography, spacing, radius, shadows, alarmDefaults, useThemeColors, ThemeColors } from '../src/styles/theme';
 import { isWithinRadius, calculateDistance } from '../src/services/location/geofence';
 import { useDistanceFormatter } from '../src/utils/distanceFormatter';
+import { RADIUS_STEPS, radiusToIndex, indexToRadius } from '../src/components/home/BottomSheetDashboard';
 
 const ALARM_ICONS = [
     { key: 'home', icon: 'home' },
@@ -50,7 +51,7 @@ export default function AlarmSetup() {
         params.radius ? parseInt(params.radius) : alarmDefaults.radius
     );
     const [memo, setMemo] = useState('');
-    const [smartBattery, setSmartBattery] = useState(true);
+
 
     const { createAlarm, addMemo } = useAlarmStore();
     const { startTracking, getCurrentLocation } = useLocationStore();
@@ -92,7 +93,7 @@ export default function AlarmSetup() {
             icon: selectedIcon,
             radius: alarmRadius,
             memo,
-            smartBattery,
+
             shakeToDismiss,
             latitude: lat,
             longitude: lng,
@@ -248,11 +249,11 @@ export default function AlarmSetup() {
                     </View>
                     <Slider
                         style={styles.slider}
-                        minimumValue={50}
-                        maximumValue={2000}
-                        step={50}
-                        value={alarmRadius}
-                        onValueChange={setAlarmRadius}
+                        minimumValue={0}
+                        maximumValue={RADIUS_STEPS.length - 1}
+                        step={1}
+                        value={radiusToIndex(alarmRadius)}
+                        onValueChange={(index: number) => setAlarmRadius(indexToRadius(index))}
                         minimumTrackTintColor={colors.primary}
                         maximumTrackTintColor={colors.background}
                     />
@@ -273,7 +274,7 @@ export default function AlarmSetup() {
 
                 {/* Toggle Options */}
                 <View style={styles.toggleSection}>
-                    {/* Smart Battery Saving */}
+                    {/* Smart Battery Saving — Info Display */}
                     <View style={styles.toggleRow}>
                         <View style={styles.toggleLeft}>
                             <Ionicons name="battery-charging" size={22} color={colors.primary} />
@@ -282,12 +283,9 @@ export default function AlarmSetup() {
                                 <Text style={styles.toggleDesc}>{t('alarmSetup.smartBatteryDesc')}</Text>
                             </View>
                         </View>
-                        <Switch
-                            value={smartBattery}
-                            onValueChange={setSmartBattery}
-                            trackColor={{ false: colors.textMedium, true: colors.primary }}
-                            ios_backgroundColor={colors.textMedium}
-                        />
+                        <View style={{ backgroundColor: colors.primary + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                            <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn') || '항상 활성'}</Text>
+                        </View>
                     </View>
 
                     {/* Shake to Dismiss */}

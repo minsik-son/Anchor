@@ -5,7 +5,7 @@
  * Delegates API calls to searchService.ts service.
  */
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { Keyboard } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
@@ -15,6 +15,7 @@ import {
     getGooglePlaceDetails,
     resetSessionToken,
 } from '../services/location/searchService';
+import { getRecentDestinations, RecentDestination } from '../db/database';
 
 // =============================================================================
 // Types
@@ -44,6 +45,8 @@ interface SearchState {
     isSearching: boolean;
     isVisible: boolean;
     topMatch: SearchResult | null;
+    recentDestinations: SearchResult[];
+    showingRecent: boolean;
 }
 
 interface UseLocationSearchReturn {
@@ -199,10 +202,35 @@ export function useLocationSearch({
     const [isSearching, setIsSearching] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const [topMatch, setTopMatch] = useState<SearchResult | null>(null);
+    const [recentDestinations, setRecentDestinations] = useState<SearchResult[]>([]);
+    const [showingRecent, setShowingRecent] = useState(false);
 
     const cacheRef = useRef(
         new SearchResultCache(mergedConfig.cacheTTL, mergedConfig.maxCacheEntries)
     );
+
+    // Load recent destinations from DB once
+    const loadRecentDestinations = useCallback(async () => {
+        try {
+            const recent = await getRecentDestinations(4);
+            const mapped: SearchResult[] = recent.map((dest, index) => ({
+                id: `recent-${index}`,
+                name: dest.title,
+                address: '',
+                latitude: dest.latitude,
+                longitude: dest.longitude,
+                source: 'EXPO' as const,
+            }));
+            setRecentDestinations(mapped);
+        } catch (err) {
+            console.warn('[useLocationSearch] Failed to load recent destinations:', err);
+        }
+    }, []);
+
+    // Load on mount
+    useEffect(() => {
+        loadRecentDestinations();
+    }, [loadRecentDestinations]);
 
     // Default location for search (Seoul fallback)
     const searchLocation = useMemo(() => {
@@ -216,10 +244,19 @@ export function useLocationSearch({
             if (newQuery.length < mergedConfig.minQueryLength) {
                 setResults([]);
                 setTopMatch(null);
-                setIsVisible(false);
+                // If query is cleared and we have recent destinations, show them
+                if (newQuery.length === 0 && recentDestinations.length > 0) {
+                    setShowingRecent(true);
+                    setIsVisible(true);
+                } else {
+                    setShowingRecent(false);
+                    setIsVisible(false);
+                }
                 cancelPendingSearch();
                 return;
             }
+
+            setShowingRecent(false);
 
             // Check cache first
             const cachedResults = cacheRef.current.get(newQuery, currentLocation);
@@ -263,14 +300,20 @@ export function useLocationSearch({
         setTopMatch(null);
         setIsVisible(false);
         setIsSearching(false);
+        setShowingRecent(false);
         cancelPendingSearch();
     }, []);
 
     const showResults = useCallback(() => {
         if (query.length >= mergedConfig.minQueryLength) {
+            setShowingRecent(false);
+            setIsVisible(true);
+        } else if (recentDestinations.length > 0) {
+            // Show recent destinations when search bar is focused with no query
+            setShowingRecent(true);
             setIsVisible(true);
         }
-    }, [query, mergedConfig.minQueryLength]);
+    }, [query, mergedConfig.minQueryLength, recentDestinations.length]);
 
     const hideResults = useCallback(() => {
         setIsVisible(false);
@@ -328,6 +371,8 @@ export function useLocationSearch({
         isSearching,
         isVisible,
         topMatch,
+        recentDestinations,
+        showingRecent,
     };
 
     return {

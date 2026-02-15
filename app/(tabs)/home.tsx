@@ -24,7 +24,8 @@ import BottomSheetDashboard, {
     BOTTOM_SHEET_COLLAPSED,
 } from '../../src/components/home/BottomSheetDashboard';
 import { isInKorea } from '../../src/services/location/searchService';
-import { formatDistance } from '../../src/services/location/geofence';
+import { formatDistance, calculateDistance, isWithinRadius } from '../../src/services/location/geofence';
+import { startTracking as startServiceTracking } from '../../src/services/location/locationService';
 import { mapDarkStyle } from '../../src/constants/mapDarkStyle';
 import { useThemeStore } from '../../src/stores/themeStore';
 import { useElapsedTime } from '../../src/hooks/useElapsedTime';
@@ -68,6 +69,7 @@ export default function Home() {
         selectedRoute,
         stopNavigation,
         stopTracking,
+        startTracking,
         distanceToTarget,
     } = useLocationStore();
 
@@ -135,6 +137,43 @@ export default function Home() {
                     longitude: location.coords.longitude,
                 };
                 pinActions.moveToLocation(userPos);
+            }
+
+            // ★ Restore active alarm on app restart
+            const alarm = useAlarmStore.getState().activeAlarm;
+            if (alarm) {
+                console.log('[Home] Restoring active alarm:', alarm.title);
+                const target = { latitude: alarm.latitude, longitude: alarm.longitude };
+
+                // Check if already arrived
+                if (location && isWithinRadius(
+                    { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                    target,
+                    alarm.radius,
+                )) {
+                    console.log('[Home] Already inside radius — triggering alarm');
+                    router.push('/alarm-trigger');
+                    return;
+                }
+
+                // Resume tracking
+                const initialDistance = location
+                    ? calculateDistance(
+                        { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                        target,
+                    )
+                    : undefined;
+
+                await startTracking(target, alarm.radius, location ?? undefined);
+
+                try {
+                    await startServiceTracking(target, alarm.radius, initialDistance);
+                } catch (err) {
+                    console.warn('[Home] Background tracking resume failed (Expo Go?):', err);
+                }
+
+                // Move pin to destination
+                pinActions.moveToLocation(target, 400);
             }
         };
         init();
@@ -281,15 +320,7 @@ export default function Home() {
     };
 
     const handleRadiusChange = (value: number) => {
-        let roundedValue;
-        if (value <= 100) {
-            // Round to nearest 10m
-            roundedValue = Math.round(value / 10) * 10;
-        } else {
-            // Round to nearest 50m
-            roundedValue = Math.round(value / 50) * 50;
-        }
-        setSelectedRadius(roundedValue);
+        setSelectedRadius(value);
     };
 
     const handleCancelAlarm = () => {
@@ -504,7 +535,40 @@ export default function Home() {
             {/* Search Results Dropdown */}
             {searchState.isVisible && (
                 <View style={[styles.searchResultsContainer, { top: insets.top + spacing.sm + 56 }]}>
-                    {searchState.isSearching ? (
+                    {searchState.showingRecent && searchState.recentDestinations.length > 0 ? (
+                        /* Recent Destinations */
+                        <View>
+                            <View style={styles.recentHeader}>
+                                <Ionicons name="time-outline" size={16} color={colors.textWeak} />
+                                <Text style={styles.recentHeaderText}>{t('home.recentDestinations', '최근 목적지')}</Text>
+                            </View>
+                            <FlatList
+                                data={searchState.recentDestinations}
+                                keyExtractor={(item) => item.id}
+                                keyboardShouldPersistTaps="handled"
+                                scrollEnabled={false}
+                                renderItem={({ item }) => (
+                                    <Pressable
+                                        style={styles.searchResultItem}
+                                        onPress={() => selectPlace(item)}
+                                    >
+                                        <View style={styles.searchResultIconContainer}>
+                                            <Ionicons
+                                                name="time"
+                                                size={20}
+                                                color={colors.textMedium}
+                                            />
+                                        </View>
+                                        <View style={styles.searchResultTextContainer}>
+                                            <Text style={styles.searchResultName} numberOfLines={1}>
+                                                {item.name}
+                                            </Text>
+                                        </View>
+                                    </Pressable>
+                                )}
+                            />
+                        </View>
+                    ) : searchState.isSearching ? (
                         <View style={styles.searchLoadingContainer}>
                             <ActivityIndicator size="small" color={colors.primary} />
                             <Text style={styles.searchLoadingText}>검색 중...</Text>
@@ -768,6 +832,19 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     searchResultAddress: {
         ...typography.caption,
         color: colors.textMedium,
+    },
+    recentHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: spacing.sm,
+        paddingTop: spacing.sm,
+        paddingBottom: 4,
+    },
+    recentHeaderText: {
+        ...typography.caption,
+        color: colors.textWeak,
+        fontWeight: '600',
     },
     // Active Alarm Dashboard styles
     dashboardHeader: {
