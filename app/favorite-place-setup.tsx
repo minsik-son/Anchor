@@ -14,7 +14,7 @@ import { useFavoritePlaceStore } from '../src/stores/favoritePlaceStore';
 import { colors, typography, spacing, radius, shadows } from '../src/styles/theme';
 import { useDistanceFormatter } from '../src/utils/distanceFormatter';
 
-// Available icons for selection
+// Available icons for selection.
 const ICONS = [
     'home', 'business', 'cafe', 'school', 'fitness', 'cart',
     'airplane', 'restaurant', 'walk', 'people', 'heart', 'star',
