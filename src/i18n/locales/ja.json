@@ -139,7 +139,8 @@
         "sections": {
             "notification": "通知設定",
             "app": "アプリ情報",
-            "map": "地図設定"
+            "map": "地図設定",
+            "locationAndMap": "位置情報と地図"
         },
         "items": {
             "language": "言語設定",
@@ -193,14 +194,15 @@
         },
         "backgroundPicker": {
             "title": "アラーム背景を選択",
-            "default": "デフォルト（赤）",
+            "default": "デフォルト",
             "gallery": "ギャラリーから選択"
         },
-        "backgrounds": {
-            "sunset": "夕焼け",
-            "ocean": "海",
-            "aurora": "オーロラ",
-            "night": "夜空"
+        "backgroundThemes": {
+            "pixelDream": "Pixel Dream",
+            "aura": "Aura",
+            "intoTheWild": "Into the Wild",
+            "cityLights": "City Lights",
+            "stillMoment": "Still Moment"
         }
     },
     "favoriteSetup": {
@@ -277,15 +279,21 @@
         "durationMinutes": "{{minutes}}分",
         "durationHours": "{{hours}}時間",
         "durationHoursMinutes": "{{hours}}時間{{minutes}}分",
-        "noStartLocation": "出発地情報なし"
+        "noStartLocation": "出発地情報なし",
+        "straightDistance": "直線距離"
     },
     "alarmTrigger": {
         "arrived": "目的地に到着しました！",
         "arrivedBadge": "到着",
-        "dismiss": "スライドしてアラームを消す",
+        "arrivedAt": "{{place}}に到着しました！",
+        "dismiss": "スライドして解除",
         "dismissHint": "最後までスライドしてアラームを消す",
         "checklist": "チェックリスト",
         "shakeHint": "振ってアラームを解除できます"
+    },
+    "alarmCompletion": {
+        "title": "アラーム完了！",
+        "subtitle": "目的地に無事到着しました"
     },
     "actionChecklist": {
         "title": "お忘れなく！",

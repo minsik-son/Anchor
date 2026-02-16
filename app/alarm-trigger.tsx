@@ -7,6 +7,7 @@ import { useMemo, useEffect, useCallback, useState } from 'react';
 import { View, Text, StyleSheet, LayoutChangeEvent, ImageBackground } from 'react-native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
-import { useAlarmSettingsStore, ALARM_BACKGROUNDS } from '../src/stores/alarmSettingsStore';
+import { useAlarmSettingsStore, getBackgroundAsset } from '../src/stores/alarmSettingsStore';
 import { clearArrivalNotifications } from '../src/services/notification/notificationService';
 import { useAlarmSound } from '../src/hooks/useAlarmSound';
 import { useAlarmVibration } from '../src/hooks/useAlarmVibration';
@@ -37,24 +38,31 @@ const RIPPLE_DURATION = 2500;
 const ALARM_DARK_BG = '#121212';
 
 export default function AlarmTrigger() {
+    const insets = useSafeAreaInsets();
     const { activeAlarm, completeAlarm, loadMemos, currentMemos } = useAlarmStore();
     const { stopTracking } = useLocationStore();
     const { alertType, selectedSound, shakeToDismiss, backgroundType, selectedPreset, customImageUri } = useAlarmSettingsStore();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const colors = useThemeColors();
-    const styles = useMemo(() => createStyles(colors), [colors]);
+    const styles = useMemo(() => createStyles(colors, insets), [colors, insets]);
 
     const { play, stop: stopSound } = useAlarmSound({ loop: true });
     const { startLoop, stopLoop } = useAlarmVibration();
 
     const backgroundSource = useMemo(() => {
-        if (backgroundType === 'preset') return ALARM_BACKGROUNDS[selectedPreset]?.asset;
+        if (backgroundType === 'preset') {
+            const asset = getBackgroundAsset(selectedPreset);
+            return asset ?? null;
+        }
         if (backgroundType === 'custom' && customImageUri) return { uri: customImageUri };
         return null;
     }, [backgroundType, selectedPreset, customImageUri]);
 
+    const [currentTime, setCurrentTime] = useState(new Date());
     const [trackWidth, setTrackWidth] = useState(0);
     const translateX = useSharedValue(0);
+    const thumbScale = useSharedValue(1);
+    const shimmerProgress = useSharedValue(0);
 
     // Ripple shared values
     const ripple0 = useSharedValue(0);
@@ -103,6 +111,23 @@ export default function AlarmTrigger() {
         return () => timers.forEach(clearTimeout);
     }, []);
 
+    // Time update — every minute
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 60000);
+        return () => clearInterval(timer);
+    }, []);
+
+    // Shimmer animation
+    useEffect(() => {
+        shimmerProgress.value = withRepeat(
+            withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+            -1,
+            false
+        );
+    }, []);
+
     const rippleStyle0 = useAnimatedStyle(() => ({
         transform: [{ scale: interpolate(ripple0.value, [0, 1], [0.3, 2.5]) }],
         opacity: interpolate(ripple0.value, [0, 0.4, 1], [0.4, 0.2, 0]),
@@ -141,7 +166,7 @@ export default function AlarmTrigger() {
                 params: { alarmId: String(alarmId), alarmTitle },
             });
         } else {
-            router.back();
+            router.replace('/alarm-completion');
         }
     }, [activeAlarm, currentMemos, completeAlarm, stopTracking, stopSound, stopLoop]);
 
@@ -152,11 +177,15 @@ export default function AlarmTrigger() {
     }, [handleDismiss]);
 
     const panGesture = Gesture.Pan()
+        .onStart(() => {
+            thumbScale.value = withSpring(1.1, { damping: 15, stiffness: 300 });
+        })
         .onUpdate((event) => {
             const clamped = Math.max(0, Math.min(event.translationX, maxSlide));
             translateX.value = clamped;
         })
         .onEnd(() => {
+            thumbScale.value = withSpring(1, { damping: 15, stiffness: 300 });
             if (maxSlide > 0 && translateX.value >= maxSlide * DISMISS_THRESHOLD) {
                 translateX.value = withSpring(maxSlide, { damping: 15 });
                 runOnJS(onDismissJS)();
@@ -166,7 +195,10 @@ export default function AlarmTrigger() {
         });
 
     const thumbAnimatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateX: translateX.value }],
+        transform: [
+            { translateX: translateX.value },
+            { scale: thumbScale.value },
+        ],
     }));
 
     const labelAnimatedStyle = useAnimatedStyle(() => {
@@ -176,45 +208,77 @@ export default function AlarmTrigger() {
         return { opacity };
     });
 
+    const chevronAnimStyle = (index: number) => useAnimatedStyle(() => {
+        const baseX = 80 + index * 20;
+        const translateXVal = interpolate(shimmerProgress.value, [0, 1], [0, 30]);
+        const opacity = interpolate(shimmerProgress.value, [0, 0.3, 0.7, 1], [0.2, 0.6, 0.6, 0.2]);
+        return {
+            transform: [{ translateX: baseX + translateXVal }],
+            opacity,
+        };
+    });
+
     const handleTrackLayout = useCallback((event: LayoutChangeEvent) => {
         setTrackWidth(event.nativeEvent.layout.width);
     }, []);
+
+    const timeString = currentTime.toLocaleTimeString(i18n.language, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    });
+
+    const dateString = currentTime.toLocaleDateString(i18n.language, {
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long',
+    });
 
     const alarmContent = (
         <>
             <StatusBar style="light" />
 
-            <View style={styles.content}>
-                {/* Ripple rings behind hero text */}
+            {/* Top Section: Time + Date */}
+            <View style={styles.topSection}>
+                <Text style={styles.timeText}>{timeString}</Text>
+                <Text style={styles.dateText}>{dateString}</Text>
+            </View>
+
+            {/* Center Section: Arrival message with ripple background */}
+            <View style={styles.centerSection}>
+                {/* Ripple rings behind */}
                 <View style={styles.rippleContainer}>
                     <Animated.View style={[styles.rippleCircle, rippleStyle0]} />
                     <Animated.View style={[styles.rippleCircle, rippleStyle1]} />
                     <Animated.View style={[styles.rippleCircle, rippleStyle2]} />
                 </View>
 
-                {/* "Arrived" pill badge */}
-                <View style={styles.arrivedBadge}>
-                    <Text style={styles.arrivedBadgeText}>{t('alarmTrigger.arrivedBadge')}</Text>
-                </View>
-
-                {/* Hero destination name */}
+                {/* Home icon + arrival text */}
+                <Ionicons name="home" size={32} color="rgba(255, 255, 255, 0.85)" style={styles.arrivalIcon} />
                 {activeAlarm && (
-                    <Text style={styles.heroTitle} numberOfLines={3} adjustsFontSizeToFit>
-                        {activeAlarm.title}
+                    <Text style={styles.arrivalText} numberOfLines={2} adjustsFontSizeToFit>
+                        {t('alarmTrigger.arrivedAt', { place: activeAlarm.title })}
                     </Text>
                 )}
             </View>
 
-            {/* Glassmorphism slider */}
-            <View style={styles.dismissContainer}>
+            {/* Bottom Section: Slider */}
+            <View style={styles.bottomSection}>
                 <View style={styles.sliderTrack} onLayout={handleTrackLayout}>
+                    {/* Shimmer chevrons */}
+                    {[0, 1, 2].map((i) => (
+                        <Animated.View key={i} style={[styles.shimmerChevron, chevronAnimStyle(i)]}>
+                            <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.4)" />
+                        </Animated.View>
+                    ))}
+
                     <Animated.Text style={[styles.sliderLabel, labelAnimatedStyle]}>
                         {t('alarmTrigger.dismiss')}
                     </Animated.Text>
 
                     <GestureDetector gesture={panGesture}>
                         <Animated.View style={[styles.sliderThumb, thumbAnimatedStyle]}>
-                            <Ionicons name="chevron-forward" size={28} color="#FFFFFF" />
+                            <Ionicons name="arrow-forward" size={24} color={colors.primary} />
                         </Animated.View>
                     </GestureDetector>
                 </View>
@@ -239,7 +303,7 @@ export default function AlarmTrigger() {
     );
 }
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
+const createStyles = (colors: ThemeColors, insets: any) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: ALARM_DARK_BG,
@@ -248,11 +312,31 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
-    content: {
+    topSection: {
+        paddingTop: insets.top + 20,
+        paddingHorizontal: spacing.md,
+        alignItems: 'center',
+    },
+    timeText: {
+        fontSize: 72,
+        fontWeight: '700',
+        color: '#FFFFFF',
+        textAlign: 'center',
+        letterSpacing: -2,
+        fontVariant: ['tabular-nums'],
+    },
+    dateText: {
+        fontSize: 17,
+        fontWeight: '400',
+        color: 'rgba(255, 255, 255, 0.7)',
+        textAlign: 'center',
+        marginTop: 4,
+    },
+    centerSection: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: spacing.md,
+        paddingHorizontal: spacing.lg,
     },
     rippleContainer: {
         ...StyleSheet.absoluteFillObject,
@@ -267,70 +351,67 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         borderWidth: 1.5,
         borderColor: 'rgba(255, 255, 255, 0.25)',
     },
-    arrivedBadge: {
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-        borderRadius: radius.full,
-        paddingHorizontal: 16,
-        paddingVertical: 6,
-        marginBottom: spacing.md,
+    arrivalIcon: {
+        marginBottom: 12,
     },
-    arrivedBadgeText: {
-        ...typography.caption,
-        color: '#FFFFFF',
+    arrivalText: {
+        fontSize: 24,
         fontWeight: '600',
-        letterSpacing: 1,
-        textTransform: 'uppercase',
-    },
-    heroTitle: {
-        fontSize: 64,
-        fontWeight: '800',
         color: '#FFFFFF',
-        lineHeight: 72,
         textAlign: 'center',
+        lineHeight: 34,
         textShadowColor: 'rgba(0, 0, 0, 0.7)',
         textShadowOffset: { width: 0, height: 2 },
         textShadowRadius: 8,
     },
-    shakeHint: {
-        ...typography.caption,
-        color: 'rgba(255, 255, 255, 0.6)',
-        textAlign: 'center',
-        marginTop: spacing.sm,
-    },
-    dismissContainer: {
+    bottomSection: {
         paddingHorizontal: spacing.md,
-        paddingBottom: spacing.lg * 2,
+        paddingBottom: insets.bottom + spacing.lg,
         alignItems: 'center',
     },
     sliderTrack: {
         width: '100%',
-        height: THUMB_WIDTH,
-        borderRadius: radius.full,
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: 'rgba(255, 255, 255, 0.12)',
         justifyContent: 'center',
         alignItems: 'center',
+        overflow: 'hidden',
+    },
+    shimmerChevron: {
+        position: 'absolute',
+        left: 0,
     },
     sliderLabel: {
         ...typography.body,
         color: 'rgba(255, 255, 255, 0.7)',
         fontWeight: '600',
         position: 'absolute',
+        right: '40%',
         textShadowColor: 'rgba(0, 0, 0, 0.7)',
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 4,
     },
     sliderThumb: {
-        width: THUMB_WIDTH,
-        height: THUMB_WIDTH,
-        borderRadius: radius.full,
-        backgroundColor: colors.primary,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
         position: 'absolute',
-        left: 0,
+        left: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    shakeHint: {
+        fontSize: 13,
+        color: 'rgba(255, 255, 255, 0.5)',
+        textAlign: 'center',
+        marginTop: 12,
+        fontWeight: '400',
     },
 });

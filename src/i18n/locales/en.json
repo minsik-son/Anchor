@@ -139,7 +139,8 @@
         "sections": {
             "notification": "Notification Settings",
             "app": "App Info",
-            "map": "Map Settings"
+            "map": "Map Settings",
+            "locationAndMap": "Location & Map"
         },
         "items": {
             "language": "Language",
@@ -193,14 +194,15 @@
         },
         "backgroundPicker": {
             "title": "Select Alarm Background",
-            "default": "Default (Red)",
+            "default": "Default",
             "gallery": "Choose from Gallery"
         },
-        "backgrounds": {
-            "sunset": "Sunset",
-            "ocean": "Ocean",
-            "aurora": "Aurora",
-            "night": "Night Sky"
+        "backgroundThemes": {
+            "pixelDream": "Pixel Dream",
+            "aura": "Aura",
+            "intoTheWild": "Into the Wild",
+            "cityLights": "City Lights",
+            "stillMoment": "Still Moment"
         }
     },
     "favoriteSetup": {
@@ -277,15 +279,21 @@
         "durationMinutes": "{{minutes}} min",
         "durationHours": "{{hours}} hr",
         "durationHoursMinutes": "{{hours}} hr {{minutes}} min",
-        "noStartLocation": "No start location"
+        "noStartLocation": "No start location",
+        "straightDistance": "Straight-line Distance"
     },
     "alarmTrigger": {
         "arrived": "You've arrived!",
         "arrivedBadge": "Arrived",
+        "arrivedAt": "Arrived at {{place}}!",
         "dismiss": "Slide to dismiss",
         "dismissHint": "Slide all the way to dismiss",
         "checklist": "Checklist",
         "shakeHint": "Or shake to dismiss"
+    },
+    "alarmCompletion": {
+        "title": "Alarm Complete!",
+        "subtitle": "You've safely arrived at your destination"
     },
     "actionChecklist": {
         "title": "Don't Forget!",

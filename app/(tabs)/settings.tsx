@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Switch, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Switch, ScrollView, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import Animated, {
     useSharedValue,
@@ -13,7 +13,6 @@ import Animated, {
     FadeIn
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,9 +24,9 @@ import {
     AlertType,
     AlarmSoundKey,
     ALARM_SOUNDS,
-    ALARM_BACKGROUNDS,
+    BACKGROUND_THEMES,
     BackgroundType,
-    PresetKey,
+    getBackgroundLabel as getBackgroundImageLabel,
 } from '../../src/stores/alarmSettingsStore';
 import { useAlarmSound } from '../../src/hooks/useAlarmSound';
 
@@ -38,7 +37,6 @@ const ALERT_TYPE_OPTIONS: { code: AlertType; labelKey: string; icon: string }[] 
 ];
 
 const SOUND_KEYS: AlarmSoundKey[] = ['breeze', 'alert', 'digital', 'crystal'];
-const PRESET_KEYS: PresetKey[] = ['sunset', 'ocean', 'aurora', 'night'];
 
 export default function Settings() {
     const insets = useSafeAreaInsets();
@@ -77,7 +75,6 @@ export default function Settings() {
     const [showThemeModal, setShowThemeModal] = useState(false);
     const [showAlertTypeModal, setShowAlertTypeModal] = useState(false);
     const [showSoundPickerModal, setShowSoundPickerModal] = useState(false);
-    const [showBackgroundModal, setShowBackgroundModal] = useState(false);
     const [showUnitModal, setShowUnitModal] = useState(false);
 
     const currentLanguage = i18n.language;
@@ -169,30 +166,12 @@ export default function Settings() {
         setShowSoundPickerModal(false);
     }, [stopPreview]);
 
-    const handleBackgroundSelect = useCallback((type: BackgroundType, preset?: PresetKey) => {
-        setBackgroundType(type);
-        if (preset) setSelectedPreset(preset);
-        if (type !== 'custom') setShowBackgroundModal(false);
-    }, [setBackgroundType, setSelectedPreset]);
-
-    const handleGalleryPick = useCallback(async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [9, 16],
-            quality: 0.8,
-        });
-
-        if (!result.canceled && result.assets[0]) {
-            setCustomImageUri(result.assets[0].uri);
-            setBackgroundType('custom');
-            setShowBackgroundModal(false);
-        }
-    }, [setCustomImageUri, setBackgroundType]);
-
     const getBackgroundLabel = () => {
-        if (backgroundType === 'preset') return t(ALARM_BACKGROUNDS[selectedPreset].labelKey);
         if (backgroundType === 'custom') return t('settings.backgroundPicker.gallery');
+        if (backgroundType === 'preset') {
+            const label = getBackgroundImageLabel(selectedPreset);
+            if (label) return label;
+        }
         return t('settings.backgroundPicker.default');
     };
 
@@ -259,35 +238,6 @@ export default function Settings() {
                     />
                 </View>
 
-                {/* Location Settings */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{t('settings.items.backgroundLocation')}</Text>
-
-                    <SettingItem
-                        icon="navigate"
-                        label={t('settings.items.backgroundLocation')}
-                        description={t('settings.items.backgroundLocationDesc')}
-                        rightElement={
-                            <View style={{ backgroundColor: colors.primary + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
-                                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn')}</Text>
-                            </View>
-                        }
-                        colors={colors}
-                    />
-
-                    <SettingItem
-                        icon="battery-charging"
-                        label={t('settings.items.batterySaving')}
-                        description={t('alarmSetup.smartBatteryDesc')}
-                        rightElement={
-                            <View style={{ backgroundColor: colors.primary + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
-                                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn')}</Text>
-                            </View>
-                        }
-                        colors={colors}
-                    />
-                </View>
-
                 {/* Alarm Settings */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{t('settings.sections.notification')}</Text>
@@ -334,7 +284,7 @@ export default function Settings() {
                         icon="image"
                         label={t('settings.items.alarmBackground')}
                         description={getBackgroundLabel()}
-                        onPress={() => setShowBackgroundModal(true)}
+                        onPress={() => router.push('/background-picker')}
                         rightElement={
                             <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
                         }
@@ -342,9 +292,33 @@ export default function Settings() {
                     />
                 </View>
 
-                {/* Map Settings */}
+                {/* Location & Map Settings */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>{t('settings.sections.map')}</Text>
+                    <Text style={styles.sectionTitle}>{t('settings.sections.locationAndMap')}</Text>
+
+                    <SettingItem
+                        icon="navigate"
+                        label={t('settings.items.backgroundLocation')}
+                        description={t('settings.items.backgroundLocationDesc')}
+                        rightElement={
+                            <View style={{ backgroundColor: colors.primary + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn')}</Text>
+                            </View>
+                        }
+                        colors={colors}
+                    />
+
+                    <SettingItem
+                        icon="battery-charging"
+                        label={t('settings.items.batterySaving')}
+                        description={t('alarmSetup.smartBatteryDesc')}
+                        rightElement={
+                            <View style={{ backgroundColor: colors.primary + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>{t('common.alwaysOn')}</Text>
+                            </View>
+                        }
+                        colors={colors}
+                    />
 
                     <SettingItem
                         icon="map"
@@ -577,91 +551,6 @@ export default function Settings() {
                     </View>
                 </Pressable>
             )}
-
-            {/* Background Picker Modal */}
-            {showBackgroundModal && (
-                <Pressable style={styles.modalOverlay} onPress={() => setShowBackgroundModal(false)}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>{t('settings.backgroundPicker.title')}</Text>
-
-                        {/* Default option */}
-                        <Pressable
-                            style={[
-                                styles.optionRow,
-                                backgroundType === 'default' && styles.optionRowSelected,
-                            ]}
-                            onPress={() => handleBackgroundSelect('default')}
-                        >
-                            <View style={styles.optionLeft}>
-                                <View style={[styles.presetPreview, { backgroundColor: colors.error }]} />
-                                <Text style={[
-                                    styles.optionText,
-                                    backgroundType === 'default' && styles.optionTextSelected,
-                                ]}>
-                                    {t('settings.backgroundPicker.default')}
-                                </Text>
-                            </View>
-                            {backgroundType === 'default' && (
-                                <Ionicons name="checkmark" size={20} color={colors.primary} />
-                            )}
-                        </Pressable>
-
-                        {/* Preset options */}
-                        {PRESET_KEYS.map((key) => {
-                            const isSelected = backgroundType === 'preset' && selectedPreset === key;
-                            return (
-                                <Pressable
-                                    key={key}
-                                    style={[
-                                        styles.optionRow,
-                                        isSelected && styles.optionRowSelected,
-                                    ]}
-                                    onPress={() => handleBackgroundSelect('preset', key)}
-                                >
-                                    <View style={styles.optionLeft}>
-                                        <Image
-                                            source={ALARM_BACKGROUNDS[key].asset}
-                                            style={styles.presetPreview}
-                                        />
-                                        <Text style={[
-                                            styles.optionText,
-                                            isSelected && styles.optionTextSelected,
-                                        ]}>
-                                            {t(ALARM_BACKGROUNDS[key].labelKey)}
-                                        </Text>
-                                    </View>
-                                    {isSelected && (
-                                        <Ionicons name="checkmark" size={20} color={colors.primary} />
-                                    )}
-                                </Pressable>
-                            );
-                        })}
-
-                        {/* Gallery option */}
-                        <Pressable
-                            style={[
-                                styles.optionRow,
-                                backgroundType === 'custom' && styles.optionRowSelected,
-                            ]}
-                            onPress={handleGalleryPick}
-                        >
-                            <View style={styles.optionLeft}>
-                                <Ionicons name="images" size={20} color={backgroundType === 'custom' ? colors.primary : colors.textMedium} />
-                                <Text style={[
-                                    styles.optionText,
-                                    backgroundType === 'custom' && styles.optionTextSelected,
-                                ]}>
-                                    {t('settings.backgroundPicker.gallery')}
-                                </Text>
-                            </View>
-                            {backgroundType === 'custom' && (
-                                <Ionicons name="checkmark" size={20} color={colors.primary} />
-                            )}
-                        </Pressable>
-                    </View>
-                </Pressable>
-            )}
-
             {/* Loading Overlay */}
             {isLoading && (
                 <View style={styles.loadingOverlay}>
@@ -877,11 +766,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
-    },
-    presetPreview: {
-        width: 40,
-        height: 40,
-        borderRadius: radius.sm,
     },
     optionText: {
         ...typography.body,

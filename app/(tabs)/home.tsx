@@ -121,7 +121,29 @@ export default function Home() {
     const [selectedRadius, setSelectedRadius] = useState(100);
     const [isFirstHint, setIsFirstHint] = useState(false);
     const hintOpacity = useRef(new Animated.Value(1)).current;
+    const prevActiveAlarmRef = useRef<typeof activeAlarm>(activeAlarm);
     const [bottomSheetExpanded, setBottomSheetExpanded] = useState(false);
+
+    // Handle My Location button press
+    const handleMyLocationPress = useCallback(async () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+        // Get current location
+        const location = await getCurrentLocation();
+
+        if (location) {
+            const myLocation = {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            };
+            pinActions.moveToLocation(myLocation, 500);
+        } else {
+            console.log('[Home] Could not get current location');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        }
+
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }, [getCurrentLocation, pinActions]);
 
     useEffect(() => {
         const init = async () => {
@@ -206,6 +228,17 @@ export default function Home() {
             loadMemos(activeAlarm.id);
         }
     }, [activeAlarm]);
+
+    // Auto-return to current location when alarm cycle ends
+    useEffect(() => {
+        const wasActive = prevActiveAlarmRef.current;
+        prevActiveAlarmRef.current = activeAlarm;
+
+        // Alarm just completed or cancelled → move map to current location
+        if (wasActive && !activeAlarm) {
+            handleMyLocationPress();
+        }
+    }, [activeAlarm, handleMyLocationPress]);
 
     // Fit map to show both current location and destination when alarm is active
     // Uses a 2-step animation: first zoom out to midpoint, then fit to both coordinates
@@ -321,27 +354,6 @@ export default function Home() {
             subscription?.remove();
         };
     }, [activeAlarm, isNavigating]);
-
-    // Handle My Location button press
-    const handleMyLocationPress = useCallback(async () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-        // Get current location
-        const location = await getCurrentLocation();
-
-        if (location) {
-            const myLocation = {
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-            };
-            pinActions.moveToLocation(myLocation, 500);
-        } else {
-            console.log('[Home] Could not get current location');
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        }
-
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }, [getCurrentLocation, pinActions]);
 
     const handleCreateAlarm = () => {
         if (!centerLocation) return;

@@ -40,7 +40,7 @@ export default function AlarmDetail() {
     const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && systemScheme === 'dark');
 
     const { deleteAlarm, loadAlarms } = useAlarmStore();
-    const { formatDistance, formatRadius } = useDistanceFormatter();
+    const { formatDistance } = useDistanceFormatter();
 
     const [alarm, setAlarm] = useState<Alarm | null>(null);
     const [memos, setMemos] = useState<ActionMemo[]>([]);
@@ -248,14 +248,6 @@ export default function AlarmDetail() {
                 <View style={styles.card}>
                     <Text style={styles.cardLabel}>{t('history.detail.locationInfo')}</Text>
 
-                    <View style={styles.cardRow}>
-                        <Ionicons name="location" size={20} color={colors.error} />
-                        <View style={styles.cardRowContent}>
-                            <Text style={styles.cardRowLabel}>{t('alarmDetail.destination')}</Text>
-                            <Text style={styles.cardRowValue}>{destAddress}</Text>
-                        </View>
-                    </View>
-
                     {alarm.start_latitude && alarm.start_longitude ? (
                         <View style={styles.cardRow}>
                             <Ionicons name="ellipse" size={20} color={colors.primary} />
@@ -277,49 +269,76 @@ export default function AlarmDetail() {
                     )}
 
                     <View style={styles.cardRow}>
-                        <Ionicons name="radio-button-on-outline" size={20} color={colors.primary} />
-                        <Text style={styles.cardRowValue}>
-                            {t('history.detail.radius', { radius: formatRadius(alarm.radius) })}
-                        </Text>
+                        <Ionicons name="location" size={20} color={colors.error} />
+                        <View style={styles.cardRowContent}>
+                            <Text style={styles.cardRowLabel}>{t('alarmDetail.destination')}</Text>
+                            <Text style={styles.cardRowValue}>{destAddress}</Text>
+                        </View>
                     </View>
+
+                    {travelDistance && (
+                        <View style={styles.cardRow}>
+                            <Ionicons name="resize-outline" size={20} color={colors.primary} />
+                            <View style={styles.cardRowContent}>
+                                <Text style={styles.cardRowLabel}>{t('alarmDetail.straightDistance')}</Text>
+                                <Text style={styles.cardRowValue}>{travelDistance}</Text>
+                            </View>
+                        </View>
+                    )}
                 </View>
 
-                {/* Travel Info (only if arrived) */}
-                {status === 'arrived' && (
-                    <View style={styles.card}>
-                        <Text style={styles.cardLabel}>{t('alarmDetail.travelInfo')}</Text>
+                {/* Travel & Time Info */}
+                <View style={styles.card}>
+                    <Text style={styles.cardLabel}>{t('alarmDetail.travelInfo')}</Text>
 
-                        {travelDuration && (
-                            <View style={styles.cardRow}>
-                                <Ionicons name="time-outline" size={20} color={colors.primary} />
-                                <View style={styles.cardRowContent}>
-                                    <Text style={styles.cardRowLabel}>{t('alarmDetail.travelTime')}</Text>
-                                    <Text style={styles.cardRowValue}>{travelDuration}</Text>
-                                </View>
-                            </View>
-                        )}
-
-                        {travelDistance && (
-                            <View style={styles.cardRow}>
-                                <Ionicons name="navigate-outline" size={20} color={colors.primary} />
-                                <View style={styles.cardRowContent}>
-                                    <Text style={styles.cardRowLabel}>{t('alarmDetail.travelDistance')}</Text>
-                                    <Text style={styles.cardRowValue}>{travelDistance}</Text>
-                                </View>
-                            </View>
-                        )}
-
-                        {alarm.arrived_at && (
-                            <View style={styles.cardRow}>
-                                <Ionicons name="flag-outline" size={20} color={colors.success} />
-                                <View style={styles.cardRowContent}>
-                                    <Text style={styles.cardRowLabel}>{t('alarmDetail.arrivedAt')}</Text>
-                                    <Text style={styles.cardRowValue}>{formatDate(alarm.arrived_at)}</Text>
-                                </View>
-                            </View>
-                        )}
+                    <View style={styles.cardRow}>
+                        <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+                        <View style={styles.cardRowContent}>
+                            <Text style={styles.cardRowLabel}>{t('history.detail.createdAt')}</Text>
+                            <Text style={styles.cardRowValue}>{formatDate(alarm.created_at)}</Text>
+                        </View>
                     </View>
-                )}
+
+                    {travelDuration && (
+                        <View style={styles.cardRow}>
+                            <Ionicons name="time-outline" size={20} color={colors.primary} />
+                            <View style={styles.cardRowContent}>
+                                <Text style={styles.cardRowLabel}>{t('alarmDetail.travelTime')}</Text>
+                                <Text style={styles.cardRowValue}>{travelDuration}</Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {travelDistance && (
+                        <View style={styles.cardRow}>
+                            <Ionicons name="navigate-outline" size={20} color={colors.primary} />
+                            <View style={styles.cardRowContent}>
+                                <Text style={styles.cardRowLabel}>{t('alarmDetail.travelDistance')}</Text>
+                                <Text style={styles.cardRowValue}>{travelDistance}</Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {alarm.started_at && (
+                        <View style={styles.cardRow}>
+                            <Ionicons name="play-outline" size={20} color={colors.primary} />
+                            <View style={styles.cardRowContent}>
+                                <Text style={styles.cardRowLabel}>{t('alarmDetail.startedAt')}</Text>
+                                <Text style={styles.cardRowValue}>{formatDate(alarm.started_at)}</Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {alarm.arrived_at && (
+                        <View style={styles.cardRow}>
+                            <Ionicons name="flag-outline" size={20} color={colors.success} />
+                            <View style={styles.cardRowContent}>
+                                <Text style={styles.cardRowLabel}>{t('alarmDetail.arrivedAt')}</Text>
+                                <Text style={styles.cardRowValue}>{formatDate(alarm.arrived_at)}</Text>
+                            </View>
+                        </View>
+                    )}
+                </View>
 
                 {/* Checklist */}
                 {memos.length > 0 && (
@@ -342,24 +361,6 @@ export default function AlarmDetail() {
                         ))}
                     </View>
                 )}
-
-                {/* Metadata */}
-                <View style={styles.card}>
-                    <Text style={styles.cardLabel}>{t('history.detail.createdAt')}</Text>
-                    <View style={styles.cardRow}>
-                        <Ionicons name="calendar-outline" size={20} color={colors.primary} />
-                        <Text style={styles.cardRowValue}>{formatDate(alarm.created_at)}</Text>
-                    </View>
-                    {alarm.started_at && (
-                        <View style={styles.cardRow}>
-                            <Ionicons name="play-outline" size={20} color={colors.primary} />
-                            <View style={styles.cardRowContent}>
-                                <Text style={styles.cardRowLabel}>{t('alarmDetail.startedAt')}</Text>
-                                <Text style={styles.cardRowValue}>{formatDate(alarm.started_at)}</Text>
-                            </View>
-                        </View>
-                    )}
-                </View>
 
                 {/* Delete Button */}
                 <Pressable style={styles.deleteButton} onPress={handleDelete}>

@@ -46,7 +46,7 @@ export default function ActionChecklist() {
 
     const handleDone = useCallback(async () => {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        router.replace('/(tabs)/home');
+        router.replace('/alarm-completion');
     }, []);
 
     return (

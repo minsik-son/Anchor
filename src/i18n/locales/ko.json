@@ -139,7 +139,8 @@
         "sections": {
             "notification": "알림 설정",
             "app": "앱 정보",
-            "map": "지도 설정"
+            "map": "지도 설정",
+            "locationAndMap": "위치 및 지도"
         },
         "items": {
             "language": "언어 설정",
@@ -193,14 +194,15 @@
         },
         "backgroundPicker": {
             "title": "알람 배경 선택",
-            "default": "기본 (빨간색)",
+            "default": "기본 배경",
             "gallery": "갤러리에서 선택"
         },
-        "backgrounds": {
-            "sunset": "석양",
-            "ocean": "바다",
-            "aurora": "오로라",
-            "night": "밤하늘"
+        "backgroundThemes": {
+            "pixelDream": "Pixel Dream",
+            "aura": "Aura",
+            "intoTheWild": "Into the Wild",
+            "cityLights": "City Lights",
+            "stillMoment": "Still Moment"
         }
     },
     "favoriteSetup": {
@@ -277,15 +279,21 @@
         "durationMinutes": "{{minutes}}분",
         "durationHours": "{{hours}}시간",
         "durationHoursMinutes": "{{hours}}시간 {{minutes}}분",
-        "noStartLocation": "출발 위치 정보 없음"
+        "noStartLocation": "출발 위치 정보 없음",
+        "straightDistance": "직선 거리"
     },
     "alarmTrigger": {
         "arrived": "목적지에 도착했어요!",
         "arrivedBadge": "도착",
-        "dismiss": "밀어서 알람 끄기",
+        "arrivedAt": "{{place}}에 도착했어요!",
+        "dismiss": "밀어서 해제",
         "dismissHint": "끝까지 밀어서 알람을 끄세요",
         "checklist": "할 일 목록",
         "shakeHint": "흔들어서 해제할 수 있어요"
+    },
+    "alarmCompletion": {
+        "title": "알람 완료!",
+        "subtitle": "목적지에 안전하게 도착했습니다"
     },
     "actionChecklist": {
         "title": "잊지 마세요!",

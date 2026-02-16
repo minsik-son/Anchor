@@ -113,6 +113,29 @@ export default function RootLayout() {
                         contentStyle: { backgroundColor: 'transparent' },
                     }}
                 />
+                <Stack.Screen
+                    name="alarm-completion"
+                    options={{
+                        presentation: 'fullScreenModal',
+                        animation: 'fade',
+                        gestureEnabled: false,
+                    }}
+                />
+                <Stack.Screen
+                    name="interstitial-ad"
+                    options={{
+                        presentation: 'fullScreenModal',
+                        animation: 'fade',
+                        gestureEnabled: false,
+                    }}
+                />
+                <Stack.Screen
+                    name="background-picker"
+                    options={{
+                        headerShown: false,
+                        animation: 'slide_from_right',
+                    }}
+                />
             </Stack>
             <StatusBar style={statusBarStyle} />
         </GestureHandlerRootView>
