@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, Image, Linking } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
@@ -50,9 +50,17 @@ export default function Onboarding() {
                     t('onboarding.permissions.backgroundDesc'),
                     [
                         { text: t('onboarding.later'), onPress: () => completeOnboarding() },
-                        { text: t('onboarding.toSettings'), onPress: () => Location.enableNetworkProviderAsync() },
+                        {
+                            text: t('onboarding.toSettings'),
+                            onPress: () => {
+                                Linking.openSettings();
+                                // Complete onboarding so user isn't stuck when they return
+                                completeOnboarding();
+                            },
+                        },
                     ]
                 );
+                setIsLoading(false);
                 return;
             }
 
