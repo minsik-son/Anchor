@@ -217,8 +217,8 @@
         "maxLimitReached": "즐겨찾기는 최대 3개까지 등록할 수 있습니다."
     },
     "onboarding": {
-        "welcome": "도착 1km 전,\n미리 깨워드릴게요",
-        "subtitle": "지하철, 버스, 기차 어디서든\n목적지에 도착하기 전 알람을 받아보세요",
+        "welcome": "놓치면 안 되는 장소에\n닻을 내려두세요",
+        "subtitle": "목적지 근처에 도착하면\n미리 알려드릴게요",
         "permissions": {
             "location": "위치 권한 필요",
             "locationDesc": "목적지 도착 알람을 위해 위치 권한이 필요합니다. 설정에서 권한을 허용해주세요.",

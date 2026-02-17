@@ -12,6 +12,7 @@ interface AlarmState {
     currentMemos: ActionMemo[];
     isLoading: boolean;
     error: string | null;
+    dismissedAlarmId: number | null;
 
     // Actions
     loadAlarms: () => Promise<void>;
@@ -39,6 +40,7 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
     currentMemos: [],
     isLoading: false,
     error: null,
+    dismissedAlarmId: null,
 
     loadAlarms: async () => {
         set({ isLoading: true, error: null });
@@ -60,7 +62,7 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
     },
 
     createAlarm: async (input) => {
-        set({ isLoading: true, error: null });
+        set({ isLoading: true, error: null, dismissedAlarmId: null });
         try {
             const id = await db.createAlarm(input);
             await get().loadAlarms();
@@ -113,6 +115,8 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
 
     completeAlarm: async (id) => {
         try {
+            // Set dismissedAlarmId immediately to prevent re-triggering
+            set({ dismissedAlarmId: id });
             await db.updateAlarm(id, { is_active: false, arrived_at: new Date().toISOString() });
             await get().loadAlarms();
             await get().loadActiveAlarm();

@@ -146,8 +146,9 @@ export function setupNotificationResponseHandler(): void {
             if (data?.screen === '/alarm-trigger') {
                 // Small delay to ensure navigation context is ready
                 // (especially when app was terminated/backgrounded)
+                // Use navigate instead of push to prevent stacking multiple modal instances
                 setTimeout(() => {
-                    router.push('/alarm-trigger');
+                    router.navigate('/alarm-trigger');
                 }, 300);
             }
         },

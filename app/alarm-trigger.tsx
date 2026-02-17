@@ -157,8 +157,11 @@ export default function AlarmTrigger() {
         // Clear arrival notification from system tray
         await clearArrivalNotifications();
 
-        await completeAlarm(alarmId);
+        // Stop location tracking FIRST to prevent background task from re-triggering
         stopTracking();
+
+        // Then complete the alarm (sets dismissedAlarmId + updates DB)
+        await completeAlarm(alarmId);
 
         if (hasMemos) {
             router.replace({

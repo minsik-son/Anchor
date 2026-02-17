@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
@@ -90,22 +90,17 @@ export default function Onboarding() {
         <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
             {/* Illustration Area */}
             <View style={styles.illustrationContainer}>
-                <View style={styles.illustrationCircle}>
-                    <Text style={styles.illustrationEmoji}>📍</Text>
-                </View>
+                <Image
+                    source={require('../assets/images/AnchorMap.png')}
+                    style={styles.illustrationImage}
+                    resizeMode="contain"
+                />
             </View>
 
             {/* Content */}
             <View style={styles.content}>
                 <Text style={styles.title}>{t('onboarding.welcome')}</Text>
                 <Text style={styles.subtitle}>{t('onboarding.subtitle')}</Text>
-            </View>
-
-            {/* Features */}
-            <View style={styles.features}>
-                <FeatureItem icon="🔋" text={t('onboarding.features.battery')} styles={styles} />
-                <FeatureItem icon="🎯" text={t('onboarding.features.location')} styles={styles} />
-                <FeatureItem icon="📝" text={t('onboarding.features.checklist')} styles={styles} />
             </View>
 
             {/* CTA Button */}
@@ -134,15 +129,6 @@ export default function Onboarding() {
     );
 }
 
-function FeatureItem({ icon, text, styles }: { icon: string; text: string; styles: any }) {
-    return (
-        <View style={styles.featureItem}>
-            <Text style={styles.featureIcon}>{icon}</Text>
-            <Text style={styles.featureText}>{text}</Text>
-        </View>
-    );
-}
-
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
@@ -154,17 +140,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    illustrationCircle: {
-        width: 160,
-        height: 160,
-        borderRadius: 80,
-        backgroundColor: colors.surface,
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...shadows.card,
-    },
-    illustrationEmoji: {
-        fontSize: 64,
+    illustrationImage: {
+        width: 220,
+        height: 220,
     },
     content: {
         flex: 1,
@@ -182,28 +160,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         color: colors.textMedium,
         textAlign: 'center',
         lineHeight: 24,
-    },
-    features: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: spacing.md,
-        marginVertical: spacing.md,
-    },
-    featureItem: {
-        alignItems: 'center',
-        backgroundColor: colors.surface,
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.sm,
-        borderRadius: radius.md,
-        ...shadows.button,
-    },
-    featureIcon: {
-        fontSize: 24,
-        marginBottom: 4,
-    },
-    featureText: {
-        ...typography.caption,
-        color: colors.textMedium,
     },
     ctaContainer: {
         paddingVertical: spacing.lg,

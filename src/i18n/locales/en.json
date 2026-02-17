@@ -217,8 +217,8 @@
         "maxLimitReached": "You can add up to 3 favorites."
     },
     "onboarding": {
-        "welcome": "We'll wake you up\n1km before arrival",
-        "subtitle": "Whether by subway, bus, or train\nGet notified before you reach your destination",
+        "welcome": "Drop an anchor\nat places you can't miss",
+        "subtitle": "We'll notify you\nwhen you're near your destination",
         "permissions": {
             "location": "Location Permission Required",
             "locationDesc": "Location access is required for arrival alarms. Please allow in settings.",

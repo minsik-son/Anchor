@@ -171,19 +171,27 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
 
     // Check alarm trigger (user within target radius)
     if (store.checkGeofence()) {
+        const alarmStore = useAlarmStore.getState();
+
+        // Guard: skip if alarm was already dismissed or no active alarm
+        if (!alarmStore.activeAlarm || alarmStore.dismissedAlarmId === alarmStore.activeAlarm.id) {
+            console.log('[LocationService] Geofence triggered but alarm already dismissed, skipping');
+            return;
+        }
+
         console.log('[LocationService] User arrived! Distance:', store.distanceToTarget);
 
         // Always send a local notification (works in both foreground & background)
-        const alarmStore = useAlarmStore.getState();
-        const alarmTitle = alarmStore.activeAlarm?.title ?? '';
-        const alarmId = alarmStore.activeAlarm?.id;
+        const alarmTitle = alarmStore.activeAlarm.title ?? '';
+        const alarmId = alarmStore.activeAlarm.id;
         sendArrivalNotification(alarmTitle, alarmId).catch(err =>
             console.warn('[LocationService] Failed to send notification:', err),
         );
 
-        // If app is in foreground, also navigate directly to alarm screen
+        // If app is in foreground, navigate to alarm screen
+        // Use replace instead of push to prevent stacking multiple modal instances
         if (isAppInForeground()) {
-            router.push('/alarm-trigger');
+            router.navigate('/alarm-trigger');
         }
         return;
     }

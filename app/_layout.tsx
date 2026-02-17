@@ -92,8 +92,8 @@ export default function RootLayout() {
                 <Stack.Screen
                     name="alarm-trigger"
                     options={{
-                        presentation: 'fullScreenModal',
                         animation: 'fade',
+                        gestureEnabled: false,
                     }}
                 />
                 <Stack.Screen name="alarm-setup" />
@@ -116,7 +116,6 @@ export default function RootLayout() {
                 <Stack.Screen
                     name="alarm-completion"
                     options={{
-                        presentation: 'fullScreenModal',
                         animation: 'fade',
                         gestureEnabled: false,
                     }}
@@ -124,8 +123,7 @@ export default function RootLayout() {
                 <Stack.Screen
                     name="interstitial-ad"
                     options={{
-                        presentation: 'fullScreenModal',
-                        animation: 'fade',
+                        animation: 'none',
                         gestureEnabled: false,
                     }}
                 />
