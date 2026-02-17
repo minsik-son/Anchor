@@ -177,7 +177,7 @@ export default function Home() {
                     return;
                 }
 
-                // Resume tracking
+                // Resume tracking (wrapped in try/catch to prevent app stuck on loading)
                 const initialDistance = location
                     ? calculateDistance(
                         { latitude: location.coords.latitude, longitude: location.coords.longitude },
@@ -185,7 +185,11 @@ export default function Home() {
                     )
                     : undefined;
 
-                await startTracking(target, alarm.radius, location ?? undefined);
+                try {
+                    await startTracking(target, alarm.radius, location ?? undefined);
+                } catch (err) {
+                    console.warn('[Home] Store tracking resume failed:', err);
+                }
 
                 try {
                     await startServiceTracking(target, alarm.radius, initialDistance);
@@ -241,7 +245,7 @@ export default function Home() {
     }, [activeAlarm, handleMyLocationPress]);
 
     // Fit map to show both current location and destination when alarm is active
-    // Uses a 2-step animation: first zoom out to midpoint, then fit to both coordinates
+    // For long distances, skip manual animateToRegion (unsafe delta) and use fitToCoordinates only
     useEffect(() => {
         if (!activeAlarm || !currentLocation || !mapRef.current || isNavigating) return;
 
@@ -255,24 +259,38 @@ export default function Home() {
         };
         const coordinates = [userCoord, destCoord];
 
-        // Step 1: Animate camera to midpoint with a wider zoom first
+        // Calculate real geodesic distance
+        const distance = calculateDistance(userCoord, destCoord);
+
+        if (distance > 100_000) {
+            // Long distance (>100km): use fitToCoordinates directly — it handles
+            // globe-spanning coordinates safely without manual delta calculation
+            mapRef.current.fitToCoordinates(coordinates, {
+                edgePadding: { top: 180, right: 100, bottom: BOTTOM_SHEET_COLLAPSED + 80, left: 100 },
+                animated: true,
+            });
+            return;
+        }
+
+        // Normal distance: 2-step animation for smoother transition
         const midLat = (userCoord.latitude + destCoord.latitude) / 2;
         const midLng = (userCoord.longitude + destCoord.longitude) / 2;
         const latDiff = Math.abs(userCoord.latitude - destCoord.latitude);
-        const lngDiff = Math.abs(userCoord.longitude - destCoord.longitude);
+        let lngDiff = Math.abs(userCoord.longitude - destCoord.longitude);
+        if (lngDiff > 180) lngDiff = 360 - lngDiff;
         const delta = Math.max(latDiff, lngDiff) * 1.8;
+        const safeDelta = Math.min(Math.max(delta, 0.02), 150);
 
         mapRef.current.animateToRegion(
             {
                 latitude: midLat,
                 longitude: midLng,
-                latitudeDelta: Math.max(delta, 0.02),
-                longitudeDelta: Math.max(delta, 0.02),
+                latitudeDelta: safeDelta,
+                longitudeDelta: safeDelta,
             },
             600,
         );
 
-        // Step 2: After first animation, fine-tune with fitToCoordinates
         setTimeout(() => {
             mapRef.current?.fitToCoordinates(coordinates, {
                 edgePadding: { top: 180, right: 100, bottom: BOTTOM_SHEET_COLLAPSED + 80, left: 100 },
@@ -325,6 +343,7 @@ export default function Home() {
 
 
     // Watch user location in foreground when alarm is active (for smooth distance updates)
+    // For long-distance alarms (>50km), use relaxed intervals to save battery
     useEffect(() => {
         if (!activeAlarm || isNavigating) return;
 
@@ -332,11 +351,22 @@ export default function Home() {
 
         const startWatching = async () => {
             try {
+                // Determine if this is a long-distance alarm
+                const loc = useLocationStore.getState().currentLocation;
+                let isLongRange = false;
+                if (loc) {
+                    const dist = calculateDistance(
+                        { latitude: loc.coords.latitude, longitude: loc.coords.longitude },
+                        { latitude: activeAlarm.latitude, longitude: activeAlarm.longitude },
+                    );
+                    isLongRange = dist > 50_000;
+                }
+
                 subscription = await Location.watchPositionAsync(
                     {
-                        accuracy: Location.Accuracy.High,
-                        distanceInterval: 5, // Update every 5 meters
-                        timeInterval: 1000,
+                        accuracy: isLongRange ? Location.Accuracy.Balanced : Location.Accuracy.High,
+                        distanceInterval: isLongRange ? 500 : 5,
+                        timeInterval: isLongRange ? 30_000 : 1_000,
                     },
                     (location) => {
                         // Directly update store to reflect distance on UI immediately

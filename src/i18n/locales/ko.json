@@ -69,6 +69,9 @@
         "pleaseEnterTitle": "알람 제목을 입력해주세요.",
         "locationError": "위치 정보가 없습니다.",
         "createFailed": "알람 생성에 실패했습니다.",
+        "longDistanceTitle": "먼 거리 알람",
+        "longDistanceMessage": "목적지까지 {{distance}} 떨어져 있습니다. 장거리 알람은 배터리 소모가 클 수 있습니다. 계속하시겠습니까?",
+        "longDistanceConfirm": "계속",
         "batteryInfo": {
             "title": "스마트 배터리 절약",
             "description": "거리에 따라 위치 확인 주기를 자동 조절하여 배터리를 절약합니다.",

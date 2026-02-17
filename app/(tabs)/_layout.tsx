@@ -58,7 +58,7 @@ export default function TabsLayout() {
                 options={{
                     title: t('tabs.activity'),
                     tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="pulse" size={size} color={color} />
+                        <Ionicons name="walk" size={size} color={color} />
                     ),
                 }}
             />

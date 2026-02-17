@@ -35,12 +35,29 @@ export default function RootLayout() {
         async function initialize() {
             try {
                 await initDatabase();
-                await useAlarmStore.getState().loadActiveAlarm();
-                await useChallengeStore.getState().loadChallenges();
-                await initNotifications();
+
+                // Load stores — wrap each in try/catch so one failure doesn't block the app
+                try {
+                    await useAlarmStore.getState().loadActiveAlarm();
+                } catch (alarmErr) {
+                    console.warn('[RootLayout] Failed to load active alarm (non-fatal):', alarmErr);
+                }
+
+                try {
+                    await useChallengeStore.getState().loadChallenges();
+                } catch (challengeErr) {
+                    console.warn('[RootLayout] Failed to load challenges (non-fatal):', challengeErr);
+                }
+
+                try {
+                    await initNotifications();
+                } catch (notifErr) {
+                    console.warn('[RootLayout] Failed to init notifications (non-fatal):', notifErr);
+                }
+
                 setIsReady(true);
             } catch (err) {
-                console.error('[RootLayout] Initialization failed:', err);
+                console.error('[RootLayout] Database initialization failed:', err);
                 setError((err as Error).message);
             }
         }

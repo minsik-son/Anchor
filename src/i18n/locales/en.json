@@ -69,6 +69,9 @@
         "pleaseEnterTitle": "Please enter an alarm title.",
         "locationError": "Location information is missing.",
         "createFailed": "Failed to create alarm.",
+        "longDistanceTitle": "Long Distance Alarm",
+        "longDistanceMessage": "The destination is {{distance}} away. Long-distance alarms may consume more battery. Continue?",
+        "longDistanceConfirm": "Continue",
         "batteryInfo": {
             "title": "Smart Battery Saving",
             "description": "Automatically adjusts location check intervals based on distance to save battery.",

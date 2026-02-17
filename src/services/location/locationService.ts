@@ -31,6 +31,8 @@ let currentServicePhase: TrackingPhase = 'IDLE';
 let currentTarget: { latitude: number; longitude: number } | null = null;
 let currentRadius: number = 500;
 let lastProcessedAt: number = 0;
+/** Tracks consecutive geofence setup failures to prevent infinite fallback loops */
+let geofenceSetupFailed: boolean = false;
 
 // Callback for routine evaluation on background location ticks
 let onLocationTickCallback: (() => void) | null = null;
@@ -46,6 +48,7 @@ export function registerLocationTickCallback(cb: () => void): void {
 /**
  * Calculate dynamic cooldown for ADAPTIVE_POLLING based on distance & speed.
  * Returns cooldown in milliseconds clamped to [MIN, MAX].
+ * For long-range distances (>50km), uses a much longer max cooldown to save battery.
  */
 function calculateDynamicCooldown(distanceMeters: number, speedKmh: number): number {
     const effectiveSpeed = Math.max(speedKmh, ADAPTIVE_POLLING_CONFIG.MIN_ASSUMED_SPEED_KMH);
@@ -57,9 +60,14 @@ function calculateDynamicCooldown(distanceMeters: number, speedKmh: number): num
         cooldownMs *= ADAPTIVE_POLLING_CONFIG.HIGH_SPEED_COOLDOWN_MULTIPLIER;
     }
 
+    // Use longer max cooldown for long-range distances to save battery
+    const maxCooldown = distanceMeters > PHASE_BOUNDARIES.LONG_RANGE_POLLING_THRESHOLD
+        ? ADAPTIVE_POLLING_CONFIG.LONG_RANGE_MAX_COOLDOWN_MS
+        : ADAPTIVE_POLLING_CONFIG.MAX_COOLDOWN_MS;
+
     return Math.max(
         ADAPTIVE_POLLING_CONFIG.MIN_COOLDOWN_MS,
-        Math.min(ADAPTIVE_POLLING_CONFIG.MAX_COOLDOWN_MS, cooldownMs),
+        Math.min(maxCooldown, cooldownMs),
     );
 }
 
@@ -78,6 +86,8 @@ function shouldEnterActiveTracking(distanceMeters: number, speedKmh: number): bo
 
 /**
  * Determine the ideal tracking phase, applying hysteresis to prevent flapping.
+ * If geofence setup previously failed, stays in ADAPTIVE_POLLING instead of
+ * transitioning back to GEOFENCING (prevents infinite fallback loops).
  */
 function determinePhase(
     distanceMeters: number,
@@ -102,7 +112,12 @@ function determinePhase(
     }
 
     // Reverse: leave ADAPTIVE_POLLING only beyond hysteresis buffer
+    // BUT if geofence setup previously failed, stay in ADAPTIVE_POLLING
+    // to prevent infinite GEOFENCING → fail → ADAPTIVE_POLLING → GEOFENCING loop
     if (fromPhase === 'ADAPTIVE_POLLING') {
+        if (geofenceSetupFailed) {
+            return 'ADAPTIVE_POLLING';
+        }
         return distanceMeters > PHASE_BOUNDARIES.GEOFENCING_EXIT_BUFFER
             ? 'GEOFENCING'
             : 'ADAPTIVE_POLLING';
@@ -259,9 +274,11 @@ async function setupGeofencing(): Promise<void> {
             notifyOnEnter: true,
             notifyOnExit: false,
         }]);
+        geofenceSetupFailed = false;
         console.log('[LocationService] Geofencing started (5km radius)');
     } catch (err) {
-        console.warn('[LocationService] Geofencing failed (Expo Go?), falling back:', err);
+        console.warn('[LocationService] Geofencing failed, falling back to ADAPTIVE_POLLING:', err);
+        geofenceSetupFailed = true;
         await transitionToPhase('ADAPTIVE_POLLING');
     }
 }
@@ -369,6 +386,7 @@ export async function stopAllTracking(): Promise<void> {
     currentServicePhase = 'IDLE';
     currentTarget = null;
     lastProcessedAt = 0;
+    geofenceSetupFailed = false;
     console.log('[LocationService] All tracking stopped');
 }
 

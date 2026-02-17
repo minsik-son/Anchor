@@ -16,9 +16,10 @@ import { useAlarmSettingsStore } from '../src/stores/alarmSettingsStore';
 import { startTracking as startServiceTracking } from '../src/services/location/locationService';
 import { useTranslation } from 'react-i18next';
 import { typography, spacing, radius, shadows, alarmDefaults, useThemeColors, ThemeColors } from '../src/styles/theme';
-import { isWithinRadius, calculateDistance } from '../src/services/location/geofence';
+import { isWithinRadius, calculateDistance, formatDistance } from '../src/services/location/geofence';
 import { useDistanceFormatter } from '../src/utils/distanceFormatter';
 import { RADIUS_STEPS, radiusToIndex, indexToRadius } from '../src/components/home/BottomSheetDashboard';
+import { PHASE_BOUNDARIES } from '../src/constants/trackingConfig';
 
 const ALARM_ICONS = [
     { key: 'home', icon: 'home' },
@@ -45,7 +46,7 @@ export default function AlarmSetup() {
     const styles = useMemo(() => createStyles(colors), [colors]);
     const { formatRadius } = useDistanceFormatter();
 
-    const [title, setTitle] = useState('');
+    const [title, setTitle] = useState(params.locationName || '');
     const [selectedIcon, setSelectedIcon] = useState('pin');
     const [alarmRadius, setAlarmRadius] = useState(
         params.radius ? parseInt(params.radius) : alarmDefaults.radius
@@ -98,6 +99,31 @@ export default function AlarmSetup() {
 
         // Fetch fresh GPS — capture return value as local variable (store update may not be visible this tick)
         const location = await getCurrentLocation();
+
+        // Check distance — warn if extremely far (>100km)
+        if (location) {
+            const distanceToTarget = calculateDistance(
+                { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                { latitude: lat, longitude: lng }
+            );
+            if (distanceToTarget > PHASE_BOUNDARIES.MAX_RECOMMENDED_DISTANCE) {
+                const distStr = formatDistance(distanceToTarget);
+                const confirmed = await new Promise<boolean>((resolve) => {
+                    Alert.alert(
+                        t('alarmSetup.longDistanceTitle'),
+                        t('alarmSetup.longDistanceMessage', { distance: distStr }),
+                        [
+                            { text: t('common.cancel'), onPress: () => resolve(false), style: 'cancel' },
+                            { text: t('alarmSetup.longDistanceConfirm'), onPress: () => resolve(true) },
+                        ]
+                    );
+                });
+                if (!confirmed) {
+                    setIsCreating(false);
+                    return;
+                }
+            }
+        }
 
         console.log('[AlarmSetup] Alarm data:', {
             title,
