@@ -491,5 +491,19 @@
             "hours": "{{count}} hr"
         },
         "start": "Start"
+    },
+    "trackingNotification": {
+        "remaining": "{{distance}} remaining",
+        "elapsed": "{{time}} elapsed"
+    },
+    "trackingDetail": {
+        "title": "Tracking Detail",
+        "remainingDistance": "Remaining",
+        "traveledDistance": "Traveled",
+        "currentSpeed": "Speed",
+        "elapsedTime": "Elapsed",
+        "viewAll": "View All",
+        "currentLocation": "My Location",
+        "speedUnit": "km/h"
     }
 }

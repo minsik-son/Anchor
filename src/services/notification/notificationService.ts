@@ -14,6 +14,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform, AppState } from 'react-native';
 import { router } from 'expo-router';
+import { AlarmSoundKey } from '../../stores/alarmSettingsStore';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -33,14 +34,31 @@ const CHANNEL_NAME = 'Arrival Alarms';
 export async function initNotifications(): Promise<void> {
     // How to display notifications when app is in foreground
     Notifications.setNotificationHandler({
-        handleNotification: async () => ({
-            shouldShowAlert: true,
-            shouldShowBanner: true,
-            shouldShowList: true,
-            shouldPlaySound: true,
-            shouldSetBadge: false,
-            priority: Notifications.AndroidNotificationPriority.MAX,
-        }),
+        handleNotification: async (notification) => {
+            const data = notification.request.content.data;
+
+            // Suppress tracking update notifications in foreground (dashboard already shows this)
+            if (data?.type === 'tracking') {
+                return {
+                    shouldShowAlert: false,
+                    shouldShowBanner: false,
+                    shouldShowList: false,
+                    shouldPlaySound: false,
+                    shouldSetBadge: false,
+                    priority: Notifications.AndroidNotificationPriority.LOW,
+                };
+            }
+
+            // All other notifications (arrival, etc.) show normally
+            return {
+                shouldShowAlert: true,
+                shouldShowBanner: true,
+                shouldShowList: true,
+                shouldPlaySound: true,
+                shouldSetBadge: false,
+                priority: Notifications.AndroidNotificationPriority.MAX,
+            };
+        },
     });
 
     // Android: create a high-importance notification channel
@@ -95,6 +113,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 export async function sendArrivalNotification(
     alarmTitle: string,
     alarmId?: number,
+    soundKey: AlarmSoundKey = 'alert',
 ): Promise<string> {
     const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
@@ -102,12 +121,15 @@ export async function sendArrivalNotification(
             body: alarmTitle
                 ? `${alarmTitle}에 도착했습니다.`
                 : '설정한 목적지에 도착했습니다.',
-            sound: 'default',
+            sound: `${soundKey}.wav`,
             data: {
                 type: 'arrival',
                 alarmId: alarmId ?? null,
                 screen: '/alarm-trigger',
             },
+            ...(Platform.OS === 'ios' && {
+                interruptionLevel: 'critical',
+            }),
             ...(Platform.OS === 'android' && {
                 channelId: CHANNEL_ID,
                 priority: 'max',
@@ -119,6 +141,62 @@ export async function sendArrivalNotification(
 
     console.log('[NotificationService] Sent arrival notification:', notificationId);
     return notificationId;
+}
+
+/**
+ * Send a tracking notification showing distance and elapsed time for lock screen.
+ * Called every 30 seconds during ADAPTIVE_POLLING and ACTIVE_TRACKING phases.
+ */
+export async function sendTrackingNotification(
+    distanceMeters: number,
+    elapsedSeconds: number,
+    alarmId: number,
+    alarmTitle: string,
+): Promise<void> {
+    const distanceStr = distanceMeters < 1000
+        ? `${Math.round(distanceMeters)}m`
+        : `${(distanceMeters / 1000).toFixed(1)}km`;
+
+    const hours = Math.floor(elapsedSeconds / 3600);
+    const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+    const seconds = elapsedSeconds % 60;
+    let timeStr: string;
+    if (hours > 0) {
+        timeStr = `${hours}시간 ${minutes}분`;
+    } else if (minutes > 0) {
+        timeStr = `${minutes}분 ${seconds}초`;
+    } else {
+        timeStr = `${seconds}초`;
+    }
+
+    await Notifications.scheduleNotificationAsync({
+        content: {
+            title: `📍 ${alarmTitle} · 남은 거리 ${distanceStr}`,
+            body: `⏱ 경과 시간 ${timeStr}`,
+            sound: false,
+            data: {
+                type: 'tracking',
+                alarmId,
+            },
+            ...(Platform.OS === 'android' && {
+                channelId: CHANNEL_ID,
+                priority: 'high',
+                sticky: true,
+            }),
+        },
+        trigger: null,
+        identifier: 'tracking-update',
+    });
+}
+
+/**
+ * Clear the tracking notification from the lock screen.
+ */
+export async function clearTrackingNotification(): Promise<void> {
+    try {
+        await Notifications.dismissNotificationAsync('tracking-update');
+    } catch {
+    }
 }
 
 // ---------------------------------------------------------------------------

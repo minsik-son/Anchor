@@ -491,5 +491,19 @@
             "hours": "{{count}}시간"
         },
         "start": "시작하기"
+    },
+    "trackingNotification": {
+        "remaining": "{{distance}} 남음",
+        "elapsed": "{{time}} 경과"
+    },
+    "trackingDetail": {
+        "title": "트래킹 상세",
+        "remainingDistance": "남은 거리",
+        "traveledDistance": "이동 거리",
+        "currentSpeed": "현재 속도",
+        "elapsedTime": "경과 시간",
+        "viewAll": "전체 보기",
+        "currentLocation": "현위치",
+        "speedUnit": "km/h"
     }
 }

@@ -720,6 +720,7 @@ export default function Home() {
                 />
             ) : activeAlarm ? (
                 /* Active Alarm Dashboard */
+                <Pressable onPress={() => router.push('/tracking-detail')}>
                 <View style={[styles.bottomSheet, { paddingBottom: spacing.sm }]}>
                     {/* Alarm Title Row */}
                     <View style={styles.dashboardHeader}>
@@ -783,6 +784,7 @@ export default function Home() {
                         <Text style={styles.cancelAlarmText}>{t('alarmDashboard.cancelAlarm')}</Text>
                     </Pressable>
                 </View>
+                </Pressable>
             ) : (
                 /* Normal setup bottom sheet - Draggable */
                 <BottomSheetDashboard

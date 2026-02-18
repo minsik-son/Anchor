@@ -138,6 +138,14 @@ export default function RootLayout() {
                     }}
                 />
                 <Stack.Screen
+                    name="tracking-detail"
+                    options={{
+                        animation: 'slide_from_bottom',
+                        gestureEnabled: true,
+                        headerShown: false,
+                    }}
+                />
+                <Stack.Screen
                     name="interstitial-ad"
                     options={{
                         animation: 'none',

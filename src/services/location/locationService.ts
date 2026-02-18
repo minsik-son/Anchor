@@ -21,7 +21,8 @@ import {
 import { processLocationUpdate as processChallengeLocation } from './dwellTracker';
 import { useChallengeStore } from '../../stores/challengeStore';
 import { useAlarmStore } from '../../stores/alarmStore';
-import { sendArrivalNotification, isAppInForeground } from '../notification/notificationService';
+import { useAlarmSettingsStore } from '../../stores/alarmSettingsStore';
+import { sendArrivalNotification, isAppInForeground, sendTrackingNotification, clearTrackingNotification } from '../notification/notificationService';
 
 // ---------------------------------------------------------------------------
 // Module-level state (the service is the "brain")
@@ -33,6 +34,8 @@ let currentRadius: number = 500;
 let lastProcessedAt: number = 0;
 /** Tracks consecutive geofence setup failures to prevent infinite fallback loops */
 let geofenceSetupFailed: boolean = false;
+let lastTrackingNotificationAt: number = 0;
+const TRACKING_NOTIFICATION_INTERVAL_MS = 30_000;
 
 // Callback for routine evaluation on background location ticks
 let onLocationTickCallback: (() => void) | null = null;
@@ -184,6 +187,15 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
     // Update store (recalculates distance, speed)
     store.updateLocation(location);
 
+    // Append to route history for tracking detail
+    if (store.isTracking) {
+        store.addRoutePoint({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            timestamp: location.timestamp || Date.now(),
+        });
+    }
+
     // Check alarm trigger (user within target radius)
     if (store.checkGeofence()) {
         const alarmStore = useAlarmStore.getState();
@@ -199,8 +211,13 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
         // Always send a local notification (works in both foreground & background)
         const alarmTitle = alarmStore.activeAlarm.title ?? '';
         const alarmId = alarmStore.activeAlarm.id;
-        sendArrivalNotification(alarmTitle, alarmId).catch(err =>
+        const alarmSettings = useAlarmSettingsStore.getState();
+        sendArrivalNotification(alarmTitle, alarmId, alarmSettings.selectedSound).catch(err =>
             console.warn('[LocationService] Failed to send notification:', err),
+        );
+
+        clearTrackingNotification().catch(err =>
+            console.warn('[LocationService] Failed to clear tracking notification:', err),
         );
 
         // If app is in foreground, navigate to alarm screen
@@ -218,6 +235,25 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
         const desiredPhase = determinePhase(distance, speed, currentServicePhase);
         if (desiredPhase !== currentServicePhase) {
             await transitionToPhase(desiredPhase);
+        }
+    }
+
+    // Send tracking notification (lock screen distance/time update)
+    if (currentServicePhase === 'ADAPTIVE_POLLING' || currentServicePhase === 'ACTIVE_TRACKING') {
+        const now2 = Date.now();
+        if (now2 - lastTrackingNotificationAt >= TRACKING_NOTIFICATION_INTERVAL_MS) {
+            const alarmStore2 = useAlarmStore.getState();
+            const locationStore = useLocationStore.getState();
+            if (alarmStore2.activeAlarm && locationStore.trackingStartedAt && store.distanceToTarget) {
+                const elapsedSec = Math.floor((now2 - new Date(locationStore.trackingStartedAt).getTime()) / 1000);
+                sendTrackingNotification(
+                    store.distanceToTarget,
+                    elapsedSec,
+                    alarmStore2.activeAlarm.id,
+                    alarmStore2.activeAlarm.title ?? '',
+                ).catch(err => console.warn('[LocationService] Tracking notification failed:', err));
+                lastTrackingNotificationAt = now2;
+            }
         }
     }
 
@@ -376,6 +412,11 @@ export async function startTracking(
     const initialPhase = determinePhase(distance, 0, 'IDLE');
 
     await transitionToPhase(initialPhase);
+
+    if (distance !== Infinity) {
+        sendTrackingNotification(distance, 0, 0, '').catch(() => {});
+        lastTrackingNotificationAt = Date.now();
+    }
 }
 
 /**
@@ -387,6 +428,9 @@ export async function stopAllTracking(): Promise<void> {
     currentTarget = null;
     lastProcessedAt = 0;
     geofenceSetupFailed = false;
+    lastTrackingNotificationAt = 0;
+    useLocationStore.getState().clearRouteHistory();
+    clearTrackingNotification().catch(() => {});
     console.log('[LocationService] All tracking stopped');
 }
 

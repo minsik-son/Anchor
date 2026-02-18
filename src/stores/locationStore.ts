@@ -10,6 +10,12 @@ import { calculateDistance, isWithinRadius } from '../services/location/geofence
 export type TrackingPhase = 'IDLE' | 'GEOFENCING' | 'ADAPTIVE_POLLING' | 'ACTIVE_TRACKING';
 export type TransportMode = 'driving' | 'transit' | 'walking' | 'cycling';
 
+export interface RoutePoint {
+    latitude: number;
+    longitude: number;
+    timestamp: number;
+}
+
 export interface RouteInfo {
     id: string;
     name: string;  // "추천 경로", "최단 시간", etc.
@@ -35,6 +41,10 @@ interface LocationState {
     targetLocation: { latitude: number; longitude: number } | null;
     targetRadius: number;
 
+    // Route history for tracking detail
+    routeHistory: RoutePoint[];
+    traveledDistance: number;
+
     // Permissions
     hasPermission: boolean;
     permissionStatus: Location.PermissionStatus | null;
@@ -54,6 +64,8 @@ interface LocationState {
     updateLocation: (location: Location.LocationObject) => void;
     checkGeofence: () => boolean;
     setPhase: (phase: TrackingPhase) => void;
+    addRoutePoint: (point: RoutePoint) => void;
+    clearRouteHistory: () => void;
 
     // Navigation actions
     setTransportMode: (mode: TransportMode) => void;
@@ -74,6 +86,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     trackingStartedAt: null,
     targetLocation: null,
     targetRadius: 500,
+    routeHistory: [],
+    traveledDistance: 0,
     hasPermission: false,
     permissionStatus: null,
 
@@ -162,6 +176,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             );
         }
 
+        get().clearRouteHistory();
+
         set({
             targetLocation: target,
             targetRadius: radius,
@@ -186,6 +202,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             distanceToTarget: null,
             targetLocation: null,
             trackingStartedAt: null,
+            routeHistory: [],
+            traveledDistance: 0,
         });
         console.log('[LocationStore] Stopped tracking');
     },
@@ -223,6 +241,33 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     },
 
     setPhase: (phase) => set({ currentPhase: phase }),
+
+    addRoutePoint: (point) => {
+        const { routeHistory, traveledDistance } = get();
+        let newDistance = traveledDistance;
+
+        // Calculate incremental distance from last point
+        if (routeHistory.length > 0) {
+            const lastPoint = routeHistory[routeHistory.length - 1];
+            const dist = calculateDistance(
+                { latitude: lastPoint.latitude, longitude: lastPoint.longitude },
+                { latitude: point.latitude, longitude: point.longitude }
+            );
+            newDistance += dist;
+        }
+
+        set({
+            routeHistory: [...routeHistory, point],
+            traveledDistance: newDistance,
+        });
+    },
+
+    clearRouteHistory: () => {
+        set({
+            routeHistory: [],
+            traveledDistance: 0,
+        });
+    },
 
     // Navigation actions
     setTransportMode: (mode) => {

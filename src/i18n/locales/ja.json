@@ -491,5 +491,19 @@
             "hours": "{{count}}時間"
         },
         "start": "スタート"
+    },
+    "trackingNotification": {
+        "remaining": "{{distance}} 残り",
+        "elapsed": "{{time}} 経過"
+    },
+    "trackingDetail": {
+        "title": "トラッキング詳細",
+        "remainingDistance": "残り距離",
+        "traveledDistance": "移動距離",
+        "currentSpeed": "現在速度",
+        "elapsedTime": "経過時間",
+        "viewAll": "全体表示",
+        "currentLocation": "現在地",
+        "speedUnit": "km/h"
     }
 }

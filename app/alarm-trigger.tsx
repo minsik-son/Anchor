@@ -25,7 +25,7 @@ import Animated, {
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
 import { useAlarmSettingsStore, getBackgroundAsset } from '../src/stores/alarmSettingsStore';
-import { clearArrivalNotifications } from '../src/services/notification/notificationService';
+import { clearArrivalNotifications, clearTrackingNotification } from '../src/services/notification/notificationService';
 import { useAlarmSound } from '../src/hooks/useAlarmSound';
 import { useAlarmVibration } from '../src/hooks/useAlarmVibration';
 import { useShakeDetection } from '../src/hooks/useShakeDetection';
@@ -156,6 +156,9 @@ export default function AlarmTrigger() {
 
         // Clear arrival notification from system tray
         await clearArrivalNotifications();
+
+        // Clear tracking notification
+        await clearTrackingNotification();
 
         // Stop location tracking FIRST to prevent background task from re-triggering
         stopTracking();
