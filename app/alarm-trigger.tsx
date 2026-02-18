@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { stopTrackingActivity } from '../src/services/liveActivity/liveActivityService';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -156,6 +157,9 @@ export default function AlarmTrigger() {
 
         // Clear arrival notification from system tray
         await clearArrivalNotifications();
+
+        // Stop Live Activity (Dynamic Island)
+        await stopTrackingActivity();
 
         // Clear tracking notification
         await clearTrackingNotification();

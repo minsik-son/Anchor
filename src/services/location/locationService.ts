@@ -23,6 +23,12 @@ import { useChallengeStore } from '../../stores/challengeStore';
 import { useAlarmStore } from '../../stores/alarmStore';
 import { useAlarmSettingsStore } from '../../stores/alarmSettingsStore';
 import { sendArrivalNotification, isAppInForeground, sendTrackingNotification, clearTrackingNotification } from '../notification/notificationService';
+import {
+    startTrackingActivity,
+    updateTrackingActivity,
+    stopTrackingActivity,
+    hasActiveActivity,
+} from '../liveActivity/liveActivityService';
 
 // ---------------------------------------------------------------------------
 // Module-level state (the service is the "brain")
@@ -216,6 +222,9 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
             console.warn('[LocationService] Failed to send notification:', err),
         );
 
+        stopTrackingActivity().catch(err =>
+            console.warn('[LocationService] Failed to stop Live Activity:', err),
+        );
         clearTrackingNotification().catch(err =>
             console.warn('[LocationService] Failed to clear tracking notification:', err),
         );
@@ -238,20 +247,29 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
         }
     }
 
-    // Send tracking notification (lock screen distance/time update)
+    // Send tracking update (Live Activity or notification fallback)
     if (currentServicePhase === 'ADAPTIVE_POLLING' || currentServicePhase === 'ACTIVE_TRACKING') {
         const now2 = Date.now();
         if (now2 - lastTrackingNotificationAt >= TRACKING_NOTIFICATION_INTERVAL_MS) {
             const alarmStore2 = useAlarmStore.getState();
             const locationStore = useLocationStore.getState();
             if (alarmStore2.activeAlarm && locationStore.trackingStartedAt && store.distanceToTarget) {
-                const elapsedSec = Math.floor((now2 - new Date(locationStore.trackingStartedAt).getTime()) / 1000);
-                sendTrackingNotification(
-                    store.distanceToTarget,
-                    elapsedSec,
-                    alarmStore2.activeAlarm.id,
-                    alarmStore2.activeAlarm.title ?? '',
-                ).catch(err => console.warn('[LocationService] Tracking notification failed:', err));
+                if (hasActiveActivity()) {
+                    // Live Activity: only update distance (timer is automatic)
+                    updateTrackingActivity(
+                        alarmStore2.activeAlarm.title ?? '',
+                        store.distanceToTarget,
+                    ).catch(err => console.warn('[LocationService] Live Activity update failed:', err));
+                } else {
+                    // Fallback: regular notification
+                    const elapsedSec = Math.floor((now2 - new Date(locationStore.trackingStartedAt).getTime()) / 1000);
+                    sendTrackingNotification(
+                        store.distanceToTarget,
+                        elapsedSec,
+                        alarmStore2.activeAlarm.id,
+                        alarmStore2.activeAlarm.title ?? '',
+                    ).catch(err => console.warn('[LocationService] Tracking notification failed:', err));
+                }
                 lastTrackingNotificationAt = now2;
             }
         }
@@ -414,7 +432,19 @@ export async function startTracking(
     await transitionToPhase(initialPhase);
 
     if (distance !== Infinity) {
-        sendTrackingNotification(distance, 0, 0, '').catch(() => {});
+        // Try Live Activity first (Dynamic Island), fall back to notification
+        const alarmStore = useAlarmStore.getState();
+        const locationStore = useLocationStore.getState();
+        if (alarmStore.activeAlarm && locationStore.trackingStartedAt) {
+            const started = await startTrackingActivity(
+                alarmStore.activeAlarm.title ?? '',
+                distance,
+                locationStore.trackingStartedAt,
+            );
+            if (!started) {
+                sendTrackingNotification(distance, 0, alarmStore.activeAlarm.id, alarmStore.activeAlarm.title ?? '').catch(() => {});
+            }
+        }
         lastTrackingNotificationAt = Date.now();
     }
 }
@@ -430,6 +460,7 @@ export async function stopAllTracking(): Promise<void> {
     geofenceSetupFailed = false;
     lastTrackingNotificationAt = 0;
     useLocationStore.getState().clearRouteHistory();
+    stopTrackingActivity().catch(() => {});
     clearTrackingNotification().catch(() => {});
     console.log('[LocationService] All tracking stopped');
 }
