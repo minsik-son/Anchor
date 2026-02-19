@@ -283,7 +283,9 @@
         "durationHours": "{{hours}}시간",
         "durationHoursMinutes": "{{hours}}시간 {{minutes}}분",
         "noStartLocation": "출발 위치 정보 없음",
-        "straightDistance": "직선 거리"
+        "straightDistance": "직선 거리",
+        "actualDistance": "실제 이동 거리",
+        "cancelledAt": "취소 시간"
     },
     "alarmTrigger": {
         "arrived": "목적지에 도착했어요!",

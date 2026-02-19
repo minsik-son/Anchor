@@ -28,6 +28,14 @@ export const ACTIVE_TRACKING_CONFIG = {
     DISTANCE_FILTER_METERS: 10,
 } as const;
 
+/** GEOFENCING phase: low-power location updates for route collection */
+export const GEOFENCING_ROUTE_CONFIG = {
+    /** Minimum distance between updates (meters) */
+    DISTANCE_INTERVAL: 200,
+    /** Minimum time between updates (ms) — 60 seconds */
+    TIME_INTERVAL: 60_000,
+} as const;
+
 /** TaskManager task names */
 export const TASK_NAMES = {
     LOCATION: 'background-location-task',

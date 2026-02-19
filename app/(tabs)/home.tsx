@@ -28,6 +28,8 @@ import { startTracking as startServiceTracking } from '../../src/services/locati
 import { mapDarkStyle } from '../../src/constants/mapDarkStyle';
 import { useThemeStore } from '../../src/stores/themeStore';
 import { useElapsedTime } from '../../src/hooks/useElapsedTime';
+import { clearTrackingNotification } from '../../src/services/notification/notificationService';
+import { stopTrackingActivity } from '../../src/services/liveActivity/liveActivityService';
 import { useMapPin } from '../../src/hooks/useMapPin';
 import { useLocationSearch } from '../../src/hooks/useLocationSearch';
 
@@ -419,6 +421,8 @@ export default function Home() {
                             await deactivateAlarm(activeAlarm.id);
                         }
                         stopTracking();
+                        await stopTrackingActivity();
+                        await clearTrackingNotification();
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                     },
                 },
@@ -709,13 +713,15 @@ export default function Home() {
             {/* Navigation Panel (shown during navigation mode) */}
             {isNavigating ? (
                 <NavigationPanel
-                    onStopNavigation={() => {
+                    onStopNavigation={async () => {
                         // Deactivate alarm to remove red pin
                         if (activeAlarm) {
-                            deactivateAlarm(activeAlarm.id);
+                            await deactivateAlarm(activeAlarm.id);
                         }
                         stopNavigation();
                         stopTracking();
+                        await stopTrackingActivity();
+                        await clearTrackingNotification();
                     }}
                 />
             ) : activeAlarm ? (

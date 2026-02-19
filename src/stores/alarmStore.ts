@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { Alarm, ActionMemo, CreateAlarmInput, CreateActionMemoInput } from '../db/schema';
 import * as db from '../db/database';
+import { useLocationStore } from './locationStore';
 
 interface AlarmState {
     alarms: Alarm[];
@@ -105,7 +106,16 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
 
     deactivateAlarm: async (id) => {
         try {
-            await db.updateAlarm(id, { is_active: false });
+            const locationStore = useLocationStore.getState();
+            const routePoints = locationStore.routeHistory;
+            const traveledDistance = locationStore.traveledDistance;
+
+            await db.updateAlarm(id, {
+                is_active: false,
+                cancelled_at: new Date().toISOString(),
+                route_points: routePoints.length > 0 ? JSON.stringify(routePoints) : null,
+                traveled_distance: traveledDistance > 0 ? traveledDistance : null,
+            });
             await get().loadAlarms();
             await get().loadActiveAlarm();
         } catch (error) {
@@ -117,7 +127,16 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
         try {
             // Set dismissedAlarmId immediately to prevent re-triggering
             set({ dismissedAlarmId: id });
-            await db.updateAlarm(id, { is_active: false, arrived_at: new Date().toISOString() });
+            const locationStore = useLocationStore.getState();
+            const routePoints = locationStore.routeHistory;
+            const traveledDistance = locationStore.traveledDistance;
+
+            await db.updateAlarm(id, {
+                is_active: false,
+                arrived_at: new Date().toISOString(),
+                route_points: routePoints.length > 0 ? JSON.stringify(routePoints) : null,
+                traveled_distance: traveledDistance > 0 ? traveledDistance : null,
+            });
             await get().loadAlarms();
             await get().loadActiveAlarm();
         } catch (error) {

@@ -283,7 +283,9 @@
         "durationHours": "{{hours}}時間",
         "durationHoursMinutes": "{{hours}}時間{{minutes}}分",
         "noStartLocation": "出発地情報なし",
-        "straightDistance": "直線距離"
+        "straightDistance": "直線距離",
+        "actualDistance": "実際の移動距離",
+        "cancelledAt": "キャンセル時刻"
     },
     "alarmTrigger": {
         "arrived": "目的地に到着しました！",

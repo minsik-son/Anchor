@@ -23,10 +23,25 @@ import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } fro
 
 type StatusType = 'active' | 'arrived' | 'cancelled';
 
+interface ParsedRoutePoint {
+    latitude: number;
+    longitude: number;
+    timestamp: number;
+}
+
 function getAlarmStatus(alarm: Alarm): StatusType {
     if (alarm.is_active) return 'active';
     if (alarm.arrived_at) return 'arrived';
     return 'cancelled';
+}
+
+function parseRoutePoints(json: string | null): ParsedRoutePoint[] {
+    if (!json) return [];
+    try {
+        return JSON.parse(json);
+    } catch {
+        return [];
+    }
 }
 
 export default function AlarmDetail() {
@@ -100,7 +115,12 @@ export default function AlarmDetail() {
         return t('alarmDetail.durationMinutes', { minutes: totalMinutes });
     }, [alarm, t]);
 
-    const travelDistance = useMemo(() => {
+    const routePoints = useMemo(() => {
+        return alarm ? parseRoutePoints(alarm.route_points) : [];
+    }, [alarm]);
+
+    // Straight-line distance (start → destination) — always shown in Location Info
+    const straightDistance = useMemo(() => {
         if (!alarm?.start_latitude || !alarm?.start_longitude) return null;
         const meters = calculateDistance(
             { latitude: alarm.start_latitude, longitude: alarm.start_longitude },
@@ -109,17 +129,41 @@ export default function AlarmDetail() {
         return formatDistance(meters);
     }, [alarm, formatDistance]);
 
+    // Actual traveled distance — show 0 when no distance recorded
+    const actualTraveledDistance = useMemo(() => {
+        if (!alarm) return null;
+        // Only show for completed or cancelled alarms (not active ones)
+        if (alarm.is_active) return null;
+        const distance = alarm.traveled_distance ?? 0;
+        return formatDistance(distance);
+    }, [alarm, formatDistance]);
+
     const mapRegion = useMemo(() => {
         if (!alarm) return undefined;
 
+        // Collect all coordinates (route points + start + destination) for bounding
+        const allCoords: { latitude: number; longitude: number }[] = [
+            { latitude: alarm.latitude, longitude: alarm.longitude },
+        ];
         if (alarm.start_latitude && alarm.start_longitude) {
-            const midLat = (alarm.start_latitude + alarm.latitude) / 2;
-            const midLng = (alarm.start_longitude + alarm.longitude) / 2;
-            const latDelta = Math.abs(alarm.start_latitude - alarm.latitude) * 1.5 + 0.01;
-            const lngDelta = Math.abs(alarm.start_longitude - alarm.longitude) * 1.5 + 0.01;
+            allCoords.push({ latitude: alarm.start_latitude, longitude: alarm.start_longitude });
+        }
+        if (routePoints.length > 0) {
+            routePoints.forEach(p => allCoords.push({ latitude: p.latitude, longitude: p.longitude }));
+        }
+
+        if (allCoords.length > 1) {
+            const lats = allCoords.map(c => c.latitude);
+            const lngs = allCoords.map(c => c.longitude);
+            const minLat = Math.min(...lats);
+            const maxLat = Math.max(...lats);
+            const minLng = Math.min(...lngs);
+            const maxLng = Math.max(...lngs);
+            const latDelta = (maxLat - minLat) * 1.5 + 0.01;
+            const lngDelta = (maxLng - minLng) * 1.5 + 0.01;
             return {
-                latitude: midLat,
-                longitude: midLng,
+                latitude: (minLat + maxLat) / 2,
+                longitude: (minLng + maxLng) / 2,
                 latitudeDelta: Math.max(latDelta, 0.01),
                 longitudeDelta: Math.max(lngDelta, 0.01),
             };
@@ -131,7 +175,7 @@ export default function AlarmDetail() {
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
         };
-    }, [alarm]);
+    }, [alarm, routePoints]);
 
     const handleDelete = () => {
         if (!alarm) return;
@@ -212,27 +256,40 @@ export default function AlarmDetail() {
 
                         {/* Start location marker */}
                         {alarm.start_latitude && alarm.start_longitude && (
-                            <>
-                                <Marker
-                                    coordinate={{ latitude: alarm.start_latitude, longitude: alarm.start_longitude }}
-                                    anchor={{ x: 0.5, y: 0.5 }}
-                                    tracksViewChanges={false}
-                                >
-                                    <View style={styles.startMarker}>
-                                        <View style={styles.startMarkerInner} />
-                                    </View>
-                                </Marker>
-                                <Polyline
-                                    coordinates={[
-                                        { latitude: alarm.start_latitude, longitude: alarm.start_longitude },
-                                        { latitude: alarm.latitude, longitude: alarm.longitude },
-                                    ]}
-                                    strokeColor={colors.primary}
-                                    strokeWidth={2}
-                                    lineDashPattern={[8, 6]}
-                                />
-                            </>
+                            <Marker
+                                coordinate={{ latitude: alarm.start_latitude, longitude: alarm.start_longitude }}
+                                anchor={{ x: 0.5, y: 0.5 }}
+                                tracksViewChanges={false}
+                            >
+                                <View style={styles.startMarker}>
+                                    <View style={styles.startMarkerInner} />
+                                </View>
+                            </Marker>
                         )}
+
+                        {/* Route polyline (actual path) or fallback dashed line */}
+                        {routePoints.length > 1 ? (
+                            <Polyline
+                                coordinates={routePoints.map(p => ({
+                                    latitude: p.latitude,
+                                    longitude: p.longitude,
+                                }))}
+                                strokeColor="rgba(0, 200, 83, 0.8)"
+                                strokeWidth={3}
+                                lineJoin="round"
+                                lineCap="round"
+                            />
+                        ) : alarm.start_latitude && alarm.start_longitude ? (
+                            <Polyline
+                                coordinates={[
+                                    { latitude: alarm.start_latitude, longitude: alarm.start_longitude },
+                                    { latitude: alarm.latitude, longitude: alarm.longitude },
+                                ]}
+                                strokeColor={colors.primary}
+                                strokeWidth={2}
+                                lineDashPattern={[8, 6]}
+                            />
+                        ) : null}
                     </MapView>
                 </View>
 
@@ -276,12 +333,12 @@ export default function AlarmDetail() {
                         </View>
                     </View>
 
-                    {travelDistance && (
+                    {straightDistance && (
                         <View style={styles.cardRow}>
                             <Ionicons name="resize-outline" size={20} color={colors.primary} />
                             <View style={styles.cardRowContent}>
                                 <Text style={styles.cardRowLabel}>{t('alarmDetail.straightDistance')}</Text>
-                                <Text style={styles.cardRowValue}>{travelDistance}</Text>
+                                <Text style={styles.cardRowValue}>{straightDistance}</Text>
                             </View>
                         </View>
                     )}
@@ -309,12 +366,12 @@ export default function AlarmDetail() {
                         </View>
                     )}
 
-                    {travelDistance && (
+                    {actualTraveledDistance && (
                         <View style={styles.cardRow}>
                             <Ionicons name="navigate-outline" size={20} color={colors.primary} />
                             <View style={styles.cardRowContent}>
-                                <Text style={styles.cardRowLabel}>{t('alarmDetail.travelDistance')}</Text>
-                                <Text style={styles.cardRowValue}>{travelDistance}</Text>
+                                <Text style={styles.cardRowLabel}>{t('alarmDetail.actualDistance')}</Text>
+                                <Text style={styles.cardRowValue}>{actualTraveledDistance}</Text>
                             </View>
                         </View>
                     )}
@@ -335,6 +392,16 @@ export default function AlarmDetail() {
                             <View style={styles.cardRowContent}>
                                 <Text style={styles.cardRowLabel}>{t('alarmDetail.arrivedAt')}</Text>
                                 <Text style={styles.cardRowValue}>{formatDate(alarm.arrived_at)}</Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {alarm.cancelled_at && !alarm.arrived_at && (
+                        <View style={styles.cardRow}>
+                            <Ionicons name="close-circle-outline" size={20} color={colors.textWeak} />
+                            <View style={styles.cardRowContent}>
+                                <Text style={styles.cardRowLabel}>{t('alarmDetail.cancelledAt')}</Text>
+                                <Text style={styles.cardRowValue}>{formatDate(alarm.cancelled_at)}</Text>
                             </View>
                         </View>
                     )}

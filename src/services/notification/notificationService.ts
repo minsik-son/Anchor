@@ -196,6 +196,12 @@ export async function clearTrackingNotification(): Promise<void> {
     try {
         await Notifications.dismissNotificationAsync('tracking-update');
     } catch {
+        // notification may not exist — ignore
+    }
+    try {
+        await Notifications.cancelScheduledNotificationAsync('tracking-update');
+    } catch {
+        // notification may not exist — ignore
     }
 }
 

@@ -55,6 +55,9 @@ export interface Alarm {
     arrived_at: string | null;
     start_latitude: number | null;
     start_longitude: number | null;
+    route_points: string | null;
+    traveled_distance: number | null;
+    cancelled_at: string | null;
 }
 
 export interface ActionMemo {

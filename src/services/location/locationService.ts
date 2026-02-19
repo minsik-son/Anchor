@@ -16,6 +16,7 @@ import {
     PHASE_BOUNDARIES,
     ADAPTIVE_POLLING_CONFIG,
     ACTIVE_TRACKING_CONFIG,
+    GEOFENCING_ROUTE_CONFIG,
     TASK_NAMES,
 } from '../../constants/trackingConfig';
 import { processLocationUpdate as processChallengeLocation } from './dwellTracker';
@@ -185,6 +186,14 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
         const cooldown = calculateDynamicCooldown(distance, speed);
 
         if (now - lastProcessedAt < cooldown) {
+            // Cooldown skip, but still collect route points for polyline continuity
+            if (store.isTracking) {
+                store.addRoutePoint({
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude,
+                    timestamp: location.timestamp || Date.now(),
+                });
+            }
             return;
         }
         lastProcessedAt = now;
@@ -305,8 +314,11 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
 async function teardownPhase(phase: TrackingPhase): Promise<void> {
     try {
         if (phase === 'GEOFENCING') {
-            const has = await Location.hasStartedGeofencingAsync(TASK_NAMES.GEOFENCE);
-            if (has) await Location.stopGeofencingAsync(TASK_NAMES.GEOFENCE);
+            const hasGeo = await Location.hasStartedGeofencingAsync(TASK_NAMES.GEOFENCE);
+            if (hasGeo) await Location.stopGeofencingAsync(TASK_NAMES.GEOFENCE);
+            // Also stop location updates used for route collection during GEOFENCING
+            const hasLoc = await Location.hasStartedLocationUpdatesAsync(TASK_NAMES.LOCATION);
+            if (hasLoc) await Location.stopLocationUpdatesAsync(TASK_NAMES.LOCATION);
         }
         if (phase === 'ADAPTIVE_POLLING' || phase === 'ACTIVE_TRACKING') {
             const has = await Location.hasStartedLocationUpdatesAsync(TASK_NAMES.LOCATION);
@@ -330,6 +342,26 @@ async function setupGeofencing(): Promise<void> {
         }]);
         geofenceSetupFailed = false;
         console.log('[LocationService] Geofencing started (5km radius)');
+
+        // Start low-power location updates alongside geofencing for route collection
+        try {
+            await Location.startLocationUpdatesAsync(TASK_NAMES.LOCATION, {
+                accuracy: Location.Accuracy.Balanced,
+                distanceInterval: GEOFENCING_ROUTE_CONFIG.DISTANCE_INTERVAL,
+                timeInterval: GEOFENCING_ROUTE_CONFIG.TIME_INTERVAL,
+                foregroundService: {
+                    notificationTitle: 'LocaAlert 실행 중',
+                    notificationBody: '목적지 도착을 알려드릴게요',
+                    notificationColor: '#3182F6',
+                },
+                activityType: Location.ActivityType.OtherNavigation,
+                pausesUpdatesAutomatically: false,
+                showsBackgroundLocationIndicator: true,
+            });
+            console.log('[LocationService] Geofencing route collection started (low-power)');
+        } catch (routeErr) {
+            console.warn('[LocationService] Failed to start route collection during geofencing:', routeErr);
+        }
     } catch (err) {
         console.warn('[LocationService] Geofencing failed, falling back to ADAPTIVE_POLLING:', err);
         geofenceSetupFailed = true;

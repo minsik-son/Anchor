@@ -283,7 +283,9 @@
         "durationHours": "{{hours}} hr",
         "durationHoursMinutes": "{{hours}} hr {{minutes}} min",
         "noStartLocation": "No start location",
-        "straightDistance": "Straight-line Distance"
+        "straightDistance": "Straight-line Distance",
+        "actualDistance": "Actual Distance Traveled",
+        "cancelledAt": "Cancelled at"
     },
     "alarmTrigger": {
         "arrived": "You've arrived!",

@@ -62,6 +62,9 @@ async function runMigrations(database: SQLite.SQLiteDatabase): Promise<void> {
         'ALTER TABLE alarms ADD COLUMN arrived_at TEXT',
         'ALTER TABLE alarms ADD COLUMN start_latitude REAL',
         'ALTER TABLE alarms ADD COLUMN start_longitude REAL',
+        'ALTER TABLE alarms ADD COLUMN route_points TEXT',
+        'ALTER TABLE alarms ADD COLUMN traveled_distance REAL',
+        'ALTER TABLE alarms ADD COLUMN cancelled_at TEXT',
     ];
     for (const sql of newColumns) {
         try {
@@ -135,7 +138,14 @@ export async function getAlarmById(id: number): Promise<Alarm | null> {
 
 export async function updateAlarm(
     id: number,
-    updates: Partial<CreateAlarmInput & { is_active: boolean; started_at: string | null; arrived_at: string | null }>
+    updates: Partial<CreateAlarmInput & {
+        is_active: boolean;
+        started_at: string | null;
+        arrived_at: string | null;
+        route_points: string | null;
+        traveled_distance: number | null;
+        cancelled_at: string | null;
+    }>
 ): Promise<void> {
     const database = getDatabase();
     const fields: string[] = [];
@@ -149,6 +159,9 @@ export async function updateAlarm(
     if (updates.is_active !== undefined) { fields.push('is_active = ?'); values.push(updates.is_active ? 1 : 0); }
     if (updates.started_at !== undefined) { fields.push('started_at = ?'); values.push(updates.started_at); }
     if (updates.arrived_at !== undefined) { fields.push('arrived_at = ?'); values.push(updates.arrived_at); }
+    if (updates.route_points !== undefined) { fields.push('route_points = ?'); values.push(updates.route_points); }
+    if (updates.traveled_distance !== undefined) { fields.push('traveled_distance = ?'); values.push(updates.traveled_distance); }
+    if (updates.cancelled_at !== undefined) { fields.push('cancelled_at = ?'); values.push(updates.cancelled_at); }
 
     if (fields.length === 0) return;
     values.push(id);
