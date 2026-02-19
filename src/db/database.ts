@@ -22,6 +22,8 @@ import {
     UpdateChallengeInput,
     DayOfWeek,
 } from './schema';
+import { runVersionedMigrations } from './migrations';
+import { captureError } from '../utils/errorReporting';
 
 const DB_NAME = 'locaalert.db';
 
@@ -44,36 +46,12 @@ export async function initDatabase(): Promise<void> {
       ${CREATE_VISIT_RECORDS_TABLE}
     `);
 
-        await runMigrations(db);
+        await runVersionedMigrations(db);
 
         console.log('[DB] Database initialized successfully');
     } catch (error) {
-        console.error('[DB] Failed to initialize database:', error);
+        captureError(error, { module: 'Database', action: 'initDatabase' });
         throw error;
-    }
-}
-
-/**
- * Run schema migrations for existing databases
- */
-async function runMigrations(database: SQLite.SQLiteDatabase): Promise<void> {
-    const newColumns = [
-        'ALTER TABLE alarms ADD COLUMN started_at TEXT',
-        'ALTER TABLE alarms ADD COLUMN arrived_at TEXT',
-        'ALTER TABLE alarms ADD COLUMN start_latitude REAL',
-        'ALTER TABLE alarms ADD COLUMN start_longitude REAL',
-        'ALTER TABLE alarms ADD COLUMN route_points TEXT',
-        'ALTER TABLE alarms ADD COLUMN traveled_distance REAL',
-        'ALTER TABLE alarms ADD COLUMN cancelled_at TEXT',
-    ];
-    for (const sql of newColumns) {
-        try {
-            await database.runAsync(sql);
-        } catch (e: any) {
-            if (!e.message?.includes('duplicate column')) {
-                console.warn('[DB Migration]', e.message);
-            }
-        }
     }
 }
 
@@ -450,5 +428,127 @@ export async function getCountedVisitsToday(challengeId: string, todayIso: strin
         `SELECT COUNT(*) as count FROM visit_records WHERE challenge_id = ? AND counted = 1 AND entered_at LIKE ?`,
         [challengeId, `${datePrefix}%`]
     );
+    return result?.count ?? 0;
+}
+
+// ========== TRACKING SESSION OPERATIONS (Crash Recovery) ==========
+
+export interface TrackingSession {
+    id: number;
+    alarm_id: number;
+    route_points: string;
+    traveled_distance: number;
+    last_checkpoint_at: string;
+    is_active: boolean;
+}
+
+export async function upsertTrackingSession(session: {
+    alarm_id: number;
+    route_points: string;
+    traveled_distance: number;
+    last_checkpoint_at: string;
+    is_active: boolean;
+}): Promise<void> {
+    const database = getDatabase();
+    // Try update first, then insert
+    const existing = await database.getFirstAsync<{ id: number }>(
+        'SELECT id FROM tracking_sessions WHERE alarm_id = ? AND is_active = 1',
+        [session.alarm_id]
+    );
+
+    if (existing) {
+        await database.runAsync(
+            `UPDATE tracking_sessions SET route_points = ?, traveled_distance = ?, last_checkpoint_at = ? WHERE id = ?`,
+            [session.route_points, session.traveled_distance, session.last_checkpoint_at, existing.id]
+        );
+    } else {
+        await database.runAsync(
+            `INSERT INTO tracking_sessions (alarm_id, route_points, traveled_distance, last_checkpoint_at, is_active) VALUES (?, ?, ?, ?, ?)`,
+            [session.alarm_id, session.route_points, session.traveled_distance, session.last_checkpoint_at, session.is_active ? 1 : 0]
+        );
+    }
+}
+
+export async function getActiveTrackingSession(): Promise<TrackingSession | null> {
+    const database = getDatabase();
+    const row = await database.getFirstAsync<{
+        id: number;
+        alarm_id: number;
+        route_points: string;
+        traveled_distance: number;
+        last_checkpoint_at: string;
+        is_active: number;
+    }>(
+        'SELECT * FROM tracking_sessions WHERE is_active = 1 ORDER BY last_checkpoint_at DESC LIMIT 1'
+    );
+    if (!row) return null;
+    return { ...row, is_active: Boolean(row.is_active) };
+}
+
+export async function deactivateTrackingSession(alarmId: number): Promise<void> {
+    const database = getDatabase();
+    await database.runAsync(
+        'UPDATE tracking_sessions SET is_active = 0 WHERE alarm_id = ?',
+        [alarmId]
+    );
+}
+
+// ========== TELEMETRY OPERATIONS ==========
+
+export interface TelemetryLog {
+    id: number;
+    session_id: string;
+    event_type: string;
+    event_data: string | null;
+    created_at: string;
+}
+
+export async function insertTelemetryLog(log: {
+    session_id: string;
+    event_type: string;
+    event_data: string | null;
+}): Promise<void> {
+    const database = getDatabase();
+    await database.runAsync(
+        'INSERT INTO telemetry_logs (session_id, event_type, event_data) VALUES (?, ?, ?)',
+        [log.session_id, log.event_type, log.event_data]
+    );
+}
+
+export async function getTelemetryLogs(sessionId?: string): Promise<TelemetryLog[]> {
+    const database = getDatabase();
+    if (sessionId) {
+        return database.getAllAsync<TelemetryLog>(
+            'SELECT * FROM telemetry_logs WHERE session_id = ? ORDER BY created_at DESC',
+            [sessionId]
+        );
+    }
+    return database.getAllAsync<TelemetryLog>('SELECT * FROM telemetry_logs ORDER BY created_at DESC LIMIT 500');
+}
+
+export async function cleanOldTelemetryLogs(retentionDays: number = 30): Promise<void> {
+    const database = getDatabase();
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - retentionDays);
+    await database.runAsync(
+        'DELETE FROM telemetry_logs WHERE created_at < ?',
+        [cutoff.toISOString()]
+    );
+}
+
+// ========== PAGINATED QUERIES ==========
+
+export async function getAlarmsPaginated(offset: number = 0, limit: number = 20): Promise<Alarm[]> {
+    const database = getDatabase();
+    const rows = await database.getAllAsync<Alarm>(
+        'SELECT * FROM alarms ORDER BY created_at DESC LIMIT ? OFFSET ?',
+        [limit, offset]
+    );
+    return rows.map(row => ({ ...row, is_active: Boolean(row.is_active) }));
+}
+
+export async function getAlarmsCount(): Promise<number> {
+    const database = getDatabase();
+    const result = await database.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM alarms');
     return result?.count ?? 0;
 }

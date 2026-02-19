@@ -15,6 +15,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform, AppState } from 'react-native';
 import { router } from 'expo-router';
 import { AlarmSoundKey } from '../../stores/alarmSettingsStore';
+import { captureError } from '../../utils/errorReporting';
 
 // ---------------------------------------------------------------------------
 // Constants

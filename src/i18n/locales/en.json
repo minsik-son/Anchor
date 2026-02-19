@@ -12,7 +12,8 @@
         "retry": "Retry",
         "saveFailed": "Failed to save",
         "noResults": "No results found",
-        "alwaysOn": "Always On"
+        "alwaysOn": "Always On",
+        "offlineMode": "Offline mode — some features may be limited"
     },
     "tabs": {
         "home": "Home",
@@ -143,7 +144,8 @@
             "notification": "Notification Settings",
             "app": "App Info",
             "map": "Map Settings",
-            "locationAndMap": "Location & Map"
+            "locationAndMap": "Location & Map",
+            "dataManagement": "Data Management"
         },
         "items": {
             "language": "Language",
@@ -165,7 +167,9 @@
             "mapEngine": "Map Engine",
             "theme": "Screen Theme",
             "alarmBackground": "Alarm Background",
-            "distanceUnit": "Distance Unit"
+            "distanceUnit": "Distance Unit",
+            "deleteAllData": "Delete All Data",
+            "deleteAllDataDesc": "Deletes all alarm history, routes, challenges, and other data"
         },
         "unit": {
             "title": "Distance Unit",
@@ -206,6 +210,11 @@
             "intoTheWild": "Into the Wild",
             "cityLights": "City Lights",
             "stillMoment": "Still Moment"
+        },
+        "deleteAll": {
+            "title": "Delete All Data",
+            "message": "All alarm history, route data, challenges, and other data will be permanently deleted. This cannot be undone.",
+            "confirm": "Delete"
         }
     },
     "favoriteSetup": {
@@ -507,5 +516,24 @@
         "viewAll": "View All",
         "currentLocation": "My Location",
         "speedUnit": "km/h"
+    },
+    "accessibility": {
+        "tapToViewDetails": "Tap to view details",
+        "cancelAlarmHint": "Cancels the alarm",
+        "deleteAlarmHint": "Deletes the alarm",
+        "slideToDismiss": "Slide to dismiss alarm",
+        "mapShowingDestination": "Map showing destination {{destination}}",
+        "remainingDistance": "Remaining distance {{distance}}",
+        "searchLocation": "Search location",
+        "startNavigation": "Start navigation",
+        "stopNavigation": "Stop navigation",
+        "myLocation": "My location button",
+        "createAlarmButton": "Create alarm button",
+        "mapInteraction": "Interactive map showing selected location",
+        "dismissAlarm": "Dismiss the alarm by sliding",
+        "alarmTitle": "Alarm title {{title}}",
+        "statusBadge": "Status {{status}}",
+        "alarmHistoryCard": "{{title}}, {{status}}, {{time}}",
+        "alarmDetails": "Tap to view alarm details"
     }
 }

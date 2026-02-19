@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Switch, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Switch, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { router } from 'expo-router';
 import Animated, {
     useSharedValue,
@@ -29,6 +29,9 @@ import {
     getBackgroundLabel as getBackgroundImageLabel,
 } from '../../src/stores/alarmSettingsStore';
 import { useAlarmSound } from '../../src/hooks/useAlarmSound';
+import { deleteAllUserData } from '../../src/services/privacy/dataRetentionService';
+import { useAlarmStore } from '../../src/stores/alarmStore';
+import { useChallengeStore } from '../../src/stores/challengeStore';
 
 const ALERT_TYPE_OPTIONS: { code: AlertType; labelKey: string; icon: string }[] = [
     { code: 'both', labelKey: 'settings.alertType.both', icon: 'notifications' },
@@ -331,6 +334,42 @@ export default function Settings() {
                     />
                 </View>
 
+                {/* Data Management */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('settings.sections.dataManagement')}</Text>
+
+                    <SettingItem
+                        icon="trash-outline"
+                        label={t('settings.items.deleteAllData')}
+                        description={t('settings.items.deleteAllDataDesc')}
+                        onPress={() => {
+                            Alert.alert(
+                                t('settings.deleteAll.title'),
+                                t('settings.deleteAll.message'),
+                                [
+                                    { text: t('common.cancel'), style: 'cancel' },
+                                    {
+                                        text: t('settings.deleteAll.confirm'),
+                                        style: 'destructive',
+                                        onPress: async () => {
+                                            await deleteAllUserData();
+                                            // Reload stores
+                                            await useAlarmStore.getState().loadAlarms();
+                                            await useAlarmStore.getState().loadActiveAlarm();
+                                            await useChallengeStore.getState().loadChallenges();
+                                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                        },
+                                    },
+                                ]
+                            );
+                        }}
+                        rightElement={
+                            <Ionicons name="chevron-forward" size={20} color={colors.error} />
+                        }
+                        colors={colors}
+                    />
+                </View>
+
                 {/* About */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{t('settings.items.help')}</Text>
@@ -580,7 +619,12 @@ function SettingItem({
     const styles = useMemo(() => createStyles(colors), [colors]);
 
     return (
-        <Pressable style={styles.settingItem} onPress={onPress}>
+        <Pressable
+            style={styles.settingItem}
+            onPress={onPress}
+            accessibilityRole={onPress ? "button" : "text"}
+            accessibilityLabel={`${label}${description ? `, ${description}` : ''}`}
+        >
             <View style={styles.settingLeft}>
                 <Ionicons name={icon as any} size={24} color={colors.primary} />
                 <View style={styles.settingContent}>

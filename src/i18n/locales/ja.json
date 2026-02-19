@@ -12,7 +12,8 @@
         "retry": "再試行",
         "saveFailed": "保存に失敗しました",
         "noResults": "検索結果がありません",
-        "alwaysOn": "常時有効"
+        "alwaysOn": "常時有効",
+        "offlineMode": "オフラインモード — 一部機能が制限されます"
     },
     "tabs": {
         "home": "ホーム",
@@ -143,7 +144,8 @@
             "notification": "通知設定",
             "app": "アプリ情報",
             "map": "地図設定",
-            "locationAndMap": "位置情報と地図"
+            "locationAndMap": "位置情報と地図",
+            "dataManagement": "データ管理"
         },
         "items": {
             "language": "言語設定",
@@ -165,7 +167,9 @@
             "mapEngine": "地図エンジン",
             "theme": "画面テーマ",
             "alarmBackground": "アラーム背景",
-            "distanceUnit": "距離単位"
+            "distanceUnit": "距離単位",
+            "deleteAllData": "すべてのデータを削除",
+            "deleteAllDataDesc": "アラーム履歴、ルート、チャレンジなどすべてのデータを削除します"
         },
         "unit": {
             "title": "距離単位",
@@ -206,6 +210,11 @@
             "intoTheWild": "Into the Wild",
             "cityLights": "City Lights",
             "stillMoment": "Still Moment"
+        },
+        "deleteAll": {
+            "title": "すべてのデータを削除",
+            "message": "アラーム履歴、ルートデータ、チャレンジなどすべてのデータが完全に削除されます。この操作は元に戻せません。",
+            "confirm": "削除"
         }
     },
     "favoriteSetup": {
@@ -507,5 +516,24 @@
         "viewAll": "全体表示",
         "currentLocation": "現在地",
         "speedUnit": "km/h"
+    },
+    "accessibility": {
+        "tapToViewDetails": "タップして詳細を表示",
+        "cancelAlarmHint": "アラームをキャンセルします",
+        "deleteAlarmHint": "アラームを削除します",
+        "slideToDismiss": "スライドしてアラームを解除",
+        "mapShowingDestination": "{{destination}}の目的地を表示する地図",
+        "remainingDistance": "残り距離 {{distance}}",
+        "searchLocation": "場所を検索",
+        "startNavigation": "ナビゲーション開始",
+        "stopNavigation": "ナビゲーション停止",
+        "myLocation": "現在地ボタン",
+        "createAlarmButton": "アラーム作成ボタン",
+        "mapInteraction": "選択した場所を表示するインタラクティブマップ",
+        "dismissAlarm": "スライドしてアラームを解除",
+        "alarmTitle": "アラームタイトル {{title}}",
+        "statusBadge": "ステータス {{status}}",
+        "alarmHistoryCard": "{{title}}, {{status}}, {{time}}",
+        "alarmDetails": "アラームの詳細を表示するにはタップしてください"
     }
 }

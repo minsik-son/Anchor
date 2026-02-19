@@ -12,7 +12,8 @@
         "retry": "다시 시도",
         "saveFailed": "저장에 실패했습니다",
         "noResults": "검색 결과가 없습니다",
-        "alwaysOn": "항상 활성"
+        "alwaysOn": "항상 활성",
+        "offlineMode": "오프라인 모드 — 일부 기능이 제한됩니다"
     },
     "tabs": {
         "home": "홈",
@@ -143,7 +144,8 @@
             "notification": "알림 설정",
             "app": "앱 정보",
             "map": "지도 설정",
-            "locationAndMap": "위치 및 지도"
+            "locationAndMap": "위치 및 지도",
+            "dataManagement": "데이터 관리"
         },
         "items": {
             "language": "언어 설정",
@@ -165,7 +167,9 @@
             "mapEngine": "지도 엔진",
             "theme": "화면 테마",
             "alarmBackground": "알람 배경",
-            "distanceUnit": "거리 단위"
+            "distanceUnit": "거리 단위",
+            "deleteAllData": "모든 데이터 삭제",
+            "deleteAllDataDesc": "알람 기록, 경로, 챌린지 등 모든 데이터를 삭제합니다"
         },
         "unit": {
             "title": "거리 단위",
@@ -206,6 +210,11 @@
             "intoTheWild": "Into the Wild",
             "cityLights": "City Lights",
             "stillMoment": "Still Moment"
+        },
+        "deleteAll": {
+            "title": "모든 데이터 삭제",
+            "message": "알람 기록, 경로 데이터, 챌린지 등 모든 데이터가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+            "confirm": "삭제"
         }
     },
     "favoriteSetup": {
@@ -507,5 +516,24 @@
         "viewAll": "전체 보기",
         "currentLocation": "현위치",
         "speedUnit": "km/h"
+    },
+    "accessibility": {
+        "tapToViewDetails": "자세히 보려면 탭하세요",
+        "cancelAlarmHint": "알람을 취소합니다",
+        "deleteAlarmHint": "알람을 삭제합니다",
+        "slideToDismiss": "슬라이드하여 알람 해제",
+        "mapShowingDestination": "{{destination}} 목적지를 보여주는 지도",
+        "remainingDistance": "남은 거리 {{distance}}",
+        "searchLocation": "위치 검색",
+        "startNavigation": "내비게이션 시작",
+        "stopNavigation": "내비게이션 중지",
+        "myLocation": "내 위치 버튼",
+        "createAlarmButton": "알람 만들기 버튼",
+        "mapInteraction": "선택한 위치를 보여주는 대화형 지도",
+        "dismissAlarm": "슬라이드하여 알람 해제",
+        "alarmTitle": "알람 제목 {{title}}",
+        "statusBadge": "상태 {{status}}",
+        "alarmHistoryCard": "{{title}}, {{status}}, {{time}}",
+        "alarmDetails": "알람 상세 정보를 보려면 탭하세요"
     }
 }

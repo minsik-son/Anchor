@@ -599,6 +599,9 @@ export default function Home() {
                         }}
                         onSubmitEditing={handleSearchSubmit}
                         returnKeyType="search"
+                        accessibilityRole="search"
+                        accessibilityLabel={t('accessibility.searchLocation')}
+                        accessibilityHint={t('home.searchPlaceholder')}
                     />
                     {searchState.query.length > 0 && (
                         <Pressable onPress={clearSearch}>
@@ -611,6 +614,9 @@ export default function Home() {
                 <Pressable
                     style={styles.myLocationButton}
                     onPress={handleMyLocationPress}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('accessibility.myLocation')}
+                    accessibilityHint={t('accessibility.myLocation')}
                 >
                     <Ionicons name="locate" size={24} color={colors.primary} />
                 </Pressable>
@@ -726,19 +732,28 @@ export default function Home() {
                 />
             ) : activeAlarm ? (
                 /* Active Alarm Dashboard */
-                <Pressable onPress={() => router.push('/tracking-detail')}>
+                <Pressable
+                    onPress={() => router.push('/tracking-detail')}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('accessibility.alarmTitle', { title: activeAlarm.title })}
+                    accessibilityHint={t('accessibility.tapToViewDetails')}
+                >
                 <View style={[styles.bottomSheet, { paddingBottom: spacing.sm }]}>
                     {/* Alarm Title Row */}
                     <View style={styles.dashboardHeader}>
                         <View style={styles.dashboardTitleRow}>
                             <Ionicons name="navigate" size={20} color={colors.primary} />
-                            <Text style={styles.dashboardTitle}>{activeAlarm.title}</Text>
+                            <Text style={styles.dashboardTitle} accessibilityRole="text">{activeAlarm.title}</Text>
                         </View>
                     </View>
 
                     {/* Prominent Distance Display */}
                     <View style={styles.distanceDisplayContainer}>
-                        <Text style={styles.distanceValue}>
+                        <Text
+                            style={styles.distanceValue}
+                            accessibilityRole="text"
+                            accessibilityLabel={t('accessibility.remainingDistance', { distance: distanceToTarget !== null ? formatDistance(distanceToTarget) : t('home.activeAlarm.calculating') })}
+                        >
                             {distanceToTarget !== null ? formatDistance(distanceToTarget) : '--'}
                         </Text>
                         <Text style={styles.distanceLabel}>
@@ -786,6 +801,9 @@ export default function Home() {
                             pressed && styles.cancelAlarmButtonPressed,
                         ]}
                         onPress={handleCancelAlarm}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('alarmDashboard.cancelAlarm')}
+                        accessibilityHint={t('accessibility.cancelAlarmHint')}
                     >
                         <Text style={styles.cancelAlarmText}>{t('alarmDashboard.cancelAlarm')}</Text>
                     </Pressable>

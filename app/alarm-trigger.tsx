@@ -250,8 +250,8 @@ export default function AlarmTrigger() {
 
             {/* Top Section: Time + Date */}
             <View style={styles.topSection}>
-                <Text style={styles.timeText}>{timeString}</Text>
-                <Text style={styles.dateText}>{dateString}</Text>
+                <Text style={styles.timeText} accessibilityRole="text">{timeString}</Text>
+                <Text style={styles.dateText} accessibilityRole="text">{dateString}</Text>
             </View>
 
             {/* Center Section: Arrival message with ripple background */}
@@ -264,16 +264,34 @@ export default function AlarmTrigger() {
                 </View>
 
                 {/* Home icon + arrival text */}
-                <Ionicons name="home" size={32} color="rgba(255, 255, 255, 0.85)" style={styles.arrivalIcon} />
+                <Ionicons
+                    name="home"
+                    size={32}
+                    color="rgba(255, 255, 255, 0.85)"
+                    style={styles.arrivalIcon}
+                    accessibilityRole="image"
+                    accessibilityLabel={t('alarmTrigger.arrivedBadge')}
+                />
                 {activeAlarm && (
-                    <Text style={styles.arrivalText} numberOfLines={2} adjustsFontSizeToFit>
+                    <Text
+                        style={styles.arrivalText}
+                        numberOfLines={2}
+                        adjustsFontSizeToFit
+                        accessibilityRole="header"
+                        accessibilityLabel={t('alarmTrigger.arrivedAt', { place: activeAlarm.title })}
+                    >
                         {t('alarmTrigger.arrivedAt', { place: activeAlarm.title })}
                     </Text>
                 )}
             </View>
 
             {/* Bottom Section: Slider */}
-            <View style={styles.bottomSection}>
+            <View
+                style={styles.bottomSection}
+                accessibilityRole="adjustable"
+                accessibilityLabel={t('accessibility.slideToDismiss')}
+                accessibilityHint={t('alarmTrigger.dismissHint')}
+            >
                 <View style={styles.sliderTrack} onLayout={handleTrackLayout}>
                     {/* Shimmer chevrons */}
                     {[0, 1, 2].map((i) => (
@@ -287,7 +305,11 @@ export default function AlarmTrigger() {
                     </Animated.Text>
 
                     <GestureDetector gesture={panGesture}>
-                        <Animated.View style={[styles.sliderThumb, thumbAnimatedStyle]}>
+                        <Animated.View
+                            style={[styles.sliderThumb, thumbAnimatedStyle]}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('accessibility.dismissAlarm')}
+                        >
                             <Ionicons name="arrow-forward" size={24} color={colors.primary} />
                         </Animated.View>
                     </GestureDetector>

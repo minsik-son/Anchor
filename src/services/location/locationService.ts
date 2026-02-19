@@ -12,6 +12,8 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { router } from 'expo-router';
 import { useLocationStore, TrackingPhase } from '../../stores/locationStore';
+import { maybeCheckpoint, resetCheckpoint, finalizeCheckpoint } from '../checkpoint/checkpointService';
+import { logEvent, startTelemetrySession, endTelemetrySession } from '../telemetry/telemetryService';
 import {
     PHASE_BOUNDARIES,
     ADAPTIVE_POLLING_CONFIG,
@@ -30,6 +32,7 @@ import {
     stopTrackingActivity,
     hasActiveActivity,
 } from '../liveActivity/liveActivityService';
+import { captureError, addBreadcrumb } from '../../utils/errorReporting';
 
 // ---------------------------------------------------------------------------
 // Module-level state (the service is the "brain")
@@ -145,7 +148,7 @@ TaskManager.defineTask(TASK_NAMES.GEOFENCE, async ({ data, error }) => {
         if (error.message?.includes('kCLErrorDomain Code=0')) {
             console.warn('[LocationService] Geofence task: Location unknown (possibly simulator set to None)');
         } else {
-            console.error('[LocationService] Geofence task error:', error);
+            captureError(error, { module: 'LocationService', action: 'geofenceTask' });
         }
         return;
     }
@@ -166,7 +169,7 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
             // kCLErrorLocationUnknown: Common in simulator or when hardware can't get a lock
             console.warn('[LocationService] Background update: Location unknown. Check simulator "Features > Location" settings.');
         } else {
-            console.error('[LocationService] Background task error:', error);
+            captureError(error, { module: 'LocationService', action: 'backgroundLocationTask' });
         }
         return;
     }
@@ -193,6 +196,15 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
                     longitude: location.coords.longitude,
                     timestamp: location.timestamp || Date.now(),
                 });
+                // Checkpoint route data periodically
+                const alarmStoreCheckpoint = useAlarmStore.getState();
+                if (alarmStoreCheckpoint.activeAlarm) {
+                    maybeCheckpoint(
+                        alarmStoreCheckpoint.activeAlarm.id,
+                        store.routeHistory,
+                        store.traveledDistance,
+                    ).catch(() => {});  // Fire-and-forget
+                }
             }
             return;
         }
@@ -209,6 +221,22 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
             longitude: location.coords.longitude,
             timestamp: location.timestamp || Date.now(),
         });
+        // Checkpoint route data periodically
+        const alarmStoreForCheckpoint = useAlarmStore.getState();
+        if (alarmStoreForCheckpoint.activeAlarm) {
+            maybeCheckpoint(
+                alarmStoreForCheckpoint.activeAlarm.id,
+                store.routeHistory,
+                store.traveledDistance,
+            ).catch(() => {});  // Fire-and-forget
+        }
+        // Log route milestone events
+        if (store.routeHistory.length % 100 === 0 && store.routeHistory.length > 0) {
+            logEvent('route_milestone', {
+                totalPoints: store.routeHistory.length,
+                traveledDistance: store.traveledDistance,
+            }).catch(() => {});
+        }
     }
 
     // Check alarm trigger (user within target radius)
@@ -222,6 +250,13 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
         }
 
         console.log('[LocationService] User arrived! Distance:', store.distanceToTarget);
+
+        // Log alarm trigger event
+        logEvent('alarm_triggered', {
+            distance: store.distanceToTarget,
+            routePoints: store.routeHistory.length,
+            traveledDistance: store.traveledDistance,
+        }).catch(() => {});
 
         // Always send a local notification (works in both foreground & background)
         const alarmTitle = alarmStore.activeAlarm.title ?? '';
@@ -325,7 +360,7 @@ async function teardownPhase(phase: TrackingPhase): Promise<void> {
             if (has) await Location.stopLocationUpdatesAsync(TASK_NAMES.LOCATION);
         }
     } catch (err) {
-        console.warn('[LocationService] Teardown error:', err);
+        captureError(err, { module: 'LocationService', action: 'teardownPhase', phase });
     }
 }
 
@@ -360,10 +395,10 @@ async function setupGeofencing(): Promise<void> {
             });
             console.log('[LocationService] Geofencing route collection started (low-power)');
         } catch (routeErr) {
-            console.warn('[LocationService] Failed to start route collection during geofencing:', routeErr);
+            captureError(routeErr, { module: 'LocationService', action: 'geofencingRouteCollection' });
         }
     } catch (err) {
-        console.warn('[LocationService] Geofencing failed, falling back to ADAPTIVE_POLLING:', err);
+        captureError(err, { module: 'LocationService', action: 'setupGeofencing', target: currentTarget });
         geofenceSetupFailed = true;
         await transitionToPhase('ADAPTIVE_POLLING');
     }
@@ -413,6 +448,15 @@ async function transitionToPhase(newPhase: TrackingPhase): Promise<void> {
 
     const prev = currentServicePhase;
     console.log(`[LocationService] Phase: ${prev} → ${newPhase}`);
+    addBreadcrumb('tracking', `Phase: ${prev} → ${newPhase}`);
+
+    // Log phase transition event
+    logEvent('phase_transition', {
+        from: prev,
+        to: newPhase,
+        distance: useLocationStore.getState().distanceToTarget,
+        speed: useLocationStore.getState().speed,
+    }).catch(() => {});
 
     await teardownPhase(prev);
     currentServicePhase = newPhase;
@@ -455,6 +499,10 @@ export async function startTracking(
         return;
     }
 
+    // Start telemetry session and reset checkpoint
+    startTelemetrySession();
+    resetCheckpoint();
+
     currentTarget = target;
     currentRadius = radius;
 
@@ -485,6 +533,13 @@ export async function startTracking(
  * Stop all tracking — tears down whichever phase is active.
  */
 export async function stopAllTracking(): Promise<void> {
+    // Finalize checkpoint and end telemetry
+    const alarmStore = useAlarmStore.getState();
+    if (alarmStore.activeAlarm) {
+        await finalizeCheckpoint(alarmStore.activeAlarm.id);
+    }
+    endTelemetrySession();
+
     await teardownPhase(currentServicePhase);
     currentServicePhase = 'IDLE';
     currentTarget = null;

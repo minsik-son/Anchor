@@ -6,6 +6,7 @@ import { create } from 'zustand';
 import { Alarm, ActionMemo, CreateAlarmInput, CreateActionMemoInput } from '../db/schema';
 import * as db from '../db/database';
 import { useLocationStore } from './locationStore';
+import { captureError } from '../utils/errorReporting';
 
 interface AlarmState {
     alarms: Alarm[];
@@ -14,10 +15,12 @@ interface AlarmState {
     isLoading: boolean;
     error: string | null;
     dismissedAlarmId: number | null;
+    totalAlarmCount: number;  // Total count for pagination
 
     // Actions
     loadAlarms: () => Promise<void>;
     loadActiveAlarm: () => Promise<void>;
+    loadAlarmsPaginated: (page: number) => Promise<boolean>;  // Returns true if more pages available
     createAlarm: (input: CreateAlarmInput) => Promise<number>;
     updateAlarm: (id: number, updates: Partial<CreateAlarmInput & { is_active: boolean }>) => Promise<void>;
     deleteAlarm: (id: number) => Promise<void>;
@@ -42,6 +45,7 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
     isLoading: false,
     error: null,
     dismissedAlarmId: null,
+    totalAlarmCount: 0,
 
     loadAlarms: async () => {
         set({ isLoading: true, error: null });
@@ -58,7 +62,27 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
             const activeAlarms = await db.getActiveAlarms();
             set({ activeAlarm: activeAlarms[0] ?? null });
         } catch (error) {
-            console.error('[AlarmStore] Failed to load active alarm:', error);
+            captureError(error, { module: 'AlarmStore', action: 'loadActiveAlarm' });
+        }
+    },
+
+    loadAlarmsPaginated: async (page) => {
+        try {
+            const pageSize = 20;
+            const offset = page * pageSize;
+            const newAlarms = await db.getAlarmsPaginated(offset, pageSize);
+            const total = await db.getAlarmsCount();
+
+            if (page === 0) {
+                set({ alarms: newAlarms, totalAlarmCount: total, isLoading: false });
+            } else {
+                const { alarms } = get();
+                set({ alarms: [...alarms, ...newAlarms], totalAlarmCount: total, isLoading: false });
+            }
+            return newAlarms.length === pageSize;  // Has more pages
+        } catch (error) {
+            set({ error: (error as Error).message, isLoading: false });
+            return false;
         }
     },
 
@@ -149,7 +173,7 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
             const memos = await db.getActionMemosByAlarmId(alarmId);
             set({ currentMemos: memos });
         } catch (error) {
-            console.error('[AlarmStore] Failed to load memos:', error);
+            captureError(error, { module: 'AlarmStore', action: 'loadMemos' });
         }
     },
 
@@ -170,7 +194,7 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
                 await get().loadMemos(currentMemos[0].alarm_id);
             }
         } catch (error) {
-            console.error('[AlarmStore] Failed to toggle memo:', error);
+            captureError(error, { module: 'AlarmStore', action: 'toggleMemoChecked' });
         }
     },
 

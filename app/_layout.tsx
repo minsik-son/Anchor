@@ -10,15 +10,19 @@ import { View, ActivityIndicator, StyleSheet, AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useColorScheme } from 'react-native';
 import { initDatabase } from '../src/db/database';
+import * as db from '../src/db/database';
 import { colors as defaultColors, useThemeColors } from '../src/styles/theme';
 import { useThemeStore } from '../src/stores/themeStore';
 import { useChallengeStore } from '../src/stores/challengeStore';
 import { useAlarmStore } from '../src/stores/alarmStore';
+import { useLocationStore } from '../src/stores/locationStore';
 import {
     initNotifications,
     setupNotificationResponseHandler,
     removeNotificationResponseHandler,
 } from '../src/services/notification/notificationService';
+import { OfflineBanner } from '../src/components/common/OfflineBanner';
+import { cleanExpiredData } from '../src/services/privacy/dataRetentionService';
 import '../src/i18n'; // Initialize i18n
 
 export default function RootLayout() {
@@ -43,6 +47,23 @@ export default function RootLayout() {
                     console.warn('[RootLayout] Failed to load active alarm (non-fatal):', alarmErr);
                 }
 
+                // Crash recovery: restore route history from checkpoint
+                try {
+                    const activeSession = await db.getActiveTrackingSession();
+                    if (activeSession) {
+                        const routePoints = JSON.parse(activeSession.route_points);
+                        if (routePoints.length > 0) {
+                            useLocationStore.getState().restoreRouteHistory(
+                                routePoints,
+                                activeSession.traveled_distance
+                            );
+                            console.log(`[RootLayout] Restored ${routePoints.length} route points from checkpoint`);
+                        }
+                    }
+                } catch (recoveryErr) {
+                    console.warn('[RootLayout] Crash recovery failed (non-fatal):', recoveryErr);
+                }
+
                 try {
                     await useChallengeStore.getState().loadChallenges();
                 } catch (challengeErr) {
@@ -53,6 +74,13 @@ export default function RootLayout() {
                     await initNotifications();
                 } catch (notifErr) {
                     console.warn('[RootLayout] Failed to init notifications (non-fatal):', notifErr);
+                }
+
+                // Run periodic data cleanup
+                try {
+                    await cleanExpiredData();
+                } catch (cleanupErr) {
+                    console.warn('[RootLayout] Data cleanup failed (non-fatal):', cleanupErr);
                 }
 
                 setIsReady(true);
@@ -96,6 +124,7 @@ export default function RootLayout() {
 
     return (
         <GestureHandlerRootView style={styles.container}>
+            <OfflineBanner />
             <Stack
                 screenOptions={{
                     headerShown: false,

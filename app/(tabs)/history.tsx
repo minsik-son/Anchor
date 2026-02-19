@@ -145,7 +145,14 @@ interface CollapsibleSectionProps {
 function CollapsibleSection({ title, itemCount, isCollapsed, onToggle, children, colors, styles }: CollapsibleSectionProps) {
     return (
         <ReAnimated.View style={styles.sectionContainer} layout={LinearTransition.duration(250)}>
-            <Pressable style={styles.sectionHeader} onPress={onToggle}>
+            <Pressable
+                style={styles.sectionHeader}
+                onPress={onToggle}
+                accessibilityRole="button"
+                accessibilityLabel={`${title}, ${itemCount} alarms`}
+                accessibilityHint={isCollapsed ? 'Tap to expand' : 'Tap to collapse'}
+                accessibilityState={{ expanded: !isCollapsed }}
+            >
                 <View style={styles.sectionHeaderLeft}>
                     <AnimatedChevron isCollapsed={isCollapsed} color={colors.textWeak} />
                     <Text style={styles.sectionHeaderText}>{title}</Text>
@@ -248,7 +255,13 @@ export default function History() {
                     <Text style={styles.headerSubtitle}>{t('history.total', { count: alarms.length })}</Text>
                 </View>
                 {alarms.length > 0 && (
-                    <Pressable style={styles.deleteAllButton} onPress={handleDeleteAll}>
+                    <Pressable
+                        style={styles.deleteAllButton}
+                        onPress={handleDeleteAll}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('history.deleteAll.button')}
+                        accessibilityHint="Deletes all alarm records"
+                    >
                         <Ionicons name="trash-outline" size={18} color={colors.error} />
                         <Text style={styles.deleteAllText}>{t('history.deleteAll.button')}</Text>
                     </Pressable>
@@ -386,7 +399,13 @@ const SwipeableAlarmCard = memo(function SwipeableAlarmCard({
     return (
         <View style={styles.swipeContainer}>
             <ReAnimated.View style={[styles.deleteBackground, deleteButtonStyle]}>
-                <Pressable style={styles.deleteBackgroundButton} onPress={handleDeletePress}>
+                <Pressable
+                    style={styles.deleteBackgroundButton}
+                    onPress={handleDeletePress}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.delete')}
+                    accessibilityHint={t('accessibility.deleteAlarmHint')}
+                >
                     <Ionicons name="trash" size={24} color={colors.surface} />
                     <Text style={styles.deleteBackgroundText}>{t('common.delete')}</Text>
                 </Pressable>
@@ -394,7 +413,17 @@ const SwipeableAlarmCard = memo(function SwipeableAlarmCard({
 
             <GestureDetector gesture={panGesture}>
                 <ReAnimated.View style={[styles.alarmCard, cardAnimatedStyle]}>
-                    <Pressable onPress={handlePress} style={styles.alarmCardInner}>
+                    <Pressable
+                        onPress={handlePress}
+                        style={styles.alarmCardInner}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('accessibility.alarmHistoryCard', {
+                            title: alarm.title,
+                            status: t(`history.status.${getAlarmStatus(alarm)}`),
+                            time: formatRelativeTime(alarm.created_at, t, i18n),
+                        })}
+                        accessibilityHint={t('accessibility.alarmDetails')}
+                    >
                         <View style={styles.alarmHeader}>
                             <View style={styles.alarmTitleContainer}>
                                 <Ionicons

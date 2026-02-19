@@ -229,7 +229,11 @@ export default function AlarmDetail() {
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {/* Mini Map */}
-                <View style={styles.mapContainer}>
+                <View
+                    style={styles.mapContainer}
+                    accessibilityRole="image"
+                    accessibilityLabel={t('accessibility.mapShowingDestination', { destination: destAddress })}
+                >
                     <MapView
                         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
                         style={styles.map}
@@ -295,8 +299,12 @@ export default function AlarmDetail() {
 
                 {/* Title + Status */}
                 <View style={styles.titleSection}>
-                    <Text style={styles.alarmTitle}>{alarm.title}</Text>
-                    <View style={[styles.statusBadge, { backgroundColor: statusConfig[status].color }]}>
+                    <Text style={styles.alarmTitle} accessibilityRole="header">{alarm.title}</Text>
+                    <View
+                        style={[styles.statusBadge, { backgroundColor: statusConfig[status].color }]}
+                        accessibilityRole="text"
+                        accessibilityLabel={t('accessibility.statusBadge', { status: statusConfig[status].label })}
+                    >
                         <Text style={styles.statusBadgeText}>{statusConfig[status].label}</Text>
                     </View>
                 </View>
@@ -430,7 +438,13 @@ export default function AlarmDetail() {
                 )}
 
                 {/* Delete Button */}
-                <Pressable style={styles.deleteButton} onPress={handleDelete}>
+                <Pressable
+                    style={styles.deleteButton}
+                    onPress={handleDelete}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('history.detail.deleteAlarm')}
+                    accessibilityHint={t('accessibility.deleteAlarmHint')}
+                >
                     <Ionicons name="trash-outline" size={20} color={colors.surface} />
                     <Text style={styles.deleteButtonText}>{t('history.detail.deleteAlarm')}</Text>
                 </Pressable>

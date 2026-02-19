@@ -41,8 +41,9 @@ interface LocationState {
     targetLocation: { latitude: number; longitude: number } | null;
     targetRadius: number;
 
-    // Route history for tracking detail
+    // Route history for tracking detail (mutable for O(1) push)
     routeHistory: RoutePoint[];
+    routePointCount: number;  // Triggers re-renders on route updates
     traveledDistance: number;
 
     // Permissions
@@ -66,6 +67,7 @@ interface LocationState {
     setPhase: (phase: TrackingPhase) => void;
     addRoutePoint: (point: RoutePoint) => void;
     clearRouteHistory: () => void;
+    restoreRouteHistory: (points: RoutePoint[], totalDistance: number) => void;
 
     // Navigation actions
     setTransportMode: (mode: TransportMode) => void;
@@ -87,6 +89,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     targetLocation: null,
     targetRadius: 500,
     routeHistory: [],
+    routePointCount: 0,
     traveledDistance: 0,
     hasPermission: false,
     permissionStatus: null,
@@ -203,6 +206,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             targetLocation: null,
             trackingStartedAt: null,
             routeHistory: [],
+            routePointCount: 0,
             traveledDistance: 0,
         });
         console.log('[LocationStore] Stopped tracking');
@@ -243,12 +247,12 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     setPhase: (phase) => set({ currentPhase: phase }),
 
     addRoutePoint: (point) => {
-        const { routeHistory, traveledDistance } = get();
-        let newDistance = traveledDistance;
+        const state = get();
+        let newDistance = state.traveledDistance;
 
         // Calculate incremental distance from last point
-        if (routeHistory.length > 0) {
-            const lastPoint = routeHistory[routeHistory.length - 1];
+        if (state.routeHistory.length > 0) {
+            const lastPoint = state.routeHistory[state.routeHistory.length - 1];
             const dist = calculateDistance(
                 { latitude: lastPoint.latitude, longitude: lastPoint.longitude },
                 { latitude: point.latitude, longitude: point.longitude }
@@ -256,8 +260,11 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             newDistance += dist;
         }
 
+        // Mutate in-place for O(1) push performance
+        state.routeHistory.push(point);
+
         set({
-            routeHistory: [...routeHistory, point],
+            routePointCount: state.routeHistory.length,
             traveledDistance: newDistance,
         });
     },
@@ -267,6 +274,15 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             routeHistory: [],
             traveledDistance: 0,
         });
+    },
+
+    restoreRouteHistory: (points, totalDistance) => {
+        set({
+            routeHistory: points,
+            routePointCount: points.length,
+            traveledDistance: totalDistance,
+        });
+        console.log(`[LocationStore] Restored ${points.length} route points, ${totalDistance}m traveled`);
     },
 
     // Navigation actions
