@@ -15,6 +15,11 @@
         "alwaysOn": "常時有効",
         "offlineMode": "オフラインモード — 一部機能が制限されます"
     },
+    "liveActivity": {
+        "remaining": "残り {{distance}}",
+        "arrivedTitle": "到着完了",
+        "arrivedSubtitle": "目的地に到着しました"
+    },
     "tabs": {
         "home": "ホーム",
         "challenge": "チャレンジ",

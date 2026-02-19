@@ -227,9 +227,12 @@ export function useLocationSearch({
         }
     }, []);
 
-    // Load on mount
+    // Load on mount + cleanup debounced search on unmount
     useEffect(() => {
         loadRecentDestinations();
+        return () => {
+            cancelPendingSearch();
+        };
     }, [loadRecentDestinations]);
 
     // Default location for search (Seoul fallback)

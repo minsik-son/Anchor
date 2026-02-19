@@ -13,12 +13,29 @@ export interface GeocodingResult {
     district?: string;
 }
 
-// Simple cache for geocoding results
+// LRU cache for geocoding results (bounded to prevent memory leaks)
+const MAX_CACHE_SIZE = 100;
 const geocodeCache = new Map<string, GeocodingResult>();
 
 function getCacheKey(latitude: number, longitude: number): string {
     // Round to 5 decimal places (~1m precision)
     return `${latitude.toFixed(5)},${longitude.toFixed(5)}`;
+}
+
+/** LRU-aware cache set: evicts oldest entry when max size is reached */
+function setCacheEntry(key: string, value: GeocodingResult): void {
+    // If key exists, delete first to refresh insertion order
+    if (geocodeCache.has(key)) {
+        geocodeCache.delete(key);
+    }
+    // Evict oldest entry if at capacity
+    if (geocodeCache.size >= MAX_CACHE_SIZE) {
+        const oldestKey = geocodeCache.keys().next().value;
+        if (oldestKey !== undefined) {
+            geocodeCache.delete(oldestKey);
+        }
+    }
+    geocodeCache.set(key, value);
 }
 
 /**
@@ -65,8 +82,8 @@ export async function reverseGeocode(
             district: result.district || undefined,
         };
 
-        // Cache the result
-        geocodeCache.set(cacheKey, geocodingResult);
+        // Cache the result (LRU bounded)
+        setCacheEntry(cacheKey, geocodingResult);
 
         return geocodingResult;
     } catch (error) {

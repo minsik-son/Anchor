@@ -15,6 +15,11 @@
         "alwaysOn": "항상 활성",
         "offlineMode": "오프라인 모드 — 일부 기능이 제한됩니다"
     },
+    "liveActivity": {
+        "remaining": "{{distance}} 남음",
+        "arrivedTitle": "도착 완료",
+        "arrivedSubtitle": "목적지에 도착했습니다"
+    },
     "tabs": {
         "home": "홈",
         "challenge": "챌린지",

@@ -16,7 +16,10 @@ CREATE TABLE IF NOT EXISTS alarms (
   started_at TEXT,
   arrived_at TEXT,
   start_latitude REAL,
-  start_longitude REAL
+  start_longitude REAL,
+  route_points TEXT,
+  traveled_distance REAL,
+  cancelled_at TEXT
 );
 `;
 

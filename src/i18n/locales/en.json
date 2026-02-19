@@ -15,6 +15,11 @@
         "alwaysOn": "Always On",
         "offlineMode": "Offline mode — some features may be limited"
     },
+    "liveActivity": {
+        "remaining": "{{distance}} left",
+        "arrivedTitle": "Arrived",
+        "arrivedSubtitle": "You have arrived at your destination"
+    },
     "tabs": {
         "home": "Home",
         "challenge": "Challenge",

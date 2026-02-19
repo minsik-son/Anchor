@@ -14,6 +14,7 @@ import {
     stopActivity,
 } from 'expo-live-activity';
 import { Platform } from 'react-native';
+import i18n from '../../i18n';
 
 let currentActivityId: string | null = null;
 let initialDistance: number = 0; // meters, set on start
@@ -29,9 +30,10 @@ export function isLiveActivitySupported(): boolean {
 }
 
 function formatDist(meters: number): string {
-    return meters < 1000
-        ? `${Math.round(meters)}m 남음`
-        : `${(meters / 1000).toFixed(1)}km 남음`;
+    const distStr = meters < 1000
+        ? `${Math.round(meters)}m`
+        : `${(meters / 1000).toFixed(1)}km`;
+    return i18n.t('liveActivity.remaining', { distance: distStr });
 }
 
 function calcProgress(currentDistance: number): number {
@@ -114,8 +116,8 @@ export async function stopTrackingActivity(): Promise<void> {
 
     try {
         await stopActivity(currentActivityId, {
-            title: '도착 완료',
-            subtitle: '목적지에 도착했습니다',
+            title: i18n.t('liveActivity.arrivedTitle'),
+            subtitle: i18n.t('liveActivity.arrivedSubtitle'),
             progressBar: {
                 progress: 1,
             },

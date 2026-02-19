@@ -6,6 +6,7 @@ import { create } from 'zustand';
 import * as Location from 'expo-location';
 import { stopAllTracking } from '../services/location/locationService';
 import { calculateDistance, isWithinRadius } from '../services/location/geofence';
+import { captureError } from '../utils/errorReporting';
 
 export type TrackingPhase = 'IDLE' | 'GEOFENCING' | 'ADAPTIVE_POLLING' | 'ACTIVE_TRACKING';
 export type TransportMode = 'driving' | 'transit' | 'walking' | 'cycling';
@@ -196,7 +197,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
     stopTracking: () => {
         stopAllTracking().catch((err) => {
-            console.warn('[LocationStore] Failed to stop tracking:', err);
+            captureError(err, { module: 'LocationStore', action: 'stopTracking' });
         });
 
         set({

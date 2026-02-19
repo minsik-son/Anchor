@@ -131,7 +131,8 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
     deactivateAlarm: async (id) => {
         try {
             const locationStore = useLocationStore.getState();
-            const routePoints = locationStore.routeHistory;
+            // Deep copy to prevent race condition with stopTracking clearing the array
+            const routePoints = [...locationStore.routeHistory];
             const traveledDistance = locationStore.traveledDistance;
 
             await db.updateAlarm(id, {
@@ -152,7 +153,8 @@ export const useAlarmStore = create<AlarmState>((set, get) => ({
             // Set dismissedAlarmId immediately to prevent re-triggering
             set({ dismissedAlarmId: id });
             const locationStore = useLocationStore.getState();
-            const routePoints = locationStore.routeHistory;
+            // Deep copy to prevent race condition with stopTracking clearing the array
+            const routePoints = [...locationStore.routeHistory];
             const traveledDistance = locationStore.traveledDistance;
 
             await db.updateAlarm(id, {

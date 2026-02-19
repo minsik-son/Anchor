@@ -16,7 +16,6 @@ import { maybeCheckpoint, resetCheckpoint, finalizeCheckpoint } from '../checkpo
 import { logEvent, startTelemetrySession, endTelemetrySession } from '../telemetry/telemetryService';
 import {
     PHASE_BOUNDARIES,
-    ADAPTIVE_POLLING_CONFIG,
     ACTIVE_TRACKING_CONFIG,
     GEOFENCING_ROUTE_CONFIG,
     TASK_NAMES,
@@ -33,6 +32,7 @@ import {
     hasActiveActivity,
 } from '../liveActivity/liveActivityService';
 import { captureError, addBreadcrumb } from '../../utils/errorReporting';
+import { calculateDynamicCooldown, determinePhase } from './phaseCalculator';
 
 // ---------------------------------------------------------------------------
 // Module-level state (the service is the "brain")
@@ -52,91 +52,6 @@ let onLocationTickCallback: (() => void) | null = null;
 
 export function registerLocationTickCallback(cb: () => void): void {
     onLocationTickCallback = cb;
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Calculate dynamic cooldown for ADAPTIVE_POLLING based on distance & speed.
- * Returns cooldown in milliseconds clamped to [MIN, MAX].
- * For long-range distances (>50km), uses a much longer max cooldown to save battery.
- */
-function calculateDynamicCooldown(distanceMeters: number, speedKmh: number): number {
-    const effectiveSpeed = Math.max(speedKmh, ADAPTIVE_POLLING_CONFIG.MIN_ASSUMED_SPEED_KMH);
-    const speedMs = (effectiveSpeed * 1000) / 3600;
-    const etaSeconds = distanceMeters / speedMs;
-    let cooldownMs = (etaSeconds / 2) * 1000;
-
-    if (speedKmh > ADAPTIVE_POLLING_CONFIG.HIGH_SPEED_THRESHOLD_KMH) {
-        cooldownMs *= ADAPTIVE_POLLING_CONFIG.HIGH_SPEED_COOLDOWN_MULTIPLIER;
-    }
-
-    // Use longer max cooldown for long-range distances to save battery
-    const maxCooldown = distanceMeters > PHASE_BOUNDARIES.LONG_RANGE_POLLING_THRESHOLD
-        ? ADAPTIVE_POLLING_CONFIG.LONG_RANGE_MAX_COOLDOWN_MS
-        : ADAPTIVE_POLLING_CONFIG.MAX_COOLDOWN_MS;
-
-    return Math.max(
-        ADAPTIVE_POLLING_CONFIG.MIN_COOLDOWN_MS,
-        Math.min(maxCooldown, cooldownMs),
-    );
-}
-
-/**
- * Should we transition into ACTIVE_TRACKING?
- * True when distance < 1.5km OR estimated time of arrival < 3 min.
- */
-function shouldEnterActiveTracking(distanceMeters: number, speedKmh: number): boolean {
-    if (distanceMeters < PHASE_BOUNDARIES.ADAPTIVE_POLLING_MIN) return true;
-
-    const effectiveSpeed = Math.max(speedKmh, ADAPTIVE_POLLING_CONFIG.MIN_ASSUMED_SPEED_KMH);
-    const speedMs = (effectiveSpeed * 1000) / 3600;
-    const etaMinutes = (distanceMeters / speedMs) / 60;
-    return etaMinutes < ADAPTIVE_POLLING_CONFIG.ETA_TRANSITION_MINUTES;
-}
-
-/**
- * Determine the ideal tracking phase, applying hysteresis to prevent flapping.
- * If geofence setup previously failed, stays in ADAPTIVE_POLLING instead of
- * transitioning back to GEOFENCING (prevents infinite fallback loops).
- */
-function determinePhase(
-    distanceMeters: number,
-    speedKmh: number,
-    fromPhase: TrackingPhase,
-): TrackingPhase {
-    // Forward: enter ACTIVE_TRACKING when close or ETA is short
-    if (shouldEnterActiveTracking(distanceMeters, speedKmh)) {
-        return 'ACTIVE_TRACKING';
-    }
-
-    // Reverse: leave ACTIVE_TRACKING only beyond hysteresis buffer
-    if (fromPhase === 'ACTIVE_TRACKING') {
-        return distanceMeters > PHASE_BOUNDARIES.ACTIVE_EXIT_BUFFER
-            ? 'ADAPTIVE_POLLING'
-            : 'ACTIVE_TRACKING';
-    }
-
-    // Forward: enter ADAPTIVE_POLLING within geofencing radius
-    if (distanceMeters <= PHASE_BOUNDARIES.GEOFENCING_RADIUS) {
-        return 'ADAPTIVE_POLLING';
-    }
-
-    // Reverse: leave ADAPTIVE_POLLING only beyond hysteresis buffer
-    // BUT if geofence setup previously failed, stay in ADAPTIVE_POLLING
-    // to prevent infinite GEOFENCING → fail → ADAPTIVE_POLLING → GEOFENCING loop
-    if (fromPhase === 'ADAPTIVE_POLLING') {
-        if (geofenceSetupFailed) {
-            return 'ADAPTIVE_POLLING';
-        }
-        return distanceMeters > PHASE_BOUNDARIES.GEOFENCING_EXIT_BUFFER
-            ? 'GEOFENCING'
-            : 'ADAPTIVE_POLLING';
-    }
-
-    return 'GEOFENCING';
 }
 
 // ---------------------------------------------------------------------------
@@ -285,7 +200,7 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
     const distance = store.distanceToTarget;
     const speed = store.speed ?? 0;
     if (distance !== null) {
-        const desiredPhase = determinePhase(distance, speed, currentServicePhase);
+        const desiredPhase = determinePhase(distance, speed, currentServicePhase, geofenceSetupFailed);
         if (desiredPhase !== currentServicePhase) {
             await transitionToPhase(desiredPhase);
         }
@@ -507,7 +422,7 @@ export async function startTracking(
     currentRadius = radius;
 
     const distance = initialDistanceMeters ?? Infinity;
-    const initialPhase = determinePhase(distance, 0, 'IDLE');
+    const initialPhase = determinePhase(distance, 0, 'IDLE', false);
 
     await transitionToPhase(initialPhase);
 
