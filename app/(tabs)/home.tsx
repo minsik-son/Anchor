@@ -28,7 +28,7 @@ import { startTracking as startServiceTracking } from '../../src/services/locati
 import { mapDarkStyle } from '../../src/constants/mapDarkStyle';
 import { useThemeStore } from '../../src/stores/themeStore';
 import { useElapsedTime } from '../../src/hooks/useElapsedTime';
-import { clearTrackingNotification } from '../../src/services/notification/notificationService';
+import { clearAllAlarmNotifications } from '../../src/services/notification/notificationService';
 import { stopTrackingActivity } from '../../src/services/liveActivity/liveActivityService';
 import { useMapPin } from '../../src/hooks/useMapPin';
 import { useLocationSearch } from '../../src/hooks/useLocationSearch';
@@ -72,6 +72,8 @@ export default function Home() {
         stopTracking,
         startTracking,
         distanceToTarget,
+        routeHistory,
+        routePointCount,
     } = useLocationStore();
 
     // Getter function for useMapPin (reads current value)
@@ -417,12 +419,13 @@ export default function Home() {
                     text: t('alarmDashboard.cancelConfirm.confirm'),
                     style: 'destructive',
                     onPress: async () => {
+                        // IMPORTANT: Save route data BEFORE stopTracking clears the store
                         if (activeAlarm) {
                             await deactivateAlarm(activeAlarm.id);
                         }
-                        stopTracking();
                         await stopTrackingActivity();
-                        await clearTrackingNotification();
+                        await clearAllAlarmNotifications();
+                        stopTracking();
                         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                     },
                 },
@@ -531,6 +534,21 @@ export default function Home() {
                     </>
                 )}
 
+                {/* Tracked route polyline (actual path walked/driven) — TOP PRIORITY */}
+                {activeAlarm && routePointCount > 1 && (
+                    <Polyline
+                        coordinates={routeHistory.map(p => ({
+                            latitude: p.latitude,
+                            longitude: p.longitude,
+                        }))}
+                        strokeColor="rgba(0, 200, 83, 0.8)"
+                        strokeWidth={3}
+                        lineJoin="round"
+                        lineCap="round"
+                        zIndex={10}
+                    />
+                )}
+
                 {/* Navigation route polyline */}
                 {isNavigating && selectedRoute && (
                     <Polyline
@@ -540,8 +558,8 @@ export default function Home() {
                     />
                 )}
 
-                {/* Active alarm connection line (user → destination) */}
-                {activeAlarm && currentLocation && !isNavigating && (
+                {/* Active alarm connection line (user → destination) — dashed fallback */}
+                {activeAlarm && currentLocation && !isNavigating && routePointCount <= 1 && (
                     <Polyline
                         coordinates={[
                             {
@@ -720,14 +738,14 @@ export default function Home() {
             {isNavigating ? (
                 <NavigationPanel
                     onStopNavigation={async () => {
-                        // Deactivate alarm to remove red pin
+                        // IMPORTANT: Save route data BEFORE stopTracking clears the store
                         if (activeAlarm) {
                             await deactivateAlarm(activeAlarm.id);
                         }
                         stopNavigation();
-                        stopTracking();
                         await stopTrackingActivity();
-                        await clearTrackingNotification();
+                        await clearAllAlarmNotifications();
+                        stopTracking();
                     }}
                 />
             ) : activeAlarm ? (

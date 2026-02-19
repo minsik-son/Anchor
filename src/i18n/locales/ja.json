@@ -299,6 +299,7 @@
         "noStartLocation": "出発地情報なし",
         "straightDistance": "直線距離",
         "actualDistance": "実際の移動距離",
+        "averageSpeed": "平均移動速度",
         "cancelledAt": "キャンセル時刻"
     },
     "alarmTrigger": {
@@ -507,6 +508,20 @@
             "hours": "{{count}}時間"
         },
         "start": "スタート"
+    },
+    "notification": {
+        "arrival": {
+            "title": "到着しました",
+            "body": "タップしてアラームを解除",
+            "defaultPlace": "目的地"
+        },
+        "tracking": {
+            "remaining": "残り {{distance}}",
+            "elapsed": "{{time}} 移動中",
+            "timeHours": "{{hours}}時間{{minutes}}分",
+            "timeMinutes": "{{minutes}}分{{seconds}}秒",
+            "timeSeconds": "{{seconds}}秒"
+        }
     },
     "trackingNotification": {
         "remaining": "{{distance}} 残り",

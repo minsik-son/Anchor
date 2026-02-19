@@ -26,7 +26,7 @@ import Animated, {
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
 import { useAlarmSettingsStore, getBackgroundAsset } from '../src/stores/alarmSettingsStore';
-import { clearArrivalNotifications, clearTrackingNotification } from '../src/services/notification/notificationService';
+import { clearAllAlarmNotifications } from '../src/services/notification/notificationService';
 import { useAlarmSound } from '../src/hooks/useAlarmSound';
 import { useAlarmVibration } from '../src/hooks/useAlarmVibration';
 import { useShakeDetection } from '../src/hooks/useShakeDetection';
@@ -155,20 +155,19 @@ export default function AlarmTrigger() {
         stopLoop();
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-        // Clear arrival notification from system tray
-        await clearArrivalNotifications();
+        // Clear ALL notifications from notification center (arrival + tracking + scheduled)
+        await clearAllAlarmNotifications();
 
         // Stop Live Activity (Dynamic Island)
         await stopTrackingActivity();
 
-        // Clear tracking notification
-        await clearTrackingNotification();
-
-        // Stop location tracking FIRST to prevent background task from re-triggering
-        stopTracking();
-
-        // Then complete the alarm (sets dismissedAlarmId + updates DB)
+        // IMPORTANT: Save route data to DB BEFORE stopping tracking
+        // stopTracking() clears routeHistory and traveledDistance from store,
+        // so completeAlarm() must read them first.
         await completeAlarm(alarmId);
+
+        // Now safe to stop tracking (route data already persisted to DB)
+        stopTracking();
 
         if (hasMemos) {
             router.replace({

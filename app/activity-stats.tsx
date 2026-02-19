@@ -1,19 +1,374 @@
 /**
  * LocaAlert Activity Stats Screen
- * Weekly/monthly comparison charts with bar graphs
+ * Redesigned with improved bar chart (top labels, no Y-axis clutter)
+ * and step calendar grid (GitHub-style contribution heatmap)
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { BarChart } from 'react-native-gifted-charts';
 import { useActivityStore, DailyStepRecord } from '../src/stores/activityStore';
 import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../src/styles/theme';
 
 type Period = 'weekly' | 'monthly';
+
+// ---------------------------------------------------------------------------
+// Step Calendar Component (Monthly calendar with step counts per day)
+// ---------------------------------------------------------------------------
+
+interface StepCalendarProps {
+    dailyRecords: DailyStepRecord[];
+    colors: ThemeColors;
+}
+
+function StepCalendar({ dailyRecords, colors }: StepCalendarProps) {
+    const { width } = useWindowDimensions();
+    const [monthOffset, setMonthOffset] = useState(0); // 0 = current month, -1 = last month, etc.
+
+    const calendarWidth = width - spacing.sm * 4;
+    const cellWidth = Math.floor(calendarWidth / 7);
+
+    // Build record map for quick lookup
+    const recordMap = useMemo(() => {
+        const map = new Map<string, number>();
+        dailyRecords.forEach(r => map.set(r.date, r.steps));
+        return map;
+    }, [dailyRecords]);
+
+    // Current display month
+    const displayDate = useMemo(() => {
+        const d = new Date();
+        d.setDate(1);
+        d.setMonth(d.getMonth() + monthOffset);
+        return d;
+    }, [monthOffset]);
+
+    const year = displayDate.getFullYear();
+    const month = displayDate.getMonth();
+
+    // Calendar grid: array of weeks, each week is 7 cells (null for empty)
+    const calendarGrid = useMemo(() => {
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Start on Sunday (0) - adjust first day offset
+        let startOffset = firstDay.getDay(); // 0=Sun, 1=Mon, ...
+
+        const weeks: ({ day: number; steps: number; isToday: boolean; isFuture: boolean } | null)[][] = [];
+        let currentWeek: ({ day: number; steps: number; isToday: boolean; isFuture: boolean } | null)[] = [];
+
+        // Fill leading empty cells
+        for (let i = 0; i < startOffset; i++) {
+            currentWeek.push(null);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const cellDate = new Date(year, month, day);
+            const isToday = cellDate.getFullYear() === today.getFullYear()
+                && cellDate.getMonth() === today.getMonth()
+                && cellDate.getDate() === today.getDate();
+            const isFuture = cellDate > today;
+
+            currentWeek.push({
+                day,
+                steps: isFuture ? -1 : (recordMap.get(dateStr) ?? 0),
+                isToday,
+                isFuture,
+            });
+
+            if (currentWeek.length === 7) {
+                weeks.push(currentWeek);
+                currentWeek = [];
+            }
+        }
+
+        // Fill trailing empty cells
+        if (currentWeek.length > 0) {
+            while (currentWeek.length < 7) {
+                currentWeek.push(null);
+            }
+            weeks.push(currentWeek);
+        }
+
+        return weeks;
+    }, [year, month, recordMap]);
+
+    // Month stats
+    const monthStats = useMemo(() => {
+        let activeDays = 0;
+        let totalSteps = 0;
+        calendarGrid.forEach(week =>
+            week.forEach(cell => {
+                if (cell && cell.steps > 0) {
+                    activeDays++;
+                    totalSteps += cell.steps;
+                }
+            }),
+        );
+        return { activeDays, totalSteps };
+    }, [calendarGrid]);
+
+    const formatStepCount = (steps: number): string => {
+        if (steps <= 0) return '';
+        if (steps >= 10000) return `${(steps / 1000).toFixed(0)}k`;
+        if (steps >= 1000) return `${(steps / 1000).toFixed(1)}k`;
+        return `${steps}`;
+    };
+
+    const dayHeaders = ['일', '월', '화', '수', '목', '금', '토'];
+    const monthLabel = `${year}년 ${month + 1}월`;
+
+    const canGoForward = monthOffset < 0;
+
+    return (
+        <View style={{
+            backgroundColor: colors.surface,
+            borderRadius: radius.md,
+            padding: spacing.sm,
+            ...shadows.card,
+        }}>
+            {/* Month navigation header */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <Pressable onPress={() => setMonthOffset(prev => prev - 1)} hitSlop={8}>
+                    <Ionicons name="chevron-back" size={20} color={colors.textMedium} />
+                </Pressable>
+                <Text style={{ ...typography.body, fontWeight: '700', color: colors.textStrong, fontSize: 16 }}>
+                    {monthLabel}
+                </Text>
+                <Pressable
+                    onPress={() => canGoForward && setMonthOffset(prev => prev + 1)}
+                    hitSlop={8}
+                    style={{ opacity: canGoForward ? 1 : 0.3 }}
+                >
+                    <Ionicons name="chevron-forward" size={20} color={colors.textMedium} />
+                </Pressable>
+            </View>
+
+            {/* Day of week headers */}
+            <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+                {dayHeaders.map((label, i) => (
+                    <View key={i} style={{ width: cellWidth, alignItems: 'center' }}>
+                        <Text style={{
+                            fontSize: 12,
+                            fontWeight: '600',
+                            color: i === 0 ? colors.error : i === 6 ? colors.primary : colors.textWeak,
+                        }}>
+                            {label}
+                        </Text>
+                    </View>
+                ))}
+            </View>
+
+            {/* Calendar grid */}
+            {calendarGrid.map((week, weekIdx) => (
+                <View key={weekIdx} style={{ flexDirection: 'row', marginBottom: 2 }}>
+                    {week.map((cell, dayIdx) => (
+                        <View key={dayIdx} style={{
+                            width: cellWidth,
+                            alignItems: 'center',
+                            paddingVertical: 6,
+                        }}>
+                            {cell ? (
+                                <>
+                                    {/* Date number */}
+                                    <View style={{
+                                        width: 28,
+                                        height: 28,
+                                        borderRadius: 14,
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        backgroundColor: cell.isToday ? colors.primary : 'transparent',
+                                    }}>
+                                        <Text style={{
+                                            fontSize: 14,
+                                            fontWeight: cell.isToday ? '700' : '500',
+                                            color: cell.isToday
+                                                ? '#FFFFFF'
+                                                : cell.isFuture
+                                                    ? colors.textWeak + '60'
+                                                    : dayIdx === 0
+                                                        ? colors.error
+                                                        : dayIdx === 6
+                                                            ? colors.primary
+                                                            : colors.textStrong,
+                                        }}>
+                                            {cell.day}
+                                        </Text>
+                                    </View>
+                                    {/* Step count below date */}
+                                    <Text style={{
+                                        fontSize: 9,
+                                        fontWeight: '500',
+                                        color: cell.steps > 0 ? colors.primary : 'transparent',
+                                        marginTop: 2,
+                                    }}>
+                                        {cell.steps > 0 ? formatStepCount(cell.steps) : '-'}
+                                    </Text>
+                                </>
+                            ) : (
+                                <View style={{ height: 28 + 2 + 12 }} />
+                            )}
+                        </View>
+                    ))}
+                </View>
+            ))}
+
+            {/* Month summary */}
+            <View style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginTop: 12,
+                paddingTop: 12,
+                borderTopWidth: 1,
+                borderTopColor: colors.border,
+                gap: 16,
+            }}>
+                <Text style={{ ...typography.caption, color: colors.textWeak }}>
+                    {monthStats.activeDays}일 활동
+                </Text>
+                <View style={{ width: 1, height: 12, backgroundColor: colors.border }} />
+                <Text style={{ ...typography.caption, color: colors.textWeak }}>
+                    {monthStats.totalSteps.toLocaleString()}걸음
+                </Text>
+            </View>
+        </View>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Custom Bar Chart Component (cleaner than gifted-charts)
+// ---------------------------------------------------------------------------
+
+interface BarChartCustomProps {
+    currentData: DailyStepRecord[];
+    previousData: DailyStepRecord[];
+    period: Period;
+    colors: ThemeColors;
+}
+
+function CustomBarChart({ currentData, previousData, period, colors }: BarChartCustomProps) {
+    const { t } = useTranslation();
+
+    const maxValue = useMemo(() => {
+        const allValues = [
+            ...currentData.map(r => r.steps),
+            ...previousData.map(r => r.steps),
+        ];
+        return Math.max(...allValues, 100);
+    }, [currentData, previousData]);
+
+    const chartHeight = 180;
+    const dayLabels = [
+        t('days.mon'), t('days.tue'), t('days.wed'), t('days.thu'),
+        t('days.fri'), t('days.sat'), t('days.sun'),
+    ];
+
+    if (period === 'weekly') {
+        return (
+            <View>
+                {/* Bars */}
+                <View style={{ height: chartHeight, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                    {currentData.map((record, i) => {
+                        const prevSteps = previousData[i]?.steps ?? 0;
+                        const currHeight = maxValue > 0 ? (record.steps / maxValue) * chartHeight : 0;
+                        const prevHeight = maxValue > 0 ? (prevSteps / maxValue) * chartHeight : 0;
+                        const showLabel = record.steps > 0;
+
+                        return (
+                            <View key={i} style={{ flex: 1, alignItems: 'center' }}>
+                                {/* Step count label on top of bar */}
+                                {showLabel && (
+                                    <Text style={{
+                                        fontSize: 9,
+                                        fontWeight: '600',
+                                        color: colors.primary,
+                                        marginBottom: 4,
+                                    }}>
+                                        {record.steps >= 1000
+                                            ? `${(record.steps / 1000).toFixed(1)}k`
+                                            : record.steps}
+                                    </Text>
+                                )}
+                                {/* Bar pair */}
+                                <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 2 }}>
+                                    {/* Previous period bar */}
+                                    <View style={{
+                                        width: 12,
+                                        height: Math.max(prevHeight, prevSteps > 0 ? 4 : 0),
+                                        backgroundColor: colors.border,
+                                        borderRadius: 3,
+                                    }} />
+                                    {/* Current period bar */}
+                                    <View style={{
+                                        width: 12,
+                                        height: Math.max(currHeight, record.steps > 0 ? 4 : 0),
+                                        backgroundColor: colors.primary,
+                                        borderRadius: 3,
+                                    }} />
+                                </View>
+                            </View>
+                        );
+                    })}
+                </View>
+
+                {/* X-axis labels */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+                    {dayLabels.map((label, i) => (
+                        <View key={i} style={{ flex: 1, alignItems: 'center' }}>
+                            <Text style={{ fontSize: 11, color: colors.textWeak, fontWeight: '500' }}>
+                                {label}
+                            </Text>
+                        </View>
+                    ))}
+                </View>
+            </View>
+        );
+    }
+
+    // Monthly view
+    return (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View>
+                <View style={{ height: chartHeight, flexDirection: 'row', alignItems: 'flex-end' }}>
+                    {currentData.map((record, i) => {
+                        const barHeight = maxValue > 0 ? (record.steps / maxValue) * chartHeight : 0;
+                        return (
+                            <View key={i} style={{ alignItems: 'center', marginRight: 3 }}>
+                                <View style={{
+                                    width: 8,
+                                    height: Math.max(barHeight, record.steps > 0 ? 3 : 0),
+                                    backgroundColor: record.steps > 0 ? colors.primary : colors.border,
+                                    borderRadius: 2,
+                                }} />
+                            </View>
+                        );
+                    })}
+                </View>
+                <View style={{ flexDirection: 'row', marginTop: 6 }}>
+                    {currentData.map((_, i) => (
+                        <View key={i} style={{ width: 8, marginRight: 3, alignItems: 'center' }}>
+                            {(i + 1) % 5 === 0 && (
+                                <Text style={{ fontSize: 9, color: colors.textWeak }}>{i + 1}</Text>
+                            )}
+                        </View>
+                    ))}
+                </View>
+            </View>
+        </ScrollView>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Main Screen
+// ---------------------------------------------------------------------------
 
 export default function ActivityStats() {
     const insets = useSafeAreaInsets();
@@ -50,10 +405,6 @@ export default function ActivityStats() {
         if (previousTotal === 0) return null;
         return Math.round(((currentTotal - previousTotal) / previousTotal) * 100);
     }, [currentData, previousData]);
-
-    const chartData = useMemo(() => {
-        return buildChartData(currentData, previousData, period, colors, t);
-    }, [currentData, previousData, period, colors]);
 
     const hasData = currentData.some((r) => r.steps > 0) || previousData.some((r) => r.steps > 0);
 
@@ -102,6 +453,7 @@ export default function ActivityStats() {
                     </View>
                 ) : (
                     <>
+                        {/* Summary Card */}
                         <View style={styles.summaryCard}>
                             <View style={styles.summaryItem}>
                                 <Text style={styles.summaryLabel}>{t('activity.stats.totalSteps')}</Text>
@@ -119,56 +471,62 @@ export default function ActivityStats() {
                             </View>
                         </View>
 
+                        {/* Chart Card (improved) */}
                         <View style={styles.chartCard}>
                             <View style={styles.legendRow}>
                                 <View style={styles.legendItem}>
                                     <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
                                     <Text style={styles.legendText}>{t('activity.stats.current')}</Text>
                                 </View>
-                                <View style={styles.legendItem}>
-                                    <View style={[styles.legendDot, { backgroundColor: colors.border }]} />
-                                    <Text style={styles.legendText}>{t('activity.stats.previous')}</Text>
-                                </View>
+                                {period === 'weekly' && (
+                                    <View style={styles.legendItem}>
+                                        <View style={[styles.legendDot, { backgroundColor: colors.border }]} />
+                                        <Text style={styles.legendText}>{t('activity.stats.previous')}</Text>
+                                    </View>
+                                )}
                             </View>
-                            <ScrollView horizontal={period === 'monthly'} showsHorizontalScrollIndicator={false}>
-                                <BarChart
-                                    data={chartData}
-                                    barWidth={period === 'weekly' ? 16 : 8}
-                                    spacing={period === 'weekly' ? 24 : 6}
-                                    noOfSections={4}
-                                    yAxisThickness={0}
-                                    xAxisThickness={1}
-                                    xAxisColor={colors.border}
-                                    yAxisTextStyle={{ color: colors.textWeak, fontSize: 10 }}
-                                    xAxisLabelTextStyle={{ color: colors.textWeak, fontSize: 10 }}
-                                    hideRules
-                                    isAnimated
-                                    barBorderRadius={4}
-                                    height={200}
-                                />
-                            </ScrollView>
+                            <CustomBarChart
+                                currentData={currentData}
+                                previousData={previousData}
+                                period={period}
+                                colors={colors}
+                            />
                         </View>
 
+                        {/* Comparison Card */}
                         {comparisonPercent !== null && (
                             <View style={styles.comparisonCard}>
-                                <Ionicons
-                                    name={comparisonPercent >= 0 ? 'trending-up' : 'trending-down'}
-                                    size={24}
-                                    color={comparisonPercent >= 0 ? colors.success : colors.error}
-                                />
-                                <Text style={styles.comparisonText}>
-                                    {comparisonPercent === 0
-                                        ? t('activity.stats.noChange')
-                                        : t('activity.stats.comparison', {
-                                            percent: Math.abs(comparisonPercent),
-                                            direction: comparisonPercent > 0
-                                                ? t('activity.stats.more')
-                                                : t('activity.stats.less'),
-                                        })
-                                    }
-                                </Text>
+                                <View style={[
+                                    styles.comparisonIconContainer,
+                                    { backgroundColor: comparisonPercent >= 0 ? colors.success + '18' : colors.error + '18' },
+                                ]}>
+                                    <Ionicons
+                                        name={comparisonPercent >= 0 ? 'trending-up' : 'trending-down'}
+                                        size={20}
+                                        color={comparisonPercent >= 0 ? colors.success : colors.error}
+                                    />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.comparisonTitle}>
+                                        {comparisonPercent === 0
+                                            ? t('activity.stats.noChange')
+                                            : t('activity.stats.comparison', {
+                                                percent: Math.abs(comparisonPercent),
+                                                direction: comparisonPercent > 0
+                                                    ? t('activity.stats.more')
+                                                    : t('activity.stats.less'),
+                                            })
+                                        }
+                                    </Text>
+                                    <Text style={styles.comparisonSubtitle}>
+                                        {period === 'weekly' ? '지난주 대비' : '지난달 대비'}
+                                    </Text>
+                                </View>
                             </View>
                         )}
+
+                        {/* Step Calendar (GitHub heatmap style) */}
+                        <StepCalendar dailyRecords={dailyRecords} colors={colors} />
                     </>
                 )}
             </ScrollView>
@@ -176,45 +534,9 @@ export default function ActivityStats() {
     );
 }
 
-function buildChartData(
-    current: DailyStepRecord[],
-    previous: DailyStepRecord[],
-    period: Period,
-    colors: ThemeColors,
-    t: (key: string) => string,
-) {
-    const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
-    if (period === 'weekly') {
-        const items: Array<{
-            value: number;
-            frontColor: string;
-            label?: string;
-            spacing?: number;
-        }> = [];
-
-        for (let i = 0; i < 7; i++) {
-            items.push({
-                value: previous[i]?.steps ?? 0,
-                frontColor: colors.border,
-                label: dayLabels[i],
-                spacing: 2,
-            });
-            items.push({
-                value: current[i]?.steps ?? 0,
-                frontColor: colors.primary,
-            });
-        }
-        return items;
-    }
-
-    // Monthly: only current period bars
-    return current.map((record, i) => ({
-        value: record.steps,
-        frontColor: colors.primary,
-        label: (i + 1) % 5 === 0 ? String(i + 1) : '',
-    }));
-}
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
     container: {
@@ -300,7 +622,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         gap: spacing.sm,
-        marginBottom: spacing.xs,
+        marginBottom: 12,
     },
     legendItem: {
         flexDirection: 'row',
@@ -308,9 +630,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         gap: 4,
     },
     legendDot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
     },
     legendText: {
         ...typography.caption,
@@ -322,13 +644,25 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         backgroundColor: colors.surface,
         borderRadius: radius.md,
         padding: spacing.sm,
-        gap: spacing.xs,
-        ...shadows.button,
+        gap: 12,
+        ...shadows.card,
     },
-    comparisonText: {
+    comparisonIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    comparisonTitle: {
         ...typography.body,
-        color: colors.textMedium,
-        flex: 1,
+        fontWeight: '600',
+        color: colors.textStrong,
+    },
+    comparisonSubtitle: {
+        ...typography.caption,
+        color: colors.textWeak,
+        marginTop: 2,
     },
     emptyState: {
         alignItems: 'center',

@@ -299,6 +299,7 @@
         "noStartLocation": "No start location",
         "straightDistance": "Straight-line Distance",
         "actualDistance": "Actual Distance Traveled",
+        "averageSpeed": "Average Speed",
         "cancelledAt": "Cancelled at"
     },
     "alarmTrigger": {
@@ -507,6 +508,20 @@
             "hours": "{{count}} hr"
         },
         "start": "Start"
+    },
+    "notification": {
+        "arrival": {
+            "title": "You've arrived",
+            "body": "Tap to dismiss the alarm",
+            "defaultPlace": "Destination"
+        },
+        "tracking": {
+            "remaining": "{{distance}} remaining",
+            "elapsed": "{{time}} in transit",
+            "timeHours": "{{hours}}h {{minutes}}m",
+            "timeMinutes": "{{minutes}}m {{seconds}}s",
+            "timeSeconds": "{{seconds}}s"
+        }
     },
     "trackingNotification": {
         "remaining": "{{distance}} remaining",

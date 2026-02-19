@@ -16,6 +16,7 @@ import { Platform, AppState } from 'react-native';
 import { router } from 'expo-router';
 import { AlarmSoundKey } from '../../stores/alarmSettingsStore';
 import { captureError } from '../../utils/errorReporting';
+import i18n from '../../i18n';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -50,7 +51,20 @@ export async function initNotifications(): Promise<void> {
                 };
             }
 
-            // All other notifications (arrival, etc.) show normally
+            // Suppress arrival notifications in foreground
+            // (app auto-navigates to alarm-trigger screen, so the banner is redundant)
+            if (data?.type === 'arrival') {
+                return {
+                    shouldShowAlert: false,
+                    shouldShowBanner: false,
+                    shouldShowList: false,
+                    shouldPlaySound: false,
+                    shouldSetBadge: false,
+                    priority: Notifications.AndroidNotificationPriority.LOW,
+                };
+            }
+
+            // All other notifications show normally
             return {
                 shouldShowAlert: true,
                 shouldShowBanner: true,
@@ -116,12 +130,13 @@ export async function sendArrivalNotification(
     alarmId?: number,
     soundKey: AlarmSoundKey = 'alert',
 ): Promise<string> {
+    const displayTitle = alarmTitle || i18n.t('notification.arrival.defaultPlace');
+
     const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
-            title: '🔔 목적지 도착!',
-            body: alarmTitle
-                ? `${alarmTitle}에 도착했습니다.`
-                : '설정한 목적지에 도착했습니다.',
+            title: i18n.t('notification.arrival.title'),
+            subtitle: displayTitle,
+            body: i18n.t('notification.arrival.body'),
             sound: `${soundKey}.wav`,
             data: {
                 type: 'arrival',
@@ -163,17 +178,18 @@ export async function sendTrackingNotification(
     const seconds = elapsedSeconds % 60;
     let timeStr: string;
     if (hours > 0) {
-        timeStr = `${hours}시간 ${minutes}분`;
+        timeStr = i18n.t('notification.tracking.timeHours', { hours, minutes });
     } else if (minutes > 0) {
-        timeStr = `${minutes}분 ${seconds}초`;
+        timeStr = i18n.t('notification.tracking.timeMinutes', { minutes, seconds });
     } else {
-        timeStr = `${seconds}초`;
+        timeStr = i18n.t('notification.tracking.timeSeconds', { seconds });
     }
 
     await Notifications.scheduleNotificationAsync({
         content: {
-            title: `📍 ${alarmTitle} · 남은 거리 ${distanceStr}`,
-            body: `⏱ 경과 시간 ${timeStr}`,
+            title: alarmTitle || i18n.t('notification.arrival.defaultPlace'),
+            subtitle: i18n.t('notification.tracking.remaining', { distance: distanceStr }),
+            body: i18n.t('notification.tracking.elapsed', { time: timeStr }),
             sound: false,
             data: {
                 type: 'tracking',
@@ -264,7 +280,7 @@ export function isAppInForeground(): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Clear arrival notifications (after user dismisses alarm)
+// Clear notifications
 // ---------------------------------------------------------------------------
 
 /**
@@ -273,4 +289,36 @@ export function isAppInForeground(): boolean {
  */
 export async function clearArrivalNotifications(): Promise<void> {
     await Notifications.dismissAllNotificationsAsync();
+}
+
+/**
+ * Clear ALL alarm-related notifications from the notification center.
+ * Dismisses delivered notifications AND cancels any scheduled ones.
+ * Call when an alarm is completed or cancelled to ensure
+ * nothing lingers in the notification center.
+ */
+export async function clearAllAlarmNotifications(): Promise<void> {
+    try {
+        // Remove all delivered notifications from notification center
+        await Notifications.dismissAllNotificationsAsync();
+    } catch {
+        // ignore
+    }
+    try {
+        // Cancel any pending scheduled notifications
+        await Notifications.cancelAllScheduledNotificationsAsync();
+    } catch {
+        // ignore
+    }
+    try {
+        // Explicitly dismiss tracking notification by identifier
+        await Notifications.dismissNotificationAsync('tracking-update');
+    } catch {
+        // ignore
+    }
+    try {
+        await Notifications.cancelScheduledNotificationAsync('tracking-update');
+    } catch {
+        // ignore
+    }
 }

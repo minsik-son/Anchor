@@ -3,7 +3,7 @@
  * Full detail view with mini-map, travel info, checklist, and status
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Platform, useColorScheme } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Alarm, ActionMemo } from '../src/db/schema';
 import * as db from '../src/db/database';
 import { useAlarmStore } from '../src/stores/alarmStore';
+import { useLocationStore } from '../src/stores/locationStore';
 import { useThemeStore } from '../src/stores/themeStore';
 import { reverseGeocode } from '../src/services/geocoding';
 import { calculateDistance } from '../src/services/location/geofence';
@@ -55,6 +56,7 @@ export default function AlarmDetail() {
     const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && systemScheme === 'dark');
 
     const { deleteAlarm, loadAlarms } = useAlarmStore();
+    const { routeHistory: liveRouteHistory, routePointCount, isTracking } = useLocationStore();
     const { formatDistance } = useDistanceFormatter();
 
     const [alarm, setAlarm] = useState<Alarm | null>(null);
@@ -115,9 +117,17 @@ export default function AlarmDetail() {
         return t('alarmDetail.durationMinutes', { minutes: totalMinutes });
     }, [alarm, t]);
 
+    // Use LIVE routeHistory from Zustand store for active alarms,
+    // or DB-persisted route_points for completed/cancelled alarms
     const routePoints = useMemo(() => {
-        return alarm ? parseRoutePoints(alarm.route_points) : [];
-    }, [alarm]);
+        if (!alarm) return [];
+        // Active alarm: use live tracking data from store (DB hasn't saved yet)
+        if (alarm.is_active && isTracking && liveRouteHistory.length > 0) {
+            return liveRouteHistory;
+        }
+        // Completed/cancelled alarm: use persisted DB data
+        return parseRoutePoints(alarm.route_points);
+    }, [alarm, isTracking, liveRouteHistory, routePointCount]);
 
     // Straight-line distance (start → destination) — always shown in Location Info
     const straightDistance = useMemo(() => {
@@ -138,44 +148,64 @@ export default function AlarmDetail() {
         return formatDistance(distance);
     }, [alarm, formatDistance]);
 
-    const mapRegion = useMemo(() => {
-        if (!alarm) return undefined;
+    // Average speed (km/h) — only for completed alarms with both distance and time
+    const averageSpeed = useMemo(() => {
+        if (!alarm?.started_at || !alarm?.arrived_at) return null;
+        const distanceMeters = alarm.traveled_distance ?? 0;
+        if (distanceMeters <= 0) return null;
 
-        // Collect all coordinates (route points + start + destination) for bounding
-        const allCoords: { latitude: number; longitude: number }[] = [
+        const diffMs = new Date(alarm.arrived_at).getTime() - new Date(alarm.started_at).getTime();
+        const diffHours = diffMs / (1000 * 60 * 60);
+        if (diffHours <= 0) return null;
+
+        const speedKmh = (distanceMeters / 1000) / diffHours;
+        if (speedKmh < 1) {
+            // Show m/min for very slow speeds (walking)
+            const speedMpm = distanceMeters / (diffMs / 60000);
+            return `${Math.round(speedMpm)}m/min`;
+        }
+        return `${speedKmh.toFixed(1)}km/h`;
+    }, [alarm]);
+
+    const mapRef = useRef<MapView>(null);
+
+    // All coordinates to fit the map to (start + destination + route points)
+    const fitCoordinates = useMemo(() => {
+        if (!alarm) return [];
+        const coords: { latitude: number; longitude: number }[] = [
             { latitude: alarm.latitude, longitude: alarm.longitude },
         ];
         if (alarm.start_latitude && alarm.start_longitude) {
-            allCoords.push({ latitude: alarm.start_latitude, longitude: alarm.start_longitude });
+            coords.push({ latitude: alarm.start_latitude, longitude: alarm.start_longitude });
         }
         if (routePoints.length > 0) {
-            routePoints.forEach(p => allCoords.push({ latitude: p.latitude, longitude: p.longitude }));
+            routePoints.forEach(p => coords.push({ latitude: p.latitude, longitude: p.longitude }));
         }
+        return coords;
+    }, [alarm, routePoints]);
 
-        if (allCoords.length > 1) {
-            const lats = allCoords.map(c => c.latitude);
-            const lngs = allCoords.map(c => c.longitude);
-            const minLat = Math.min(...lats);
-            const maxLat = Math.max(...lats);
-            const minLng = Math.min(...lngs);
-            const maxLng = Math.max(...lngs);
-            const latDelta = (maxLat - minLat) * 1.5 + 0.01;
-            const lngDelta = (maxLng - minLng) * 1.5 + 0.01;
-            return {
-                latitude: (minLat + maxLat) / 2,
-                longitude: (minLng + maxLng) / 2,
-                latitudeDelta: Math.max(latDelta, 0.01),
-                longitudeDelta: Math.max(lngDelta, 0.01),
-            };
-        }
-
+    // Fallback initial region (centered on destination)
+    const initialRegion = useMemo(() => {
+        if (!alarm) return undefined;
         return {
             latitude: alarm.latitude,
             longitude: alarm.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02,
         };
-    }, [alarm, routePoints]);
+    }, [alarm]);
+
+    const handleMapReady = useCallback(() => {
+        if (fitCoordinates.length >= 2 && mapRef.current) {
+            // Fit map to show all points with proper padding
+            setTimeout(() => {
+                mapRef.current?.fitToCoordinates(fitCoordinates, {
+                    edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
+                    animated: false,
+                });
+            }, 100);
+        }
+    }, [fitCoordinates]);
 
     const handleDelete = () => {
         if (!alarm) return;
@@ -235,9 +265,11 @@ export default function AlarmDetail() {
                     accessibilityLabel={t('accessibility.mapShowingDestination', { destination: destAddress })}
                 >
                     <MapView
+                        ref={mapRef}
                         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
                         style={styles.map}
-                        region={mapRegion}
+                        initialRegion={initialRegion}
+                        onMapReady={handleMapReady}
                         scrollEnabled={false}
                         zoomEnabled={false}
                         rotateEnabled={false}
@@ -380,6 +412,16 @@ export default function AlarmDetail() {
                             <View style={styles.cardRowContent}>
                                 <Text style={styles.cardRowLabel}>{t('alarmDetail.actualDistance')}</Text>
                                 <Text style={styles.cardRowValue}>{actualTraveledDistance}</Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {averageSpeed && (
+                        <View style={styles.cardRow}>
+                            <Ionicons name="speedometer-outline" size={20} color={colors.primary} />
+                            <View style={styles.cardRowContent}>
+                                <Text style={styles.cardRowLabel}>{t('alarmDetail.averageSpeed')}</Text>
+                                <Text style={styles.cardRowValue}>{averageSpeed}</Text>
                             </View>
                         </View>
                     )}

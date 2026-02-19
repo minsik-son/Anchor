@@ -24,7 +24,7 @@ import { processLocationUpdate as processChallengeLocation } from './dwellTracke
 import { useChallengeStore } from '../../stores/challengeStore';
 import { useAlarmStore } from '../../stores/alarmStore';
 import { useAlarmSettingsStore } from '../../stores/alarmSettingsStore';
-import { sendArrivalNotification, isAppInForeground, sendTrackingNotification, clearTrackingNotification } from '../notification/notificationService';
+import { sendArrivalNotification, isAppInForeground, sendTrackingNotification, clearTrackingNotification, clearAllAlarmNotifications } from '../notification/notificationService';
 import {
     startTrackingActivity,
     updateTrackingActivity,
@@ -46,6 +46,8 @@ let lastProcessedAt: number = 0;
 let geofenceSetupFailed: boolean = false;
 let lastTrackingNotificationAt: number = 0;
 const TRACKING_NOTIFICATION_INTERVAL_MS = 30_000;
+/** Prevents repeated arrival notifications — set true after first trigger */
+let arrivalTriggered: boolean = false;
 
 // Callback for routine evaluation on background location ticks
 let onLocationTickCallback: (() => void) | null = null;
@@ -158,11 +160,18 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
     if (store.checkGeofence()) {
         const alarmStore = useAlarmStore.getState();
 
-        // Guard: skip if alarm was already dismissed or no active alarm
+        // Guard: skip if alarm was already dismissed, no active alarm, or already triggered
         if (!alarmStore.activeAlarm || alarmStore.dismissedAlarmId === alarmStore.activeAlarm.id) {
             console.log('[LocationService] Geofence triggered but alarm already dismissed, skipping');
             return;
         }
+        if (arrivalTriggered) {
+            console.log('[LocationService] Arrival already triggered, ignoring duplicate');
+            return;
+        }
+
+        // CRITICAL: Set flag IMMEDIATELY to prevent any further arrival processing
+        arrivalTriggered = true;
 
         console.log('[LocationService] User arrived! Distance:', store.distanceToTarget);
 
@@ -173,14 +182,7 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
             traveledDistance: store.traveledDistance,
         }).catch(() => {});
 
-        // Always send a local notification (works in both foreground & background)
-        const alarmTitle = alarmStore.activeAlarm.title ?? '';
-        const alarmId = alarmStore.activeAlarm.id;
-        const alarmSettings = useAlarmSettingsStore.getState();
-        sendArrivalNotification(alarmTitle, alarmId, alarmSettings.selectedSound).catch(err =>
-            console.warn('[LocationService] Failed to send notification:', err),
-        );
-
+        // Stop Live Activity and clear any tracking notifications
         stopTrackingActivity().catch(err =>
             console.warn('[LocationService] Failed to stop Live Activity:', err),
         );
@@ -188,10 +190,23 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
             console.warn('[LocationService] Failed to clear tracking notification:', err),
         );
 
-        // If app is in foreground, navigate to alarm screen
-        // Use replace instead of push to prevent stacking multiple modal instances
+        // Stop all location updates IMMEDIATELY to prevent repeated triggers
+        // NOTE: Route data is preserved in the store (stopAllTracking does NOT clear it)
+        await teardownPhase(currentServicePhase);
+        currentServicePhase = 'IDLE';
+
         if (isAppInForeground()) {
+            // App is active: navigate directly to full-screen alarm (no notification needed)
             router.navigate('/alarm-trigger');
+        } else {
+            // App is in background/lock screen: send ONE notification to wake the app
+            // This is the ONLY time we send an arrival notification — once per alarm
+            const alarmTitle = alarmStore.activeAlarm.title ?? '';
+            const alarmId = alarmStore.activeAlarm.id;
+            const alarmSettings = useAlarmSettingsStore.getState();
+            sendArrivalNotification(alarmTitle, alarmId, alarmSettings.selectedSound).catch(err =>
+                console.warn('[LocationService] Failed to send notification:', err),
+            );
         }
         return;
     }
@@ -420,6 +435,7 @@ export async function startTracking(
 
     currentTarget = target;
     currentRadius = radius;
+    arrivalTriggered = false; // Reset for new tracking session
 
     const distance = initialDistanceMeters ?? Infinity;
     const initialPhase = determinePhase(distance, 0, 'IDLE', false);
@@ -427,10 +443,13 @@ export async function startTracking(
     await transitionToPhase(initialPhase);
 
     if (distance !== Infinity) {
-        // Try Live Activity first (Dynamic Island), fall back to notification
+        // Only start Live Activity / notification for close-range phases.
+        // During GEOFENCING (>5km), do NOTHING — no Live Activity, no notification.
+        // The regular tracking loop will start Live Activity when user gets closer
+        // and the phase transitions to ADAPTIVE_POLLING or ACTIVE_TRACKING.
         const alarmStore = useAlarmStore.getState();
         const locationStore = useLocationStore.getState();
-        if (alarmStore.activeAlarm && locationStore.trackingStartedAt) {
+        if (alarmStore.activeAlarm && locationStore.trackingStartedAt && initialPhase !== 'GEOFENCING') {
             const started = await startTrackingActivity(
                 alarmStore.activeAlarm.title ?? '',
                 distance,
@@ -461,9 +480,12 @@ export async function stopAllTracking(): Promise<void> {
     lastProcessedAt = 0;
     geofenceSetupFailed = false;
     lastTrackingNotificationAt = 0;
-    useLocationStore.getState().clearRouteHistory();
+    arrivalTriggered = false;
+    // NOTE: Do NOT call clearRouteHistory() here.
+    // Route data must persist until completeAlarm/deactivateAlarm saves it to DB.
+    // The store's stopTracking() action handles clearing after DB save.
     stopTrackingActivity().catch(() => {});
-    clearTrackingNotification().catch(() => {});
+    clearAllAlarmNotifications().catch(() => {});
     console.log('[LocationService] All tracking stopped');
 }
 

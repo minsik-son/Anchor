@@ -299,6 +299,7 @@
         "noStartLocation": "출발 위치 정보 없음",
         "straightDistance": "직선 거리",
         "actualDistance": "실제 이동 거리",
+        "averageSpeed": "평균 이동 속도",
         "cancelledAt": "취소 시간"
     },
     "alarmTrigger": {
@@ -507,6 +508,20 @@
             "hours": "{{count}}시간"
         },
         "start": "시작하기"
+    },
+    "notification": {
+        "arrival": {
+            "title": "도착했어요",
+            "body": "탭하여 알람을 해제하세요",
+            "defaultPlace": "목적지"
+        },
+        "tracking": {
+            "remaining": "{{distance}} 남음",
+            "elapsed": "{{time}}째 이동 중",
+            "timeHours": "{{hours}}시간 {{minutes}}분",
+            "timeMinutes": "{{minutes}}분 {{seconds}}초",
+            "timeSeconds": "{{seconds}}초"
+        }
     },
     "trackingNotification": {
         "remaining": "{{distance}} 남음",

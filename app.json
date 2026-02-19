@@ -92,7 +92,8 @@
           "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ],
-      "expo-live-activity"
+      "expo-live-activity",
+      "./plugins/withCxx20"
     ]
   }
 }
