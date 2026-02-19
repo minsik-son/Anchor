@@ -165,8 +165,10 @@ export default function Home() {
             }
 
             // ★ Restore active alarm on app restart
+            // Skip if tracking is already running (alarm-setup already started it)
             const alarm = useAlarmStore.getState().activeAlarm;
-            if (alarm) {
+            const locationState = useLocationStore.getState();
+            if (alarm && !locationState.isTracking) {
                 console.log('[Home] Restoring active alarm:', alarm.title);
                 const target = { latitude: alarm.latitude, longitude: alarm.longitude };
 
