@@ -1,26 +1,34 @@
 /**
  * Challenge Location Picker
- * Search and select a place for a challenge using the existing search service
+ * Search and select a place, or tap the map to pick a location
  */
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, FlatList, ActivityIndicator } from 'react-native';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, TextInput, FlatList, ActivityIndicator, Platform, Keyboard } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Location from 'expo-location';
+import MapView, { Marker, PROVIDER_GOOGLE, MapPressEvent } from 'react-native-maps';
 import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../src/styles/theme';
 import { useLocationSearch } from '../src/hooks/useLocationSearch';
 import { SearchResult } from '../src/services/location/searchService';
+
+const DEFAULT_DELTA = 0.01;
 
 export default function ChallengeLocationPicker() {
     const insets = useSafeAreaInsets();
     const colors = useThemeColors();
     const { t } = useTranslation();
     const styles = useMemo(() => createStyles(colors), [colors]);
+    const mapRef = useRef<MapView>(null);
 
     const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+    const [selectedPin, setSelectedPin] = useState<{ latitude: number; longitude: number } | null>(null);
+    const [selectedPlaceName, setSelectedPlaceName] = useState<string | null>(null);
+    const [selectedPlaceAddress, setSelectedPlaceAddress] = useState<string | null>(null);
+    const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -39,7 +47,6 @@ export default function ChallengeLocationPicker() {
 
     const handlePlaceSelected = useCallback((coords: { latitude: number; longitude: number }, placeInfo: SearchResult) => {
         router.back();
-        // Use setTimeout to ensure navigation params are set after back
         setTimeout(() => {
             router.setParams({
                 placeName: placeInfo.name,
@@ -69,6 +76,48 @@ export default function ChallengeLocationPicker() {
             });
         }
     }, [selectPlace]);
+
+    const handleMapPress = useCallback(async (event: MapPressEvent) => {
+        const { latitude, longitude } = event.nativeEvent.coordinate;
+        Keyboard.dismiss();
+        setSelectedPin({ latitude, longitude });
+        setSelectedPlaceName(null);
+        setSelectedPlaceAddress(null);
+        setIsReverseGeocoding(true);
+
+        try {
+            const results = await Location.reverseGeocodeAsync({ latitude, longitude });
+            if (results && results.length > 0) {
+                const geocode = results[0];
+                const name = geocode.name || geocode.street || t('challengeCreate.location.selectedLocation');
+                const addressParts = [geocode.district, geocode.city, geocode.region].filter(Boolean);
+                const address = addressParts.join(' ');
+                setSelectedPlaceName(name);
+                setSelectedPlaceAddress(address || null);
+            } else {
+                setSelectedPlaceName(t('challengeCreate.location.selectedLocation'));
+            }
+        } catch {
+            setSelectedPlaceName(t('challengeCreate.location.selectedLocation'));
+        } finally {
+            setIsReverseGeocoding(false);
+        }
+    }, [t]);
+
+    const handleSelectPinLocation = useCallback(() => {
+        if (!selectedPin || !selectedPlaceName) return;
+        router.navigate({
+            pathname: '/challenge-create',
+            params: {
+                placeName: selectedPlaceName,
+                placeAddress: selectedPlaceAddress || '',
+                placeLatitude: String(selectedPin.latitude),
+                placeLongitude: String(selectedPin.longitude),
+            },
+        });
+    }, [selectedPin, selectedPlaceName, selectedPlaceAddress]);
+
+    const showMap = state.results.length === 0;
 
     const renderResult = useCallback(({ item }: { item: SearchResult }) => (
         <Pressable style={styles.resultItem} onPress={() => handleResultPress(item)}>
@@ -112,27 +161,107 @@ export default function ChallengeLocationPicker() {
                 </View>
             </View>
 
-            {/* Results */}
+            {/* Loading */}
             {state.isSearching && (
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="small" color={colors.primary} />
                 </View>
             )}
 
-            <FlatList
-                data={state.results}
-                keyExtractor={(item) => item.id}
-                renderItem={renderResult}
-                contentContainerStyle={styles.resultList}
-                keyboardShouldPersistTaps="handled"
-                ListEmptyComponent={
-                    state.query.length >= 2 && !state.isSearching ? (
-                        <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyText}>{t('common.noResults')}</Text>
+            {/* Search Results */}
+            {state.results.length > 0 && (
+                <FlatList
+                    data={state.results}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderResult}
+                    contentContainerStyle={styles.resultList}
+                    keyboardShouldPersistTaps="handled"
+                    style={styles.resultListContainer}
+                />
+            )}
+
+            {/* Map + Pin Selection */}
+            {showMap && currentLocation && (
+                <View style={styles.mapContainer}>
+                    <MapView
+                        ref={mapRef}
+                        style={styles.map}
+                        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+                        initialRegion={{
+                            latitude: currentLocation.latitude,
+                            longitude: currentLocation.longitude,
+                            latitudeDelta: DEFAULT_DELTA,
+                            longitudeDelta: DEFAULT_DELTA,
+                        }}
+                        onPress={handleMapPress}
+                        showsUserLocation
+                        showsMyLocationButton
+                    >
+                        {selectedPin && (
+                            <Marker
+                                coordinate={selectedPin}
+                                pinColor={colors.primary}
+                            />
+                        )}
+                    </MapView>
+
+                    {/* Map hint */}
+                    {!selectedPin && (
+                        <View style={styles.mapHintContainer}>
+                            <Text style={styles.mapHintText}>
+                                {t('challengeCreate.location.mapSelectHint')}
+                            </Text>
                         </View>
-                    ) : null
-                }
-            />
+                    )}
+
+                    {/* Selected location card */}
+                    {selectedPin && (
+                        <View style={[styles.selectedLocationCard, { paddingBottom: insets.bottom + spacing.sm }]}>
+                            <View style={styles.selectedLocationInfo}>
+                                <Ionicons name="location" size={20} color={colors.primary} />
+                                <View style={styles.selectedLocationText}>
+                                    {isReverseGeocoding ? (
+                                        <ActivityIndicator size="small" color={colors.primary} />
+                                    ) : (
+                                        <>
+                                            <Text style={styles.selectedLocationName} numberOfLines={1}>
+                                                {selectedPlaceName || '...'}
+                                            </Text>
+                                            {selectedPlaceAddress && (
+                                                <Text style={styles.selectedLocationAddress} numberOfLines={1}>
+                                                    {selectedPlaceAddress}
+                                                </Text>
+                                            )}
+                                        </>
+                                    )}
+                                </View>
+                            </View>
+                            <Pressable
+                                style={[
+                                    styles.selectButton,
+                                    (!selectedPlaceName || isReverseGeocoding) && styles.selectButtonDisabled,
+                                ]}
+                                onPress={handleSelectPinLocation}
+                                disabled={!selectedPlaceName || isReverseGeocoding}
+                            >
+                                <Text style={[
+                                    styles.selectButtonText,
+                                    (!selectedPlaceName || isReverseGeocoding) && styles.selectButtonTextDisabled,
+                                ]}>
+                                    {t('challengeCreate.location.selectThisLocation')}
+                                </Text>
+                            </Pressable>
+                        </View>
+                    )}
+                </View>
+            )}
+
+            {/* No results message */}
+            {state.query.length >= 2 && !state.isSearching && state.results.length === 0 && (
+                <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>{t('common.noResults')}</Text>
+                </View>
+            )}
         </View>
     );
 }
@@ -179,6 +308,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         padding: spacing.md,
         alignItems: 'center',
     },
+    resultListContainer: {
+        flex: 1,
+    },
     resultList: {
         paddingHorizontal: spacing.md,
     },
@@ -209,6 +341,76 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     },
     emptyText: {
         ...typography.body,
+        color: colors.textWeak,
+    },
+    // Map styles
+    mapContainer: {
+        flex: 1,
+    },
+    map: {
+        flex: 1,
+    },
+    mapHintContainer: {
+        position: 'absolute',
+        top: spacing.md,
+        left: spacing.md,
+        right: spacing.md,
+        backgroundColor: colors.surface,
+        borderRadius: radius.md,
+        padding: spacing.sm,
+        alignItems: 'center',
+        ...shadows.card,
+    },
+    mapHintText: {
+        ...typography.caption,
+        color: colors.textMedium,
+    },
+    // Selected location card
+    selectedLocationCard: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: colors.surface,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: spacing.md,
+        ...shadows.card,
+    },
+    selectedLocationInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        marginBottom: spacing.sm,
+    },
+    selectedLocationText: {
+        flex: 1,
+    },
+    selectedLocationName: {
+        ...typography.body,
+        fontWeight: '600',
+        color: colors.textStrong,
+    },
+    selectedLocationAddress: {
+        ...typography.caption,
+        color: colors.textMedium,
+        marginTop: 2,
+    },
+    selectButton: {
+        backgroundColor: colors.primary,
+        borderRadius: radius.md,
+        paddingVertical: 14,
+        alignItems: 'center',
+    },
+    selectButtonDisabled: {
+        backgroundColor: colors.border,
+    },
+    selectButtonText: {
+        ...typography.body,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+    selectButtonTextDisabled: {
         color: colors.textWeak,
     },
 });

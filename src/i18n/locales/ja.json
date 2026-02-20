@@ -1,559 +1,562 @@
 {
-    "common": {
-        "cancel": "キャンセル",
-        "confirm": "確認",
-        "delete": "削除",
-        "save": "保存",
-        "edit": "編集",
-        "close": "閉じる",
-        "loading": "読み込み中...",
-        "error": "エラー",
-        "success": "成功",
-        "retry": "再試行",
-        "saveFailed": "保存に失敗しました",
-        "noResults": "検索結果がありません",
-        "alwaysOn": "常時有効",
-        "offlineMode": "オフラインモード — 一部機能が制限されます"
+  "common": {
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "delete": "削除",
+    "save": "保存",
+    "edit": "編集",
+    "close": "閉じる",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "retry": "再試行",
+    "saveFailed": "保存に失敗しました",
+    "noResults": "検索結果がありません",
+    "alwaysOn": "常時有効",
+    "offlineMode": "オフラインモード — 一部機能が制限されます"
+  },
+  "liveActivity": {
+    "remaining": "残り {{distance}}",
+    "arrivedTitle": "到着完了",
+    "arrivedSubtitle": "目的地に到着しました"
+  },
+  "tabs": {
+    "home": "ホーム",
+    "challenge": "チャレンジ",
+    "activity": "アクティビティ",
+    "history": "履歴",
+    "settings": "設定"
+  },
+  "home": {
+    "searchPlaceholder": "どこへ行きますか？",
+    "searchSource": {
+      "google": "(Google)",
+      "kakao": "(Kakao)"
     },
-    "liveActivity": {
-        "remaining": "残り {{distance}}",
-        "arrivedTitle": "到着完了",
-        "arrivedSubtitle": "目的地に到着しました"
+    "radius": "半径 {{radius}}",
+    "createAlarm": "ここにアラーム設定",
+    "favorites": "お気に入り",
+    "addFavorite": "お気に入り追加",
+    "hint": "地図を動かして位置を決めてください",
+    "recentDestinations": "最近の目的地",
+    "searching": "検索中...",
+    "activeAlarm": {
+      "calculating": "目的地までの距離を計算中..."
     },
-    "tabs": {
-        "home": "ホーム",
-        "challenge": "チャレンジ",
-        "activity": "アクティビティ",
-        "history": "履歴",
-        "settings": "設定"
-    },
-    "home": {
-        "searchPlaceholder": "どこへ行きますか？",
-        "searchSource": {
-            "google": "(Google)",
-            "kakao": "(Kakao)"
-        },
-        "radius": "半径 {{radius}}",
-        "createAlarm": "ここにアラーム設定",
-        "favorites": "お気に入り",
-        "addFavorite": "お気に入り追加",
-        "hint": "地図を動かして位置を決めてください",
-        "recentDestinations": "最近の目的地",
-        "searching": "検索中...",
-        "activeAlarm": {
-            "calculating": "目的地までの距離を計算中..."
-        },
-        "deleteFavorite": {
-            "title": "お気に入り削除",
-            "message": "'{{name}}'をお気に入りから削除しますか？",
-            "confirm": "削除"
-        }
-    },
-    "alarmSetup": {
-        "title": "アラーム作成",
-        "titleLabel": "タイトル",
-        "titlePlaceholder": "例：東京駅、会社、家",
-        "startLocation": "出発地",
-        "currentLocation": "現在地",
-        "selectFromMap": "地図から選択",
-        "transportMode": "移動手段",
-        "driving": "運転",
-        "transit": "公共交通",
-        "walking": "徒歩",
-        "cycling": "自転車",
-        "routeOptions": "経路オプション",
-        "radius": "アラーム半径",
-        "radiusValue": "{{radius}}",
-        "alarmPreview": {
-            "beforeRadius": "目的地半径 {{radius}} 前",
-            "estimatedTime": "約 {{minutes}}分後にアラームが鳴ります"
-        },
-        "memo": "メモ (任意)",
-        "memoPlaceholder": "例：傘を持っていく、3番出口",
-        "startAlarm": "アラーム開始",
-        "noTitle": "タイトルが必要です",
-        "pleaseEnterTitle": "アラームのタイトルを入力してください。",
-        "locationError": "位置情報がありません。",
-        "createFailed": "アラームの作成に失敗しました。",
-        "longDistanceTitle": "長距離アラーム",
-        "longDistanceMessage": "目的地まで{{distance}}離れています。長距離アラームはバッテリー消費が大きくなる可能性があります。続けますか？",
-        "longDistanceConfirm": "続ける",
-        "batteryInfo": {
-            "title": "スマートバッテリー節約",
-            "description": "距離に応じて位置確認の間隔を自動調整し、バッテリーを節約します。",
-            "phase1": "• 10km以上 → 10分間隔",
-            "phase2": "• 2〜10km → 3分間隔",
-            "phase3": "• 1〜2km → 1分間隔",
-            "phase4": "• 1km以内 → リアルタイム追跡"
-        },
-        "iconLabel": "アイコン",
-        "icons": {
-            "home": "家",
-            "office": "会社",
-            "restaurant": "レストラン",
-            "cafe": "カフェ",
-            "pin": "位置",
-            "gym": "ジム",
-            "others": "その他"
-        },
-        "smartBattery": "スマートバッテリー節約",
-        "smartBatteryDesc": "距離に応じて位置確認の間隔を自動調整します。",
-        "shakeToDismiss": "振ってアラーム停止",
-        "shakeToDismissDesc": "アラームが鳴った時、端末を振るとアラームが止まります。",
-        "locationLabel": "目的地",
-        "rawCoordinates": "元の座標 (デバッグ)"
-    },
-    "navigation": {
-        "eta": "到着予定 {{time}}",
-        "distance": "残り距離",
-        "speed": "現在速度",
-        "toAlarm": "アラームまで",
-        "stopAlarm": "アラームキャンセル"
-    },
-    "history": {
-        "title": "アラーム履歴",
-        "total": "全 {{count}}件",
-        "empty": "まだアラームがありません",
-        "emptyHint": "ホーム画面からアラームを作成してみましょう！",
-        "active": "有効",
-        "status": {
-            "inProgress": "進行中",
-            "completed": "完了",
-            "cancelled": "キャンセル"
-        },
-        "detail": {
-            "locationInfo": "位置情報",
-            "loading": "住所検索中...",
-            "radius": "半径 {{radius}}",
-            "createdAt": "作成日時",
-            "deleteAlarm": "アラーム削除",
-            "title": "アラーム詳細",
-            "addressNotFound": "住所が見つかりません",
-            "activated": "有効化済み"
-        },
-        "deleteAll": {
-            "button": "すべて削除",
-            "title": "すべて削除",
-            "message": "すべてのアラーム履歴を削除しますか？この操作は元に戻せません。",
-            "confirm": "すべて削除"
-        },
-        "time": {
-            "justNow": "たった今",
-            "minutesAgo": "{{minutes}}分前",
-            "hoursAgo": "{{hours}}時間前"
-        }
-    },
-    "settings": {
-        "title": "設定",
-        "sections": {
-            "notification": "通知設定",
-            "app": "アプリ情報",
-            "map": "地図設定",
-            "locationAndMap": "位置情報と地図",
-            "dataManagement": "データ管理"
-        },
-        "items": {
-            "language": "言語設定",
-            "sound": "アラーム音",
-            "vibration": "バイブレーション",
-            "preview": "アラームプレビュー",
-            "battery": "バッテリー最適化",
-            "help": "ヘルプ",
-            "privacy": "プライバシーポリシー",
-            "terms": "利用規約",
-            "version": "バージョン",
-            "licenses": "オープンソースライセンス",
-            "backgroundLocation": "バックグラウンド位置追跡",
-            "backgroundLocationDesc": "アラームが有効な場合、自動的に位置を追跡します。",
-            "batterySaving": "スマートバッテリー節約",
-            "smartVolume": "スマートボリューム",
-            "shakeToOff": "振ってアラーム停止",
-            "alertType": "通知方法",
-            "mapEngine": "地図エンジン",
-            "theme": "画面テーマ",
-            "alarmBackground": "アラーム背景",
-            "distanceUnit": "距離単位",
-            "deleteAllData": "すべてのデータを削除",
-            "deleteAllDataDesc": "アラーム履歴、ルート、チャレンジなどすべてのデータを削除します"
-        },
-        "unit": {
-            "title": "距離単位",
-            "metric": "メートル法 (km, m)",
-            "imperial": "ヤード・ポンド法 (mi, ft)",
-            "currentlyMetric": "現在: キロメートル",
-            "currentlyImperial": "現在: マイル"
-        },
-        "theme": {
-            "title": "画面テーマ",
-            "light": "ライトモード",
-            "dark": "ダークモード",
-            "system": "システム設定"
-        },
-        "alertType": {
-            "title": "通知方法",
-            "both": "サウンド + バイブレーション",
-            "soundOnly": "サウンドのみ",
-            "vibrationOnly": "バイブレーションのみ"
-        },
-        "soundPicker": {
-            "title": "アラーム音を選択"
-        },
-        "sounds": {
-            "breeze": "ブリーズ",
-            "alert": "アラート",
-            "digital": "デジタル",
-            "crystal": "クリスタル"
-        },
-        "backgroundPicker": {
-            "title": "アラーム背景を選択",
-            "default": "デフォルト",
-            "gallery": "ギャラリーから選択"
-        },
-        "backgroundThemes": {
-            "pixelDream": "Pixel Dream",
-            "aura": "Aura",
-            "intoTheWild": "Into the Wild",
-            "cityLights": "City Lights",
-            "stillMoment": "Still Moment"
-        },
-        "deleteAll": {
-            "title": "すべてのデータを削除",
-            "message": "アラーム履歴、ルートデータ、チャレンジなどすべてのデータが完全に削除されます。この操作は元に戻せません。",
-            "confirm": "削除"
-        }
-    },
-    "favoriteSetup": {
-        "title": "お気に入り追加",
-        "nameLabel": "名前",
-        "namePlaceholder": "例：家、会社、カフェ",
-        "iconLabel": "アイコン",
-        "locationLabel": "位置",
-        "save": "保存する",
-        "noName": "名前が必要です",
-        "pleaseEnterName": "お気に入りの名前を入力してください。",
-        "maxLimitReached": "お気に入りは最大3件まで登録できます。"
-    },
-    "onboarding": {
-        "welcome": "見逃せない場所に\nアンカーを下ろそう",
-        "subtitle": "目的地の近くに着いたら\n事前にお知らせします",
-        "permissions": {
-            "location": "位置情報の権限が必要",
-            "locationDesc": "到着アラームのために位置情報が必要です。設定で許可してください。",
-            "background": "バックグラウンド権限が必要",
-            "backgroundDesc": "アプリが閉じていてもアラームを受け取るには「常に許可」を選択してください。",
-            "notification": "通知の権限が必要",
-            "notificationDesc": "到着前に通知を受け取ることができます"
-        },
-        "features": {
-            "battery": "スマートバッテリー節約",
-            "location": "正確な位置ベースアラーム",
-            "checklist": "やることチェックリスト"
-        },
-        "start": "始める",
-        "requesting": "権限をリクエスト中...",
-        "permissionNote": "位置情報の許可が必要です",
-        "permissionFailed": "権限リクエストに失敗しました。もう一度お試しください。",
-        "later": "あとで",
-        "toSettings": "設定へ",
-        "expoGo": {
-            "title": "Expo Goの制限",
-            "message": "実機で位置情報の権限をテストするにはDevelopment Buildが必要です。今は権限なしで続けますか？",
-            "cancel": "キャンセル",
-            "continue": "続ける"
-        }
-    },
-    "routes": {
-        "recommended": "推奨ルート",
-        "shortest": "最短時間",
-        "shortestDistance": "最短距離",
-        "arrival": "{{time}} 到着"
-    },
-    "alarmDashboard": {
-        "distance": "{{distance}}",
-        "remainingDistance": "目的地まで {{distance}}",
-        "distanceLabel": "残り距離",
-        "cancelAlarm": "アラームキャンセル",
-        "cancelConfirm": {
-            "title": "アラームキャンセル",
-            "message": "進行中のアラームをキャンセルしますか？",
-            "confirm": "キャンセルする"
-        },
-        "checklist": "チェックリスト",
-        "elapsedTime": "経過時間"
-    },
-    "alarmDetail": {
-        "destination": "目的地",
-        "startPoint": "出発地",
-        "travelInfo": "移動情報",
-        "travelTime": "移動時間",
-        "travelDistance": "移動距離",
-        "arrivedAt": "到着時刻",
-        "startedAt": "出発時刻",
-        "checklist": "チェックリスト",
-        "cancelled": "キャンセル済み",
-        "arrived": "到着済み",
-        "active": "有効",
-        "durationMinutes": "{{minutes}}分",
-        "durationHours": "{{hours}}時間",
-        "durationHoursMinutes": "{{hours}}時間{{minutes}}分",
-        "noStartLocation": "出発地情報なし",
-        "straightDistance": "直線距離",
-        "actualDistance": "実際の移動距離",
-        "averageSpeed": "平均移動速度",
-        "cancelledAt": "キャンセル時刻"
-    },
-    "alarmTrigger": {
-        "arrived": "目的地に到着しました！",
-        "arrivedBadge": "到着",
-        "arrivedAt": "{{place}}に到着しました！",
-        "dismiss": "スライドして解除",
-        "dismissHint": "最後までスライドしてアラームを消す",
-        "checklist": "チェックリスト",
-        "shakeHint": "振ってアラームを解除できます"
-    },
-    "alarmCompletion": {
-        "title": "アラーム完了！",
-        "subtitle": "目的地に無事到着しました"
-    },
-    "actionChecklist": {
-        "title": "お忘れなく！",
-        "subtitle": "{{destination}}に到着しました！",
-        "done": "完了",
-        "allChecked": "すべて完了！お疲れ様です。",
-        "remaining": "{{count}}件 残り"
-    },
-    "devDebug": {
-        "title": "デバッグパネル",
-        "timeSection": "時間オフセット",
-        "currentTime": "現在時刻",
-        "offsetDays": "{{days}}日オフセット",
-        "resetTime": "リセット",
-        "visitSection": "訪問シミュレーター",
-        "simulateVisit": "出席記録",
-        "simulateVisitDesc": "選択したチャレンジに訪問記録を追加",
-        "stateSection": "状態オーバーライド",
-        "combo": "コンボ",
-        "chances": "チャンス",
-        "week": "週",
-        "apply": "適用",
-        "noActiveChallenge": "アクティブなチャレンジがありません",
-        "visitSuccess": "訪問を記録しました",
-        "visitFailed": "訪問記録失敗: {{reason}}"
-    },
-    "days": {
-        "sun": "日",
-        "mon": "月",
-        "tue": "火",
-        "wed": "水",
-        "thu": "木",
-        "fri": "金",
-        "sat": "土",
-        "sunFull": "日曜日",
-        "monFull": "月曜日",
-        "tueFull": "火曜日",
-        "wedFull": "水曜日",
-        "thuFull": "木曜日",
-        "friFull": "金曜日",
-        "satFull": "土曜日",
-        "weekdays": "平日",
-        "weekend": "週末",
-        "everyday": "毎日"
-    },
-    "timePicker": {
-        "title": "時刻選択",
-        "hour": "時",
-        "minute": "分"
-    },
-    "activity": {
-        "title": "アクティビティ",
-        "steps": "歩数",
-        "distance": "距離",
-        "calories": "カロリー",
-        "caloriesBurned": "今日{{kcal}}kcal消費しました",
-        "viewStats": "統計を見る",
-        "pedometerUnavailable": "このデバイスでは歩数計を使用できません",
-        "noDataYet": "まだデータがありません",
-        "noDataHint": "歩き始めるとアクティビティデータがここに表示されます！",
-        "stats": {
-            "title": "アクティビティ統計",
-            "weekly": "週間",
-            "monthly": "月間",
-            "totalSteps": "総歩数",
-            "dailyAvg": "1日平均",
-            "bestDay": "最高記録",
-            "comparison": "前回より{{percent}}%{{direction}}",
-            "more": "多い",
-            "less": "少ない",
-            "noChange": "変化なし",
-            "stepsUnit": "歩",
-            "current": "今",
-            "previous": "前"
-        },
-        "startChallenge": "チャレンジを始める",
-        "startChallengeDesc": "訪問目標を設定して達成しましょう",
-        "messages": {
-            "ecoTreesTitle": "木{{trees}}本分を植えました！",
-            "ecoTreesSub": "今日の歩行距離によるCO2相殺量",
-            "carbonReductionTitle": "CO2を{{grams}}g削減！",
-            "carbonReductionSub": "歩いて移動し炭素排出を削減",
-            "goalMotivationTitle": "あと{{remaining}}歩！",
-            "goalMotivationSub": "10,000歩の目標まで頑張って",
-            "landmarkBurjTitle": "ブルジュ・ハリファ({{height}})突破！",
-            "landmarkBurjSub": "今日の総距離が高さを超えました",
-            "comparisonYesterdayTitle": "昨日より{{percent}}%多く歩きました！",
-            "comparisonYesterdaySub": "昨日より良い調子です"
-        }
-    },
-    "challenge": {
-        "headerTitle": "チャレンジ",
-        "welcome": "場所への訪問目標を設定して\n継続的に達成しましょう！",
-        "recommended": {
-            "title": "おすすめチャレンジ",
-            "subtitle": "こんな目標はいかが？"
-        },
-        "challenges": {
-            "walk": {
-                "title": "気軽にお散歩",
-                "subtitle": "週3回 • 公園 • 初心者向け"
-            },
-            "study": {
-                "title": "図書館通いで充実ライフ",
-                "subtitle": "週5回 • 勉強習慣づくり"
-            },
-            "gym": {
-                "title": "ジム初心者卒業",
-                "subtitle": "週3回 • コツコツ運動"
-            }
-        },
-        "createCustom": "オリジナルチャレンジを作る",
-        "combo": "{{count}}コンボ",
-        "chances": "チャンス {{count}}回",
-        "weekComplete": "今週の目標達成！",
-        "oneMore": "あと1回！",
-        "remainingVisits": "あと{{count}}回訪問してください",
-        "weekInfo": "{{current}}週目/{{total}}週",
-        "limitTitle": "チャレンジ制限",
-        "limitMessage": "アクティブなチャレンジは最大2つまでです。",
-        "status": {
-            "active": "進行中",
-            "graduated": "卒業",
-            "failed": "失敗"
-        },
-        "graduated": {
-            "title": "おめでとうございます！",
-            "subtitle": "チャレンジを無事に達成しました",
-            "newChallenge": "新しいチャレンジを始める"
-        },
-        "detail": {
-            "title": "チャレンジ詳細",
-            "week": "{{current}}週目 / {{total}}週",
-            "visitRecords": "訪問記録 ({{count}})",
-            "noVisits": "まだ訪問記録がありません",
-            "min": "分",
-            "counted": "認定",
-            "notCounted": "未認定",
-            "delete": "チャレンジを削除",
-            "deleteTitle": "チャレンジを削除",
-            "deleteMessage": "このチャレンジを削除しますか？この操作は元に戻せません。"
-        }
-    },
-    "geofence": {
-        "directions": {
-            "north": "北",
-            "northEast": "北東",
-            "east": "東",
-            "southEast": "南東",
-            "south": "南",
-            "southWest": "南西",
-            "west": "西",
-            "northWest": "北西"
-        }
-    },
-    "geocoding": {
-        "addressNotFound": "住所が見つかりません",
-        "failedToLoad": "住所を読み込めませんでした"
-    },
-    "challengeCreate": {
-        "title": "チャレンジ作成",
-        "location": {
-            "label": "目標の場所",
-            "select": "場所を選択",
-            "change": "変更",
-            "searchTitle": "場所検索",
-            "searchPlaceholder": "場所を検索してください"
-        },
-        "goal": {
-            "label": "目標設定",
-            "duration": "期間",
-            "week": "1週間",
-            "month": "1ヶ月",
-            "frequency": "週間目標回数",
-            "timesPerWeek": "週{{count}}回",
-            "repeat": "リピートモード",
-            "daySpecific": "曜日指定",
-            "daySpecificDesc": "選択した曜日のみ訪問を認定します",
-            "daySpecificError": "{{selected}}個選択中 / {{required}}個必要",
-            "weeksCount": "{{count}}週間"
-        },
-        "identity": {
-            "iconLabel": "アイコン",
-            "nameLabel": "チャレンジ名",
-            "namePlaceholder": "例：朝の運動、読書"
-        },
-        "dwell": {
-            "label": "滞在時間",
-            "toggle": "滞在時間の確認",
-            "description": "一定時間以上滞在しないと出席として認定されません",
-            "minutes": "{{count}}分",
-            "hours": "{{count}}時間"
-        },
-        "start": "スタート"
-    },
-    "notification": {
-        "arrival": {
-            "title": "到着しました",
-            "body": "タップしてアラームを解除",
-            "defaultPlace": "目的地"
-        },
-        "tracking": {
-            "remaining": "残り {{distance}}",
-            "elapsed": "{{time}} 移動中",
-            "timeHours": "{{hours}}時間{{minutes}}分",
-            "timeMinutes": "{{minutes}}分{{seconds}}秒",
-            "timeSeconds": "{{seconds}}秒"
-        }
-    },
-    "trackingNotification": {
-        "remaining": "{{distance}} 残り",
-        "elapsed": "{{time}} 経過"
-    },
-    "trackingDetail": {
-        "title": "トラッキング詳細",
-        "remainingDistance": "残り距離",
-        "traveledDistance": "移動距離",
-        "currentSpeed": "現在速度",
-        "elapsedTime": "経過時間",
-        "viewAll": "全体表示",
-        "currentLocation": "現在地",
-        "speedUnit": "km/h"
-    },
-    "accessibility": {
-        "tapToViewDetails": "タップして詳細を表示",
-        "cancelAlarmHint": "アラームをキャンセルします",
-        "deleteAlarmHint": "アラームを削除します",
-        "slideToDismiss": "スライドしてアラームを解除",
-        "mapShowingDestination": "{{destination}}の目的地を表示する地図",
-        "remainingDistance": "残り距離 {{distance}}",
-        "searchLocation": "場所を検索",
-        "startNavigation": "ナビゲーション開始",
-        "stopNavigation": "ナビゲーション停止",
-        "myLocation": "現在地ボタン",
-        "createAlarmButton": "アラーム作成ボタン",
-        "mapInteraction": "選択した場所を表示するインタラクティブマップ",
-        "dismissAlarm": "スライドしてアラームを解除",
-        "alarmTitle": "アラームタイトル {{title}}",
-        "statusBadge": "ステータス {{status}}",
-        "alarmHistoryCard": "{{title}}, {{status}}, {{time}}",
-        "alarmDetails": "アラームの詳細を表示するにはタップしてください"
+    "deleteFavorite": {
+      "title": "お気に入り削除",
+      "message": "'{{name}}'をお気に入りから削除しますか？",
+      "confirm": "削除"
     }
+  },
+  "alarmSetup": {
+    "title": "アラーム作成",
+    "titleLabel": "タイトル",
+    "titlePlaceholder": "例：東京駅、会社、家",
+    "startLocation": "出発地",
+    "currentLocation": "現在地",
+    "selectFromMap": "地図から選択",
+    "transportMode": "移動手段",
+    "driving": "運転",
+    "transit": "公共交通",
+    "walking": "徒歩",
+    "cycling": "自転車",
+    "routeOptions": "経路オプション",
+    "radius": "アラーム半径",
+    "radiusValue": "{{radius}}",
+    "alarmPreview": {
+      "beforeRadius": "目的地半径 {{radius}} 前",
+      "estimatedTime": "約 {{minutes}}分後にアラームが鳴ります"
+    },
+    "memo": "メモ (任意)",
+    "memoPlaceholder": "例：傘を持っていく、3番出口",
+    "startAlarm": "アラーム開始",
+    "noTitle": "タイトルが必要です",
+    "pleaseEnterTitle": "アラームのタイトルを入力してください。",
+    "locationError": "位置情報がありません。",
+    "createFailed": "アラームの作成に失敗しました。",
+    "longDistanceTitle": "長距離アラーム",
+    "longDistanceMessage": "目的地まで{{distance}}離れています。長距離アラームはバッテリー消費が大きくなる可能性があります。続けますか？",
+    "longDistanceConfirm": "続ける",
+    "batteryInfo": {
+      "title": "スマートバッテリー節約",
+      "description": "距離に応じて位置確認の間隔を自動調整し、バッテリーを節約します。",
+      "phase1": "• 10km以上 → 10分間隔",
+      "phase2": "• 2〜10km → 3分間隔",
+      "phase3": "• 1〜2km → 1分間隔",
+      "phase4": "• 1km以内 → リアルタイム追跡"
+    },
+    "iconLabel": "アイコン",
+    "icons": {
+      "home": "家",
+      "office": "会社",
+      "restaurant": "レストラン",
+      "cafe": "カフェ",
+      "pin": "位置",
+      "gym": "ジム",
+      "others": "その他"
+    },
+    "smartBattery": "スマートバッテリー節約",
+    "smartBatteryDesc": "距離に応じて位置確認の間隔を自動調整します。",
+    "shakeToDismiss": "振ってアラーム停止",
+    "shakeToDismissDesc": "アラームが鳴った時、端末を振るとアラームが止まります。",
+    "locationLabel": "目的地",
+    "rawCoordinates": "元の座標 (デバッグ)"
+  },
+  "navigation": {
+    "eta": "到着予定 {{time}}",
+    "distance": "残り距離",
+    "speed": "現在速度",
+    "toAlarm": "アラームまで",
+    "stopAlarm": "アラームキャンセル"
+  },
+  "history": {
+    "title": "アラーム履歴",
+    "total": "全 {{count}}件",
+    "empty": "まだアラームがありません",
+    "emptyHint": "ホーム画面からアラームを作成してみましょう！",
+    "active": "有効",
+    "status": {
+      "inProgress": "進行中",
+      "completed": "完了",
+      "cancelled": "キャンセル"
+    },
+    "detail": {
+      "locationInfo": "位置情報",
+      "loading": "住所検索中...",
+      "radius": "半径 {{radius}}",
+      "createdAt": "作成日時",
+      "deleteAlarm": "アラーム削除",
+      "title": "アラーム詳細",
+      "addressNotFound": "住所が見つかりません",
+      "activated": "有効化済み"
+    },
+    "deleteAll": {
+      "button": "すべて削除",
+      "title": "すべて削除",
+      "message": "すべてのアラーム履歴を削除しますか？この操作は元に戻せません。",
+      "confirm": "すべて削除"
+    },
+    "time": {
+      "justNow": "たった今",
+      "minutesAgo": "{{minutes}}分前",
+      "hoursAgo": "{{hours}}時間前"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "sections": {
+      "notification": "通知設定",
+      "app": "アプリ情報",
+      "map": "地図設定",
+      "locationAndMap": "位置情報と地図",
+      "dataManagement": "データ管理"
+    },
+    "items": {
+      "language": "言語設定",
+      "sound": "アラーム音",
+      "vibration": "バイブレーション",
+      "preview": "アラームプレビュー",
+      "battery": "バッテリー最適化",
+      "help": "ヘルプ",
+      "privacy": "プライバシーポリシー",
+      "terms": "利用規約",
+      "version": "バージョン",
+      "licenses": "オープンソースライセンス",
+      "backgroundLocation": "バックグラウンド位置追跡",
+      "backgroundLocationDesc": "アラームが有効な場合、自動的に位置を追跡します。",
+      "batterySaving": "スマートバッテリー節約",
+      "smartVolume": "スマートボリューム",
+      "shakeToOff": "振ってアラーム停止",
+      "alertType": "通知方法",
+      "mapEngine": "地図エンジン",
+      "theme": "画面テーマ",
+      "alarmBackground": "アラーム背景",
+      "distanceUnit": "距離単位",
+      "deleteAllData": "すべてのデータを削除",
+      "deleteAllDataDesc": "アラーム履歴、ルート、チャレンジなどすべてのデータを削除します"
+    },
+    "unit": {
+      "title": "距離単位",
+      "metric": "メートル法 (km, m)",
+      "imperial": "ヤード・ポンド法 (mi, ft)",
+      "currentlyMetric": "現在: キロメートル",
+      "currentlyImperial": "現在: マイル"
+    },
+    "theme": {
+      "title": "画面テーマ",
+      "light": "ライトモード",
+      "dark": "ダークモード",
+      "system": "システム設定"
+    },
+    "alertType": {
+      "title": "通知方法",
+      "both": "サウンド + バイブレーション",
+      "soundOnly": "サウンドのみ",
+      "vibrationOnly": "バイブレーションのみ"
+    },
+    "soundPicker": {
+      "title": "アラーム音を選択"
+    },
+    "sounds": {
+      "breeze": "ブリーズ",
+      "alert": "アラート",
+      "digital": "デジタル",
+      "crystal": "クリスタル"
+    },
+    "backgroundPicker": {
+      "title": "アラーム背景を選択",
+      "default": "デフォルト",
+      "gallery": "ギャラリーから選択"
+    },
+    "backgroundThemes": {
+      "pixelDream": "Pixel Dream",
+      "aura": "Aura",
+      "intoTheWild": "Into the Wild",
+      "cityLights": "City Lights",
+      "stillMoment": "Still Moment"
+    },
+    "deleteAll": {
+      "title": "すべてのデータを削除",
+      "message": "アラーム履歴、ルートデータ、チャレンジなどすべてのデータが完全に削除されます。この操作は元に戻せません。",
+      "confirm": "削除"
+    }
+  },
+  "favoriteSetup": {
+    "title": "お気に入り追加",
+    "nameLabel": "名前",
+    "namePlaceholder": "例：家、会社、カフェ",
+    "iconLabel": "アイコン",
+    "locationLabel": "位置",
+    "save": "保存する",
+    "noName": "名前が必要です",
+    "pleaseEnterName": "お気に入りの名前を入力してください。",
+    "maxLimitReached": "お気に入りは最大3件まで登録できます。"
+  },
+  "onboarding": {
+    "welcome": "見逃せない場所に\nアンカーを下ろそう",
+    "subtitle": "目的地の近くに着いたら\n事前にお知らせします",
+    "permissions": {
+      "location": "位置情報の権限が必要",
+      "locationDesc": "到着アラームのために位置情報が必要です。設定で許可してください。",
+      "background": "バックグラウンド権限が必要",
+      "backgroundDesc": "アプリが閉じていてもアラームを受け取るには「常に許可」を選択してください。",
+      "notification": "通知の権限が必要",
+      "notificationDesc": "到着前に通知を受け取ることができます"
+    },
+    "features": {
+      "battery": "スマートバッテリー節約",
+      "location": "正確な位置ベースアラーム",
+      "checklist": "やることチェックリスト"
+    },
+    "start": "始める",
+    "requesting": "権限をリクエスト中...",
+    "permissionNote": "位置情報の許可が必要です",
+    "permissionFailed": "権限リクエストに失敗しました。もう一度お試しください。",
+    "later": "あとで",
+    "toSettings": "設定へ",
+    "expoGo": {
+      "title": "Expo Goの制限",
+      "message": "実機で位置情報の権限をテストするにはDevelopment Buildが必要です。今は権限なしで続けますか？",
+      "cancel": "キャンセル",
+      "continue": "続ける"
+    }
+  },
+  "routes": {
+    "recommended": "推奨ルート",
+    "shortest": "最短時間",
+    "shortestDistance": "最短距離",
+    "arrival": "{{time}} 到着"
+  },
+  "alarmDashboard": {
+    "distance": "{{distance}}",
+    "remainingDistance": "目的地まで {{distance}}",
+    "distanceLabel": "残り距離",
+    "cancelAlarm": "アラームキャンセル",
+    "cancelConfirm": {
+      "title": "アラームキャンセル",
+      "message": "進行中のアラームをキャンセルしますか？",
+      "confirm": "キャンセルする"
+    },
+    "checklist": "チェックリスト",
+    "elapsedTime": "経過時間"
+  },
+  "alarmDetail": {
+    "destination": "目的地",
+    "startPoint": "出発地",
+    "travelInfo": "移動情報",
+    "travelTime": "移動時間",
+    "travelDistance": "移動距離",
+    "arrivedAt": "到着時刻",
+    "startedAt": "出発時刻",
+    "checklist": "チェックリスト",
+    "cancelled": "キャンセル済み",
+    "arrived": "到着済み",
+    "active": "有効",
+    "durationMinutes": "{{minutes}}分",
+    "durationHours": "{{hours}}時間",
+    "durationHoursMinutes": "{{hours}}時間{{minutes}}分",
+    "noStartLocation": "出発地情報なし",
+    "straightDistance": "直線距離",
+    "actualDistance": "実際の移動距離",
+    "averageSpeed": "平均移動速度",
+    "cancelledAt": "キャンセル時刻"
+  },
+  "alarmTrigger": {
+    "arrived": "目的地に到着しました！",
+    "arrivedBadge": "到着",
+    "arrivedAt": "{{place}}に到着しました！",
+    "dismiss": "スライドして解除",
+    "dismissHint": "最後までスライドしてアラームを消す",
+    "checklist": "チェックリスト",
+    "shakeHint": "振ってアラームを解除できます"
+  },
+  "alarmCompletion": {
+    "title": "アラーム完了！",
+    "subtitle": "目的地に無事到着しました"
+  },
+  "actionChecklist": {
+    "title": "お忘れなく！",
+    "subtitle": "{{destination}}に到着しました！",
+    "done": "完了",
+    "allChecked": "すべて完了！お疲れ様です。",
+    "remaining": "{{count}}件 残り"
+  },
+  "devDebug": {
+    "title": "デバッグパネル",
+    "timeSection": "時間オフセット",
+    "currentTime": "現在時刻",
+    "offsetDays": "{{days}}日オフセット",
+    "resetTime": "リセット",
+    "visitSection": "訪問シミュレーター",
+    "simulateVisit": "出席記録",
+    "simulateVisitDesc": "選択したチャレンジに訪問記録を追加",
+    "stateSection": "状態オーバーライド",
+    "combo": "コンボ",
+    "chances": "チャンス",
+    "week": "週",
+    "apply": "適用",
+    "noActiveChallenge": "アクティブなチャレンジがありません",
+    "visitSuccess": "訪問を記録しました",
+    "visitFailed": "訪問記録失敗: {{reason}}"
+  },
+  "days": {
+    "sun": "日",
+    "mon": "月",
+    "tue": "火",
+    "wed": "水",
+    "thu": "木",
+    "fri": "金",
+    "sat": "土",
+    "sunFull": "日曜日",
+    "monFull": "月曜日",
+    "tueFull": "火曜日",
+    "wedFull": "水曜日",
+    "thuFull": "木曜日",
+    "friFull": "金曜日",
+    "satFull": "土曜日",
+    "weekdays": "平日",
+    "weekend": "週末",
+    "everyday": "毎日"
+  },
+  "timePicker": {
+    "title": "時刻選択",
+    "hour": "時",
+    "minute": "分"
+  },
+  "activity": {
+    "title": "アクティビティ",
+    "steps": "歩数",
+    "distance": "距離",
+    "calories": "カロリー",
+    "caloriesBurned": "今日{{kcal}}kcal消費しました",
+    "viewStats": "統計を見る",
+    "pedometerUnavailable": "このデバイスでは歩数計を使用できません",
+    "noDataYet": "まだデータがありません",
+    "noDataHint": "歩き始めるとアクティビティデータがここに表示されます！",
+    "stats": {
+      "title": "アクティビティ統計",
+      "weekly": "週間",
+      "monthly": "月間",
+      "totalSteps": "総歩数",
+      "dailyAvg": "1日平均",
+      "bestDay": "最高記録",
+      "comparison": "前回より{{percent}}%{{direction}}",
+      "more": "多い",
+      "less": "少ない",
+      "noChange": "変化なし",
+      "stepsUnit": "歩",
+      "current": "今",
+      "previous": "前"
+    },
+    "startChallenge": "チャレンジを始める",
+    "startChallengeDesc": "訪問目標を設定して達成しましょう",
+    "messages": {
+      "ecoTreesTitle": "木{{trees}}本分を植えました！",
+      "ecoTreesSub": "今日の歩行距離によるCO2相殺量",
+      "carbonReductionTitle": "CO2を{{grams}}g削減！",
+      "carbonReductionSub": "歩いて移動し炭素排出を削減",
+      "goalMotivationTitle": "あと{{remaining}}歩！",
+      "goalMotivationSub": "10,000歩の目標まで頑張って",
+      "landmarkBurjTitle": "ブルジュ・ハリファ({{height}})突破！",
+      "landmarkBurjSub": "今日の総距離が高さを超えました",
+      "comparisonYesterdayTitle": "昨日より{{percent}}%多く歩きました！",
+      "comparisonYesterdaySub": "昨日より良い調子です"
+    }
+  },
+  "challenge": {
+    "headerTitle": "チャレンジ",
+    "welcome": "場所への訪問目標を設定して\n継続的に達成しましょう！",
+    "recommended": {
+      "title": "おすすめチャレンジ",
+      "subtitle": "こんな目標はいかが？"
+    },
+    "challenges": {
+      "walk": {
+        "title": "気軽にお散歩",
+        "subtitle": "週3回 • 公園 • 初心者向け"
+      },
+      "study": {
+        "title": "図書館通いで充実ライフ",
+        "subtitle": "週5回 • 勉強習慣づくり"
+      },
+      "gym": {
+        "title": "ジム初心者卒業",
+        "subtitle": "週3回 • コツコツ運動"
+      }
+    },
+    "createCustom": "オリジナルチャレンジを作る",
+    "combo": "{{count}}コンボ",
+    "chances": "チャンス {{count}}回",
+    "weekComplete": "今週の目標達成！",
+    "oneMore": "あと1回！",
+    "remainingVisits": "あと{{count}}回訪問してください",
+    "weekInfo": "{{current}}週目/{{total}}週",
+    "limitTitle": "チャレンジ制限",
+    "limitMessage": "アクティブなチャレンジは最大2つまでです。",
+    "status": {
+      "active": "進行中",
+      "graduated": "卒業",
+      "failed": "失敗"
+    },
+    "graduated": {
+      "title": "おめでとうございます！",
+      "subtitle": "チャレンジを無事に達成しました",
+      "newChallenge": "新しいチャレンジを始める"
+    },
+    "detail": {
+      "title": "チャレンジ詳細",
+      "week": "{{current}}週目 / {{total}}週",
+      "visitRecords": "訪問記録 ({{count}})",
+      "noVisits": "まだ訪問記録がありません",
+      "min": "分",
+      "counted": "認定",
+      "notCounted": "未認定",
+      "delete": "チャレンジを削除",
+      "deleteTitle": "チャレンジを削除",
+      "deleteMessage": "このチャレンジを削除しますか？この操作は元に戻せません。"
+    }
+  },
+  "geofence": {
+    "directions": {
+      "north": "北",
+      "northEast": "北東",
+      "east": "東",
+      "southEast": "南東",
+      "south": "南",
+      "southWest": "南西",
+      "west": "西",
+      "northWest": "北西"
+    }
+  },
+  "geocoding": {
+    "addressNotFound": "住所が見つかりません",
+    "failedToLoad": "住所を読み込めませんでした"
+  },
+  "challengeCreate": {
+    "title": "チャレンジ作成",
+    "location": {
+      "label": "目標の場所",
+      "select": "場所を選択",
+      "change": "変更",
+      "searchTitle": "場所検索",
+      "searchPlaceholder": "場所を検索してください",
+      "mapSelectHint": "地図をタップして場所を選択",
+      "selectedLocation": "選択した場所",
+      "selectThisLocation": "この場所を選択"
+    },
+    "goal": {
+      "label": "目標設定",
+      "duration": "期間",
+      "week": "1週間",
+      "month": "1ヶ月",
+      "frequency": "週間目標回数",
+      "timesPerWeek": "週{{count}}回",
+      "repeat": "リピートモード",
+      "daySpecific": "曜日指定",
+      "daySpecificDesc": "選択した曜日のみ訪問を認定します",
+      "daySpecificError": "{{selected}}個選択中 / {{required}}個必要",
+      "weeksCount": "{{count}}週間"
+    },
+    "identity": {
+      "iconLabel": "アイコン",
+      "nameLabel": "チャレンジ名",
+      "namePlaceholder": "例：朝の運動、読書"
+    },
+    "dwell": {
+      "label": "滞在時間",
+      "toggle": "滞在時間の確認",
+      "description": "一定時間以上滞在しないと出席として認定されません",
+      "minutes": "{{count}}分",
+      "hours": "{{count}}時間"
+    },
+    "start": "スタート"
+  },
+  "notification": {
+    "arrival": {
+      "title": "到着しました",
+      "body": "タップしてアラームを解除",
+      "defaultPlace": "目的地"
+    },
+    "tracking": {
+      "remaining": "残り {{distance}}",
+      "elapsed": "{{time}} 移動中",
+      "timeHours": "{{hours}}時間{{minutes}}分",
+      "timeMinutes": "{{minutes}}分{{seconds}}秒",
+      "timeSeconds": "{{seconds}}秒"
+    }
+  },
+  "trackingNotification": {
+    "remaining": "{{distance}} 残り",
+    "elapsed": "{{time}} 経過"
+  },
+  "trackingDetail": {
+    "title": "トラッキング詳細",
+    "remainingDistance": "残り距離",
+    "traveledDistance": "移動距離",
+    "currentSpeed": "現在速度",
+    "elapsedTime": "経過時間",
+    "viewAll": "全体表示",
+    "currentLocation": "現在地",
+    "speedUnit": "km/h"
+  },
+  "accessibility": {
+    "tapToViewDetails": "タップして詳細を表示",
+    "cancelAlarmHint": "アラームをキャンセルします",
+    "deleteAlarmHint": "アラームを削除します",
+    "slideToDismiss": "スライドしてアラームを解除",
+    "mapShowingDestination": "{{destination}}の目的地を表示する地図",
+    "remainingDistance": "残り距離 {{distance}}",
+    "searchLocation": "場所を検索",
+    "startNavigation": "ナビゲーション開始",
+    "stopNavigation": "ナビゲーション停止",
+    "myLocation": "現在地ボタン",
+    "createAlarmButton": "アラーム作成ボタン",
+    "mapInteraction": "選択した場所を表示するインタラクティブマップ",
+    "dismissAlarm": "スライドしてアラームを解除",
+    "alarmTitle": "アラームタイトル {{title}}",
+    "statusBadge": "ステータス {{status}}",
+    "alarmHistoryCard": "{{title}}, {{status}}, {{time}}",
+    "alarmDetails": "アラームの詳細を表示するにはタップしてください"
+  }
 }

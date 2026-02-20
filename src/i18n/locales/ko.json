@@ -1,559 +1,562 @@
 {
-    "common": {
-        "cancel": "취소",
-        "confirm": "확인",
-        "delete": "삭제",
-        "save": "저장",
-        "edit": "수정",
-        "close": "닫기",
-        "loading": "로딩 중...",
-        "error": "오류",
-        "success": "성공",
-        "retry": "다시 시도",
-        "saveFailed": "저장에 실패했습니다",
-        "noResults": "검색 결과가 없습니다",
-        "alwaysOn": "항상 활성",
-        "offlineMode": "오프라인 모드 — 일부 기능이 제한됩니다"
+  "common": {
+    "cancel": "취소",
+    "confirm": "확인",
+    "delete": "삭제",
+    "save": "저장",
+    "edit": "수정",
+    "close": "닫기",
+    "loading": "로딩 중...",
+    "error": "오류",
+    "success": "성공",
+    "retry": "다시 시도",
+    "saveFailed": "저장에 실패했습니다",
+    "noResults": "검색 결과가 없습니다",
+    "alwaysOn": "항상 활성",
+    "offlineMode": "오프라인 모드 — 일부 기능이 제한됩니다"
+  },
+  "liveActivity": {
+    "remaining": "{{distance}} 남음",
+    "arrivedTitle": "도착 완료",
+    "arrivedSubtitle": "목적지에 도착했습니다"
+  },
+  "tabs": {
+    "home": "홈",
+    "challenge": "챌린지",
+    "activity": "활동",
+    "history": "히스토리",
+    "settings": "설정"
+  },
+  "home": {
+    "searchPlaceholder": "어디로 갈까요?",
+    "searchSource": {
+      "google": "(Google)",
+      "kakao": "(Kakao)"
     },
-    "liveActivity": {
-        "remaining": "{{distance}} 남음",
-        "arrivedTitle": "도착 완료",
-        "arrivedSubtitle": "목적지에 도착했습니다"
+    "radius": "반경 {{radius}}",
+    "createAlarm": "여기로 알람 설정",
+    "favorites": "즐겨찾기",
+    "addFavorite": "즐겨찾기 추가",
+    "hint": "지도를 움직여 위치를 정해보세요",
+    "recentDestinations": "최근 목적지",
+    "searching": "검색 중...",
+    "activeAlarm": {
+      "calculating": "목적지까지 계산 중..."
     },
-    "tabs": {
-        "home": "홈",
-        "challenge": "챌린지",
-        "activity": "활동",
-        "history": "히스토리",
-        "settings": "설정"
-    },
-    "home": {
-        "searchPlaceholder": "어디로 갈까요?",
-        "searchSource": {
-            "google": "(Google)",
-            "kakao": "(Kakao)"
-        },
-        "radius": "반경 {{radius}}",
-        "createAlarm": "여기로 알람 설정",
-        "favorites": "즐겨찾기",
-        "addFavorite": "즐겨찾기 추가",
-        "hint": "지도를 움직여 위치를 정해보세요",
-        "recentDestinations": "최근 목적지",
-        "searching": "검색 중...",
-        "activeAlarm": {
-            "calculating": "목적지까지 계산 중..."
-        },
-        "deleteFavorite": {
-            "title": "즐겨찾기 삭제",
-            "message": "'{{name}}' 즐겨찾기를 삭제하시겠습니까?",
-            "confirm": "삭제"
-        }
-    },
-    "alarmSetup": {
-        "title": "알람 만들기",
-        "titleLabel": "제목",
-        "titlePlaceholder": "예: 강남역, 회사, 집",
-        "startLocation": "출발지",
-        "currentLocation": "현재 위치",
-        "selectFromMap": "지도에서 선택",
-        "transportMode": "이동 수단",
-        "driving": "운전",
-        "transit": "대중교통",
-        "walking": "도보",
-        "cycling": "자전거",
-        "routeOptions": "경로 옵션",
-        "radius": "알람 반경",
-        "radiusValue": "{{radius}}",
-        "alarmPreview": {
-            "beforeRadius": "목적지 반경 {{radius}} 전",
-            "estimatedTime": "약 {{minutes}}분 뒤에 알람이 울립니다"
-        },
-        "memo": "메모 (선택사항)",
-        "memoPlaceholder": "예: 우산 챙기기, 3번 출구",
-        "startAlarm": "알람 시작",
-        "noTitle": "알람 제목 필요",
-        "pleaseEnterTitle": "알람 제목을 입력해주세요.",
-        "locationError": "위치 정보가 없습니다.",
-        "createFailed": "알람 생성에 실패했습니다.",
-        "longDistanceTitle": "먼 거리 알람",
-        "longDistanceMessage": "목적지까지 {{distance}} 떨어져 있습니다. 장거리 알람은 배터리 소모가 클 수 있습니다. 계속하시겠습니까?",
-        "longDistanceConfirm": "계속",
-        "batteryInfo": {
-            "title": "스마트 배터리 절약",
-            "description": "거리에 따라 위치 확인 주기를 자동 조절하여 배터리를 절약합니다.",
-            "phase1": "• 10km 이상 → 10분 간격",
-            "phase2": "• 2~10km → 3분 간격",
-            "phase3": "• 1~2km → 1분 간격",
-            "phase4": "• 1km 이내 → 실시간 추적"
-        },
-        "iconLabel": "아이콘",
-        "icons": {
-            "home": "집",
-            "office": "회사",
-            "restaurant": "식당",
-            "cafe": "카페",
-            "pin": "위치",
-            "gym": "운동",
-            "others": "기타"
-        },
-        "smartBattery": "스마트 배터리 절약",
-        "smartBatteryDesc": "거리에 따라 위치 확인 주기를 자동 조절합니다.",
-        "shakeToDismiss": "흔들어서 끄기",
-        "shakeToDismissDesc": "알람이 울릴 때 기기를 흔들면 알람이 꺼집니다.",
-        "locationLabel": "목적지 위치",
-        "rawCoordinates": "원본 좌표 (디버그)"
-    },
-    "navigation": {
-        "eta": "도착 예정 {{time}}",
-        "distance": "남은 거리",
-        "speed": "현재 속도",
-        "toAlarm": "알람까지",
-        "stopAlarm": "알람 취소"
-    },
-    "history": {
-        "title": "알람 히스토리",
-        "total": "총 {{count}}개",
-        "empty": "아직 생성된 알람이 없습니다",
-        "emptyHint": "홈 화면에서 알람을 만들어보세요!",
-        "active": "활성화",
-        "status": {
-            "inProgress": "진행중",
-            "completed": "완료됨",
-            "cancelled": "취소됨"
-        },
-        "detail": {
-            "locationInfo": "위치 정보",
-            "loading": "주소 검색 중...",
-            "radius": "반경 {{radius}}",
-            "createdAt": "생성 시간",
-            "deleteAlarm": "알람 삭제",
-            "title": "알람 상세정보",
-            "addressNotFound": "주소를 찾을 수 없습니다",
-            "activated": "활성화됨"
-        },
-        "deleteAll": {
-            "button": "전체 삭제",
-            "title": "전체 삭제",
-            "message": "모든 알람 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
-            "confirm": "전체 삭제"
-        },
-        "time": {
-            "justNow": "방금 전",
-            "minutesAgo": "{{minutes}}분 전",
-            "hoursAgo": "{{hours}}시간 전"
-        }
-    },
-    "settings": {
-        "title": "설정",
-        "sections": {
-            "notification": "알림 설정",
-            "app": "앱 정보",
-            "map": "지도 설정",
-            "locationAndMap": "위치 및 지도",
-            "dataManagement": "데이터 관리"
-        },
-        "items": {
-            "language": "언어 설정",
-            "sound": "알람 사운드",
-            "vibration": "진동",
-            "preview": "알람 미리듣기",
-            "battery": "배터리 최적화",
-            "help": "도움말",
-            "privacy": "개인정보 처리방침",
-            "terms": "이용약관",
-            "version": "버전",
-            "licenses": "오픈소스 라이선스",
-            "backgroundLocation": "백그라운드 위치 추적",
-            "backgroundLocationDesc": "알람 활성화 시 자동으로 위치를 추적합니다.",
-            "batterySaving": "스마트 배터리 절약",
-            "smartVolume": "스마트 볼륨",
-            "shakeToOff": "흔들어서 끄기",
-            "alertType": "알림 방식",
-            "mapEngine": "지도 엔진",
-            "theme": "화면 테마",
-            "alarmBackground": "알람 배경",
-            "distanceUnit": "거리 단위",
-            "deleteAllData": "모든 데이터 삭제",
-            "deleteAllDataDesc": "알람 기록, 경로, 챌린지 등 모든 데이터를 삭제합니다"
-        },
-        "unit": {
-            "title": "거리 단위",
-            "metric": "미터법 (km, m)",
-            "imperial": "야드파운드법 (mi, ft)",
-            "currentlyMetric": "현재: 킬로미터",
-            "currentlyImperial": "현재: 마일"
-        },
-        "theme": {
-            "title": "화면 테마",
-            "light": "밝은 모드",
-            "dark": "어두운 모드",
-            "system": "시스템 설정"
-        },
-        "alertType": {
-            "title": "알림 방식",
-            "both": "소리 + 진동",
-            "soundOnly": "소리만",
-            "vibrationOnly": "진동만"
-        },
-        "soundPicker": {
-            "title": "알람 사운드 선택"
-        },
-        "sounds": {
-            "breeze": "브리즈",
-            "alert": "알림",
-            "digital": "디지털",
-            "crystal": "크리스탈"
-        },
-        "backgroundPicker": {
-            "title": "알람 배경 선택",
-            "default": "기본 배경",
-            "gallery": "갤러리에서 선택"
-        },
-        "backgroundThemes": {
-            "pixelDream": "Pixel Dream",
-            "aura": "Aura",
-            "intoTheWild": "Into the Wild",
-            "cityLights": "City Lights",
-            "stillMoment": "Still Moment"
-        },
-        "deleteAll": {
-            "title": "모든 데이터 삭제",
-            "message": "알람 기록, 경로 데이터, 챌린지 등 모든 데이터가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
-            "confirm": "삭제"
-        }
-    },
-    "favoriteSetup": {
-        "title": "즐겨찾기 추가",
-        "nameLabel": "이름",
-        "namePlaceholder": "예: 집, 회사, 카페",
-        "iconLabel": "아이콘",
-        "locationLabel": "위치",
-        "save": "저장하기",
-        "noName": "이름 필요",
-        "pleaseEnterName": "즐겨찾기 이름을 입력해주세요.",
-        "maxLimitReached": "즐겨찾기는 최대 3개까지 등록할 수 있습니다."
-    },
-    "onboarding": {
-        "welcome": "놓치면 안 되는 장소에\n닻을 내려두세요",
-        "subtitle": "목적지 근처에 도착하면\n미리 알려드릴게요",
-        "permissions": {
-            "location": "위치 권한 필요",
-            "locationDesc": "목적지 도착 알람을 위해 위치 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
-            "background": "백그라운드 권한 필요",
-            "backgroundDesc": "앱이 꺼진 상태에서도 알람을 받으려면 \"항상 허용\"을 선택해주세요.",
-            "notification": "알림 권한 필요",
-            "notificationDesc": "도착 전 알림을 받을 수 있습니다"
-        },
-        "features": {
-            "battery": "스마트 배터리 절약",
-            "location": "정확한 위치 기반 알람",
-            "checklist": "할 일 체크리스트"
-        },
-        "start": "시작하기",
-        "requesting": "권한 요청 중...",
-        "permissionNote": "위치 권한 허용이 필요합니다",
-        "permissionFailed": "권한 요청에 실패했습니다. 다시 시도해주세요.",
-        "later": "나중에",
-        "toSettings": "설정으로",
-        "expoGo": {
-            "title": "Expo Go 제한",
-            "message": "실제 기기에서 위치 권한을 테스트하려면 Development Build가 필요합니다. 지금은 권한 없이 계속할까요?",
-            "cancel": "취소",
-            "continue": "계속하기"
-        }
-    },
-    "routes": {
-        "recommended": "추천 경로",
-        "shortest": "최단 시간",
-        "shortestDistance": "최단 거리",
-        "arrival": "{{time}} 도착"
-    },
-    "alarmDashboard": {
-        "distance": "{{distance}}",
-        "remainingDistance": "목적지까지 {{distance}}",
-        "distanceLabel": "남은 거리",
-        "cancelAlarm": "알람 취소",
-        "cancelConfirm": {
-            "title": "알람 취소",
-            "message": "진행 중인 알람을 취소하시겠습니까?",
-            "confirm": "취소하기"
-        },
-        "checklist": "할 일 목록",
-        "elapsedTime": "경과 시간"
-    },
-    "alarmDetail": {
-        "destination": "목적지",
-        "startPoint": "출발지",
-        "travelInfo": "이동 정보",
-        "travelTime": "이동 시간",
-        "travelDistance": "이동 거리",
-        "arrivedAt": "도착 시간",
-        "startedAt": "출발 시간",
-        "checklist": "할 일 목록",
-        "cancelled": "취소됨",
-        "arrived": "도착 완료",
-        "active": "활성화 중",
-        "durationMinutes": "{{minutes}}분",
-        "durationHours": "{{hours}}시간",
-        "durationHoursMinutes": "{{hours}}시간 {{minutes}}분",
-        "noStartLocation": "출발 위치 정보 없음",
-        "straightDistance": "직선 거리",
-        "actualDistance": "실제 이동 거리",
-        "averageSpeed": "평균 이동 속도",
-        "cancelledAt": "취소 시간"
-    },
-    "alarmTrigger": {
-        "arrived": "목적지에 도착했어요!",
-        "arrivedBadge": "도착",
-        "arrivedAt": "{{place}}에 도착했어요!",
-        "dismiss": "밀어서 해제",
-        "dismissHint": "끝까지 밀어서 알람을 끄세요",
-        "checklist": "할 일 목록",
-        "shakeHint": "흔들어서 해제할 수 있어요"
-    },
-    "alarmCompletion": {
-        "title": "알람 완료!",
-        "subtitle": "목적지에 안전하게 도착했습니다"
-    },
-    "actionChecklist": {
-        "title": "잊지 마세요!",
-        "subtitle": "{{destination}}에 도착했어요!",
-        "done": "완료",
-        "allChecked": "모두 완료! 잘했어요.",
-        "remaining": "{{count}}개 남음"
-    },
-    "devDebug": {
-        "title": "디버그 패널",
-        "timeSection": "시간 오프셋",
-        "currentTime": "현재 시간",
-        "offsetDays": "{{days}}일 오프셋",
-        "resetTime": "초기화",
-        "visitSection": "방문 시뮬레이터",
-        "simulateVisit": "출석 기록",
-        "simulateVisitDesc": "선택한 챌린지에 방문 기록 추가",
-        "stateSection": "상태 오버라이드",
-        "combo": "콤보",
-        "chances": "찬스",
-        "week": "주차",
-        "apply": "적용",
-        "noActiveChallenge": "활성 챌린지가 없습니다",
-        "visitSuccess": "방문 기록 완료",
-        "visitFailed": "방문 기록 실패: {{reason}}"
-    },
-    "days": {
-        "sun": "일",
-        "mon": "월",
-        "tue": "화",
-        "wed": "수",
-        "thu": "목",
-        "fri": "금",
-        "sat": "토",
-        "sunFull": "일요일",
-        "monFull": "월요일",
-        "tueFull": "화요일",
-        "wedFull": "수요일",
-        "thuFull": "목요일",
-        "friFull": "금요일",
-        "satFull": "토요일",
-        "weekdays": "평일",
-        "weekend": "주말",
-        "everyday": "매일"
-    },
-    "timePicker": {
-        "title": "시간 선택",
-        "hour": "시",
-        "minute": "분"
-    },
-    "activity": {
-        "title": "활동",
-        "steps": "걸음",
-        "distance": "거리",
-        "calories": "칼로리",
-        "caloriesBurned": "오늘 {{kcal}}kcal 소모했어요",
-        "viewStats": "통계 보기",
-        "pedometerUnavailable": "이 기기에서는 만보기를 사용할 수 없습니다",
-        "noDataYet": "아직 데이터가 없습니다",
-        "noDataHint": "걸으면 활동 데이터가 여기에 표시됩니다!",
-        "stats": {
-            "title": "활동 통계",
-            "weekly": "주간",
-            "monthly": "월간",
-            "totalSteps": "총 걸음 수",
-            "dailyAvg": "일 평균",
-            "bestDay": "최고 기록",
-            "comparison": "이전 대비 {{percent}}% {{direction}}",
-            "more": "더 많이",
-            "less": "더 적게",
-            "noChange": "변화 없음",
-            "stepsUnit": "걸음",
-            "current": "이번",
-            "previous": "지난"
-        },
-        "startChallenge": "챌린지 시작하기",
-        "startChallengeDesc": "장소 방문 목표를 세우고 달성해보세요",
-        "messages": {
-            "ecoTreesTitle": "나무 {{trees}}그루를 심었어요!",
-            "ecoTreesSub": "오늘 걸은 거리 기반 CO2 상쇄량",
-            "carbonReductionTitle": "{{grams}}g의 CO2를 줄였어요!",
-            "carbonReductionSub": "걸어서 이동하며 탄소 배출 감소",
-            "goalMotivationTitle": "{{remaining}}보 남았어요!",
-            "goalMotivationSub": "10,000보 목표까지 화이팅",
-            "landmarkBurjTitle": "부르즈 할리파({{height}}) 돌파!",
-            "landmarkBurjSub": "오늘 걸은 총 거리가 높이를 넘었어요",
-            "comparisonYesterdayTitle": "어제보다 {{percent}}% 더 걸었어요!",
-            "comparisonYesterdaySub": "어제보다 더 잘하고 있어요"
-        }
-    },
-    "challenge": {
-        "headerTitle": "챌린지",
-        "welcome": "장소 방문 목표를 세우고\n꾸준히 달성해보세요!",
-        "recommended": {
-            "title": "추천 챌린지",
-            "subtitle": "이런 목표는 어때요?"
-        },
-        "challenges": {
-            "walk": {
-                "title": "가볍게 산책하기",
-                "subtitle": "주 3회 • 공원 • 초보자 추천"
-            },
-            "study": {
-                "title": "갓생 살기 (도서관/스터디카페)",
-                "subtitle": "주 5회 • 공부 습관 만들기"
-            },
-            "gym": {
-                "title": "헬린이 탈출",
-                "subtitle": "주 3회 • 꾸준한 운동"
-            }
-        },
-        "createCustom": "나만의 챌린지 만들기",
-        "combo": "{{count}}콤보",
-        "chances": "찬스 {{count}}회",
-        "weekComplete": "이번 주 목표 달성!",
-        "oneMore": "한 번만 더!",
-        "remainingVisits": "{{count}}번 더 방문하세요",
-        "weekInfo": "{{current}}주차/{{total}}주",
-        "limitTitle": "챌린지 제한",
-        "limitMessage": "활성 챌린지는 최대 2개까지 가능합니다.",
-        "status": {
-            "active": "진행중",
-            "graduated": "졸업",
-            "failed": "실패"
-        },
-        "graduated": {
-            "title": "축하합니다!",
-            "subtitle": "챌린지를 성공적으로 완료했어요",
-            "newChallenge": "새 챌린지 시작하기"
-        },
-        "detail": {
-            "title": "챌린지 상세",
-            "week": "{{current}}주차 / {{total}}주",
-            "visitRecords": "방문 기록 ({{count}})",
-            "noVisits": "아직 방문 기록이 없습니다",
-            "min": "분",
-            "counted": "인정",
-            "notCounted": "미인정",
-            "delete": "챌린지 삭제",
-            "deleteTitle": "챌린지 삭제",
-            "deleteMessage": "이 챌린지를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
-        }
-    },
-    "geofence": {
-        "directions": {
-            "north": "북",
-            "northEast": "북동",
-            "east": "동",
-            "southEast": "남동",
-            "south": "남",
-            "southWest": "남서",
-            "west": "서",
-            "northWest": "북서"
-        }
-    },
-    "geocoding": {
-        "addressNotFound": "주소를 찾을 수 없습니다",
-        "failedToLoad": "주소를 불러올 수 없습니다"
-    },
-    "challengeCreate": {
-        "title": "챌린지 만들기",
-        "location": {
-            "label": "목표 장소",
-            "select": "장소 선택하기",
-            "change": "변경",
-            "searchTitle": "장소 검색",
-            "searchPlaceholder": "장소를 검색하세요"
-        },
-        "goal": {
-            "label": "목표 설정",
-            "duration": "기간",
-            "week": "1주일",
-            "month": "1달",
-            "frequency": "주간 목표 횟수",
-            "timesPerWeek": "주 {{count}}회",
-            "repeat": "반복 모드",
-            "daySpecific": "요일 지정",
-            "daySpecificDesc": "특정 요일에만 방문을 인정합니다",
-            "daySpecificError": "{{selected}}개 선택됨 / {{required}}개 필요",
-            "weeksCount": "{{count}}주"
-        },
-        "identity": {
-            "iconLabel": "아이콘",
-            "nameLabel": "챌린지 이름",
-            "namePlaceholder": "예: 아침 운동, 독서하기"
-        },
-        "dwell": {
-            "label": "체류 시간",
-            "toggle": "체류 시간 확인",
-            "description": "일정 시간 이상 머물러야 출석으로 인정됩니다",
-            "minutes": "{{count}}분",
-            "hours": "{{count}}시간"
-        },
-        "start": "시작하기"
-    },
-    "notification": {
-        "arrival": {
-            "title": "도착했어요",
-            "body": "탭하여 알람을 해제하세요",
-            "defaultPlace": "목적지"
-        },
-        "tracking": {
-            "remaining": "{{distance}} 남음",
-            "elapsed": "{{time}}째 이동 중",
-            "timeHours": "{{hours}}시간 {{minutes}}분",
-            "timeMinutes": "{{minutes}}분 {{seconds}}초",
-            "timeSeconds": "{{seconds}}초"
-        }
-    },
-    "trackingNotification": {
-        "remaining": "{{distance}} 남음",
-        "elapsed": "{{time}} 경과"
-    },
-    "trackingDetail": {
-        "title": "트래킹 상세",
-        "remainingDistance": "남은 거리",
-        "traveledDistance": "이동 거리",
-        "currentSpeed": "현재 속도",
-        "elapsedTime": "경과 시간",
-        "viewAll": "전체 보기",
-        "currentLocation": "현위치",
-        "speedUnit": "km/h"
-    },
-    "accessibility": {
-        "tapToViewDetails": "자세히 보려면 탭하세요",
-        "cancelAlarmHint": "알람을 취소합니다",
-        "deleteAlarmHint": "알람을 삭제합니다",
-        "slideToDismiss": "슬라이드하여 알람 해제",
-        "mapShowingDestination": "{{destination}} 목적지를 보여주는 지도",
-        "remainingDistance": "남은 거리 {{distance}}",
-        "searchLocation": "위치 검색",
-        "startNavigation": "내비게이션 시작",
-        "stopNavigation": "내비게이션 중지",
-        "myLocation": "내 위치 버튼",
-        "createAlarmButton": "알람 만들기 버튼",
-        "mapInteraction": "선택한 위치를 보여주는 대화형 지도",
-        "dismissAlarm": "슬라이드하여 알람 해제",
-        "alarmTitle": "알람 제목 {{title}}",
-        "statusBadge": "상태 {{status}}",
-        "alarmHistoryCard": "{{title}}, {{status}}, {{time}}",
-        "alarmDetails": "알람 상세 정보를 보려면 탭하세요"
+    "deleteFavorite": {
+      "title": "즐겨찾기 삭제",
+      "message": "'{{name}}' 즐겨찾기를 삭제하시겠습니까?",
+      "confirm": "삭제"
     }
+  },
+  "alarmSetup": {
+    "title": "알람 만들기",
+    "titleLabel": "제목",
+    "titlePlaceholder": "예: 강남역, 회사, 집",
+    "startLocation": "출발지",
+    "currentLocation": "현재 위치",
+    "selectFromMap": "지도에서 선택",
+    "transportMode": "이동 수단",
+    "driving": "운전",
+    "transit": "대중교통",
+    "walking": "도보",
+    "cycling": "자전거",
+    "routeOptions": "경로 옵션",
+    "radius": "알람 반경",
+    "radiusValue": "{{radius}}",
+    "alarmPreview": {
+      "beforeRadius": "목적지 반경 {{radius}} 전",
+      "estimatedTime": "약 {{minutes}}분 뒤에 알람이 울립니다"
+    },
+    "memo": "메모 (선택사항)",
+    "memoPlaceholder": "예: 우산 챙기기, 3번 출구",
+    "startAlarm": "알람 시작",
+    "noTitle": "알람 제목 필요",
+    "pleaseEnterTitle": "알람 제목을 입력해주세요.",
+    "locationError": "위치 정보가 없습니다.",
+    "createFailed": "알람 생성에 실패했습니다.",
+    "longDistanceTitle": "먼 거리 알람",
+    "longDistanceMessage": "목적지까지 {{distance}} 떨어져 있습니다. 장거리 알람은 배터리 소모가 클 수 있습니다. 계속하시겠습니까?",
+    "longDistanceConfirm": "계속",
+    "batteryInfo": {
+      "title": "스마트 배터리 절약",
+      "description": "거리에 따라 위치 확인 주기를 자동 조절하여 배터리를 절약합니다.",
+      "phase1": "• 10km 이상 → 10분 간격",
+      "phase2": "• 2~10km → 3분 간격",
+      "phase3": "• 1~2km → 1분 간격",
+      "phase4": "• 1km 이내 → 실시간 추적"
+    },
+    "iconLabel": "아이콘",
+    "icons": {
+      "home": "집",
+      "office": "회사",
+      "restaurant": "식당",
+      "cafe": "카페",
+      "pin": "위치",
+      "gym": "운동",
+      "others": "기타"
+    },
+    "smartBattery": "스마트 배터리 절약",
+    "smartBatteryDesc": "거리에 따라 위치 확인 주기를 자동 조절합니다.",
+    "shakeToDismiss": "흔들어서 끄기",
+    "shakeToDismissDesc": "알람이 울릴 때 기기를 흔들면 알람이 꺼집니다.",
+    "locationLabel": "목적지 위치",
+    "rawCoordinates": "원본 좌표 (디버그)"
+  },
+  "navigation": {
+    "eta": "도착 예정 {{time}}",
+    "distance": "남은 거리",
+    "speed": "현재 속도",
+    "toAlarm": "알람까지",
+    "stopAlarm": "알람 취소"
+  },
+  "history": {
+    "title": "알람 히스토리",
+    "total": "총 {{count}}개",
+    "empty": "아직 생성된 알람이 없습니다",
+    "emptyHint": "홈 화면에서 알람을 만들어보세요!",
+    "active": "활성화",
+    "status": {
+      "inProgress": "진행중",
+      "completed": "완료됨",
+      "cancelled": "취소됨"
+    },
+    "detail": {
+      "locationInfo": "위치 정보",
+      "loading": "주소 검색 중...",
+      "radius": "반경 {{radius}}",
+      "createdAt": "생성 시간",
+      "deleteAlarm": "알람 삭제",
+      "title": "알람 상세정보",
+      "addressNotFound": "주소를 찾을 수 없습니다",
+      "activated": "활성화됨"
+    },
+    "deleteAll": {
+      "button": "전체 삭제",
+      "title": "전체 삭제",
+      "message": "모든 알람 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+      "confirm": "전체 삭제"
+    },
+    "time": {
+      "justNow": "방금 전",
+      "minutesAgo": "{{minutes}}분 전",
+      "hoursAgo": "{{hours}}시간 전"
+    }
+  },
+  "settings": {
+    "title": "설정",
+    "sections": {
+      "notification": "알림 설정",
+      "app": "앱 정보",
+      "map": "지도 설정",
+      "locationAndMap": "위치 및 지도",
+      "dataManagement": "데이터 관리"
+    },
+    "items": {
+      "language": "언어 설정",
+      "sound": "알람 사운드",
+      "vibration": "진동",
+      "preview": "알람 미리듣기",
+      "battery": "배터리 최적화",
+      "help": "도움말",
+      "privacy": "개인정보 처리방침",
+      "terms": "이용약관",
+      "version": "버전",
+      "licenses": "오픈소스 라이선스",
+      "backgroundLocation": "백그라운드 위치 추적",
+      "backgroundLocationDesc": "알람 활성화 시 자동으로 위치를 추적합니다.",
+      "batterySaving": "스마트 배터리 절약",
+      "smartVolume": "스마트 볼륨",
+      "shakeToOff": "흔들어서 끄기",
+      "alertType": "알림 방식",
+      "mapEngine": "지도 엔진",
+      "theme": "화면 테마",
+      "alarmBackground": "알람 배경",
+      "distanceUnit": "거리 단위",
+      "deleteAllData": "모든 데이터 삭제",
+      "deleteAllDataDesc": "알람 기록, 경로, 챌린지 등 모든 데이터를 삭제합니다"
+    },
+    "unit": {
+      "title": "거리 단위",
+      "metric": "미터법 (km, m)",
+      "imperial": "야드파운드법 (mi, ft)",
+      "currentlyMetric": "현재: 킬로미터",
+      "currentlyImperial": "현재: 마일"
+    },
+    "theme": {
+      "title": "화면 테마",
+      "light": "밝은 모드",
+      "dark": "어두운 모드",
+      "system": "시스템 설정"
+    },
+    "alertType": {
+      "title": "알림 방식",
+      "both": "소리 + 진동",
+      "soundOnly": "소리만",
+      "vibrationOnly": "진동만"
+    },
+    "soundPicker": {
+      "title": "알람 사운드 선택"
+    },
+    "sounds": {
+      "breeze": "브리즈",
+      "alert": "알림",
+      "digital": "디지털",
+      "crystal": "크리스탈"
+    },
+    "backgroundPicker": {
+      "title": "알람 배경 선택",
+      "default": "기본 배경",
+      "gallery": "갤러리에서 선택"
+    },
+    "backgroundThemes": {
+      "pixelDream": "Pixel Dream",
+      "aura": "Aura",
+      "intoTheWild": "Into the Wild",
+      "cityLights": "City Lights",
+      "stillMoment": "Still Moment"
+    },
+    "deleteAll": {
+      "title": "모든 데이터 삭제",
+      "message": "알람 기록, 경로 데이터, 챌린지 등 모든 데이터가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+      "confirm": "삭제"
+    }
+  },
+  "favoriteSetup": {
+    "title": "즐겨찾기 추가",
+    "nameLabel": "이름",
+    "namePlaceholder": "예: 집, 회사, 카페",
+    "iconLabel": "아이콘",
+    "locationLabel": "위치",
+    "save": "저장하기",
+    "noName": "이름 필요",
+    "pleaseEnterName": "즐겨찾기 이름을 입력해주세요.",
+    "maxLimitReached": "즐겨찾기는 최대 3개까지 등록할 수 있습니다."
+  },
+  "onboarding": {
+    "welcome": "놓치면 안 되는 장소에\n닻을 내려두세요",
+    "subtitle": "목적지 근처에 도착하면\n미리 알려드릴게요",
+    "permissions": {
+      "location": "위치 권한 필요",
+      "locationDesc": "목적지 도착 알람을 위해 위치 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
+      "background": "백그라운드 권한 필요",
+      "backgroundDesc": "앱이 꺼진 상태에서도 알람을 받으려면 \"항상 허용\"을 선택해주세요.",
+      "notification": "알림 권한 필요",
+      "notificationDesc": "도착 전 알림을 받을 수 있습니다"
+    },
+    "features": {
+      "battery": "스마트 배터리 절약",
+      "location": "정확한 위치 기반 알람",
+      "checklist": "할 일 체크리스트"
+    },
+    "start": "시작하기",
+    "requesting": "권한 요청 중...",
+    "permissionNote": "위치 권한 허용이 필요합니다",
+    "permissionFailed": "권한 요청에 실패했습니다. 다시 시도해주세요.",
+    "later": "나중에",
+    "toSettings": "설정으로",
+    "expoGo": {
+      "title": "Expo Go 제한",
+      "message": "실제 기기에서 위치 권한을 테스트하려면 Development Build가 필요합니다. 지금은 권한 없이 계속할까요?",
+      "cancel": "취소",
+      "continue": "계속하기"
+    }
+  },
+  "routes": {
+    "recommended": "추천 경로",
+    "shortest": "최단 시간",
+    "shortestDistance": "최단 거리",
+    "arrival": "{{time}} 도착"
+  },
+  "alarmDashboard": {
+    "distance": "{{distance}}",
+    "remainingDistance": "목적지까지 {{distance}}",
+    "distanceLabel": "남은 거리",
+    "cancelAlarm": "알람 취소",
+    "cancelConfirm": {
+      "title": "알람 취소",
+      "message": "진행 중인 알람을 취소하시겠습니까?",
+      "confirm": "취소하기"
+    },
+    "checklist": "할 일 목록",
+    "elapsedTime": "경과 시간"
+  },
+  "alarmDetail": {
+    "destination": "목적지",
+    "startPoint": "출발지",
+    "travelInfo": "이동 정보",
+    "travelTime": "이동 시간",
+    "travelDistance": "이동 거리",
+    "arrivedAt": "도착 시간",
+    "startedAt": "출발 시간",
+    "checklist": "할 일 목록",
+    "cancelled": "취소됨",
+    "arrived": "도착 완료",
+    "active": "활성화 중",
+    "durationMinutes": "{{minutes}}분",
+    "durationHours": "{{hours}}시간",
+    "durationHoursMinutes": "{{hours}}시간 {{minutes}}분",
+    "noStartLocation": "출발 위치 정보 없음",
+    "straightDistance": "직선 거리",
+    "actualDistance": "실제 이동 거리",
+    "averageSpeed": "평균 이동 속도",
+    "cancelledAt": "취소 시간"
+  },
+  "alarmTrigger": {
+    "arrived": "목적지에 도착했어요!",
+    "arrivedBadge": "도착",
+    "arrivedAt": "{{place}}에 도착했어요!",
+    "dismiss": "밀어서 해제",
+    "dismissHint": "끝까지 밀어서 알람을 끄세요",
+    "checklist": "할 일 목록",
+    "shakeHint": "흔들어서 해제할 수 있어요"
+  },
+  "alarmCompletion": {
+    "title": "알람 완료!",
+    "subtitle": "목적지에 안전하게 도착했습니다"
+  },
+  "actionChecklist": {
+    "title": "잊지 마세요!",
+    "subtitle": "{{destination}}에 도착했어요!",
+    "done": "완료",
+    "allChecked": "모두 완료! 잘했어요.",
+    "remaining": "{{count}}개 남음"
+  },
+  "devDebug": {
+    "title": "디버그 패널",
+    "timeSection": "시간 오프셋",
+    "currentTime": "현재 시간",
+    "offsetDays": "{{days}}일 오프셋",
+    "resetTime": "초기화",
+    "visitSection": "방문 시뮬레이터",
+    "simulateVisit": "출석 기록",
+    "simulateVisitDesc": "선택한 챌린지에 방문 기록 추가",
+    "stateSection": "상태 오버라이드",
+    "combo": "콤보",
+    "chances": "찬스",
+    "week": "주차",
+    "apply": "적용",
+    "noActiveChallenge": "활성 챌린지가 없습니다",
+    "visitSuccess": "방문 기록 완료",
+    "visitFailed": "방문 기록 실패: {{reason}}"
+  },
+  "days": {
+    "sun": "일",
+    "mon": "월",
+    "tue": "화",
+    "wed": "수",
+    "thu": "목",
+    "fri": "금",
+    "sat": "토",
+    "sunFull": "일요일",
+    "monFull": "월요일",
+    "tueFull": "화요일",
+    "wedFull": "수요일",
+    "thuFull": "목요일",
+    "friFull": "금요일",
+    "satFull": "토요일",
+    "weekdays": "평일",
+    "weekend": "주말",
+    "everyday": "매일"
+  },
+  "timePicker": {
+    "title": "시간 선택",
+    "hour": "시",
+    "minute": "분"
+  },
+  "activity": {
+    "title": "활동",
+    "steps": "걸음",
+    "distance": "거리",
+    "calories": "칼로리",
+    "caloriesBurned": "오늘 {{kcal}}kcal 소모했어요",
+    "viewStats": "통계 보기",
+    "pedometerUnavailable": "이 기기에서는 만보기를 사용할 수 없습니다",
+    "noDataYet": "아직 데이터가 없습니다",
+    "noDataHint": "걸으면 활동 데이터가 여기에 표시됩니다!",
+    "stats": {
+      "title": "활동 통계",
+      "weekly": "주간",
+      "monthly": "월간",
+      "totalSteps": "총 걸음 수",
+      "dailyAvg": "일 평균",
+      "bestDay": "최고 기록",
+      "comparison": "이전 대비 {{percent}}% {{direction}}",
+      "more": "더 많이",
+      "less": "더 적게",
+      "noChange": "변화 없음",
+      "stepsUnit": "걸음",
+      "current": "이번",
+      "previous": "지난"
+    },
+    "startChallenge": "챌린지 시작하기",
+    "startChallengeDesc": "장소 방문 목표를 세우고 달성해보세요",
+    "messages": {
+      "ecoTreesTitle": "나무 {{trees}}그루를 심었어요!",
+      "ecoTreesSub": "오늘 걸은 거리 기반 CO2 상쇄량",
+      "carbonReductionTitle": "{{grams}}g의 CO2를 줄였어요!",
+      "carbonReductionSub": "걸어서 이동하며 탄소 배출 감소",
+      "goalMotivationTitle": "{{remaining}}보 남았어요!",
+      "goalMotivationSub": "10,000보 목표까지 화이팅",
+      "landmarkBurjTitle": "부르즈 할리파({{height}}) 돌파!",
+      "landmarkBurjSub": "오늘 걸은 총 거리가 높이를 넘었어요",
+      "comparisonYesterdayTitle": "어제보다 {{percent}}% 더 걸었어요!",
+      "comparisonYesterdaySub": "어제보다 더 잘하고 있어요"
+    }
+  },
+  "challenge": {
+    "headerTitle": "챌린지",
+    "welcome": "장소 방문 목표를 세우고\n꾸준히 달성해보세요!",
+    "recommended": {
+      "title": "추천 챌린지",
+      "subtitle": "이런 목표는 어때요?"
+    },
+    "challenges": {
+      "walk": {
+        "title": "가볍게 산책하기",
+        "subtitle": "주 3회 • 공원 • 초보자 추천"
+      },
+      "study": {
+        "title": "갓생 살기 (도서관/스터디카페)",
+        "subtitle": "주 5회 • 공부 습관 만들기"
+      },
+      "gym": {
+        "title": "헬린이 탈출",
+        "subtitle": "주 3회 • 꾸준한 운동"
+      }
+    },
+    "createCustom": "나만의 챌린지 만들기",
+    "combo": "{{count}}콤보",
+    "chances": "찬스 {{count}}회",
+    "weekComplete": "이번 주 목표 달성!",
+    "oneMore": "한 번만 더!",
+    "remainingVisits": "{{count}}번 더 방문하세요",
+    "weekInfo": "{{current}}주차/{{total}}주",
+    "limitTitle": "챌린지 제한",
+    "limitMessage": "활성 챌린지는 최대 2개까지 가능합니다.",
+    "status": {
+      "active": "진행중",
+      "graduated": "졸업",
+      "failed": "실패"
+    },
+    "graduated": {
+      "title": "축하합니다!",
+      "subtitle": "챌린지를 성공적으로 완료했어요",
+      "newChallenge": "새 챌린지 시작하기"
+    },
+    "detail": {
+      "title": "챌린지 상세",
+      "week": "{{current}}주차 / {{total}}주",
+      "visitRecords": "방문 기록 ({{count}})",
+      "noVisits": "아직 방문 기록이 없습니다",
+      "min": "분",
+      "counted": "인정",
+      "notCounted": "미인정",
+      "delete": "챌린지 삭제",
+      "deleteTitle": "챌린지 삭제",
+      "deleteMessage": "이 챌린지를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+    }
+  },
+  "geofence": {
+    "directions": {
+      "north": "북",
+      "northEast": "북동",
+      "east": "동",
+      "southEast": "남동",
+      "south": "남",
+      "southWest": "남서",
+      "west": "서",
+      "northWest": "북서"
+    }
+  },
+  "geocoding": {
+    "addressNotFound": "주소를 찾을 수 없습니다",
+    "failedToLoad": "주소를 불러올 수 없습니다"
+  },
+  "challengeCreate": {
+    "title": "챌린지 만들기",
+    "location": {
+      "label": "목표 장소",
+      "select": "장소 선택하기",
+      "change": "변경",
+      "searchTitle": "장소 검색",
+      "searchPlaceholder": "장소를 검색하세요",
+      "mapSelectHint": "지도를 탭하여 장소를 선택하세요",
+      "selectedLocation": "선택한 위치",
+      "selectThisLocation": "이 위치 선택"
+    },
+    "goal": {
+      "label": "목표 설정",
+      "duration": "기간",
+      "week": "1주일",
+      "month": "1달",
+      "frequency": "주간 목표 횟수",
+      "timesPerWeek": "주 {{count}}회",
+      "repeat": "반복 모드",
+      "daySpecific": "요일 지정",
+      "daySpecificDesc": "특정 요일에만 방문을 인정합니다",
+      "daySpecificError": "{{selected}}개 선택됨 / {{required}}개 필요",
+      "weeksCount": "{{count}}주"
+    },
+    "identity": {
+      "iconLabel": "아이콘",
+      "nameLabel": "챌린지 이름",
+      "namePlaceholder": "예: 아침 운동, 독서하기"
+    },
+    "dwell": {
+      "label": "체류 시간",
+      "toggle": "체류 시간 확인",
+      "description": "일정 시간 이상 머물러야 출석으로 인정됩니다",
+      "minutes": "{{count}}분",
+      "hours": "{{count}}시간"
+    },
+    "start": "시작하기"
+  },
+  "notification": {
+    "arrival": {
+      "title": "도착했어요",
+      "body": "탭하여 알람을 해제하세요",
+      "defaultPlace": "목적지"
+    },
+    "tracking": {
+      "remaining": "{{distance}} 남음",
+      "elapsed": "{{time}}째 이동 중",
+      "timeHours": "{{hours}}시간 {{minutes}}분",
+      "timeMinutes": "{{minutes}}분 {{seconds}}초",
+      "timeSeconds": "{{seconds}}초"
+    }
+  },
+  "trackingNotification": {
+    "remaining": "{{distance}} 남음",
+    "elapsed": "{{time}} 경과"
+  },
+  "trackingDetail": {
+    "title": "트래킹 상세",
+    "remainingDistance": "남은 거리",
+    "traveledDistance": "이동 거리",
+    "currentSpeed": "현재 속도",
+    "elapsedTime": "경과 시간",
+    "viewAll": "전체 보기",
+    "currentLocation": "현위치",
+    "speedUnit": "km/h"
+  },
+  "accessibility": {
+    "tapToViewDetails": "자세히 보려면 탭하세요",
+    "cancelAlarmHint": "알람을 취소합니다",
+    "deleteAlarmHint": "알람을 삭제합니다",
+    "slideToDismiss": "슬라이드하여 알람 해제",
+    "mapShowingDestination": "{{destination}} 목적지를 보여주는 지도",
+    "remainingDistance": "남은 거리 {{distance}}",
+    "searchLocation": "위치 검색",
+    "startNavigation": "내비게이션 시작",
+    "stopNavigation": "내비게이션 중지",
+    "myLocation": "내 위치 버튼",
+    "createAlarmButton": "알람 만들기 버튼",
+    "mapInteraction": "선택한 위치를 보여주는 대화형 지도",
+    "dismissAlarm": "슬라이드하여 알람 해제",
+    "alarmTitle": "알람 제목 {{title}}",
+    "statusBadge": "상태 {{status}}",
+    "alarmHistoryCard": "{{title}}, {{status}}, {{time}}",
+    "alarmDetails": "알람 상세 정보를 보려면 탭하세요"
+  }
 }

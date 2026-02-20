@@ -1,559 +1,562 @@
 {
-    "common": {
-        "cancel": "Cancel",
-        "confirm": "Confirm",
-        "delete": "Delete",
-        "save": "Save",
-        "edit": "Edit",
-        "close": "Close",
-        "loading": "Loading...",
-        "error": "Error",
-        "success": "Success",
-        "retry": "Retry",
-        "saveFailed": "Failed to save",
-        "noResults": "No results found",
-        "alwaysOn": "Always On",
-        "offlineMode": "Offline mode — some features may be limited"
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "save": "Save",
+    "edit": "Edit",
+    "close": "Close",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "retry": "Retry",
+    "saveFailed": "Failed to save",
+    "noResults": "No results found",
+    "alwaysOn": "Always On",
+    "offlineMode": "Offline mode — some features may be limited"
+  },
+  "liveActivity": {
+    "remaining": "{{distance}} left",
+    "arrivedTitle": "Arrived",
+    "arrivedSubtitle": "You have arrived at your destination"
+  },
+  "tabs": {
+    "home": "Home",
+    "challenge": "Challenge",
+    "activity": "Activity",
+    "history": "History",
+    "settings": "Settings"
+  },
+  "home": {
+    "searchPlaceholder": "Where are you going?",
+    "searchSource": {
+      "google": "(Google)",
+      "kakao": "(Kakao)"
     },
-    "liveActivity": {
-        "remaining": "{{distance}} left",
-        "arrivedTitle": "Arrived",
-        "arrivedSubtitle": "You have arrived at your destination"
+    "radius": "Radius {{radius}}",
+    "createAlarm": "Create Alarm",
+    "favorites": "Favorites",
+    "addFavorite": "Add Favorite",
+    "hint": "Move the map to set a location",
+    "recentDestinations": "Recent Destinations",
+    "searching": "Searching...",
+    "activeAlarm": {
+      "calculating": "Calculating distance..."
     },
-    "tabs": {
-        "home": "Home",
-        "challenge": "Challenge",
-        "activity": "Activity",
-        "history": "History",
-        "settings": "Settings"
-    },
-    "home": {
-        "searchPlaceholder": "Where are you going?",
-        "searchSource": {
-            "google": "(Google)",
-            "kakao": "(Kakao)"
-        },
-        "radius": "Radius {{radius}}",
-        "createAlarm": "Create Alarm",
-        "favorites": "Favorites",
-        "addFavorite": "Add Favorite",
-        "hint": "Move the map to set a location",
-        "recentDestinations": "Recent Destinations",
-        "searching": "Searching...",
-        "activeAlarm": {
-            "calculating": "Calculating distance..."
-        },
-        "deleteFavorite": {
-            "title": "Delete Favorite",
-            "message": "Delete '{{name}}' from favorites?",
-            "confirm": "Delete"
-        }
-    },
-    "alarmSetup": {
-        "title": "Create Alarm",
-        "titleLabel": "Title",
-        "titlePlaceholder": "e.g. Station, Office, Home",
-        "startLocation": "Start Location",
-        "currentLocation": "Current Location",
-        "selectFromMap": "Select from Map",
-        "transportMode": "Transport Mode",
-        "driving": "Driving",
-        "transit": "Transit",
-        "walking": "Walking",
-        "cycling": "Cycling",
-        "routeOptions": "Route Options",
-        "radius": "Alarm Radius",
-        "radiusValue": "{{radius}}",
-        "alarmPreview": {
-            "beforeRadius": "{{radius}} before destination",
-            "estimatedTime": "Alarm will ring in about {{minutes}} minutes"
-        },
-        "memo": "Memo (Optional)",
-        "memoPlaceholder": "e.g. Bring umbrella, Exit 3",
-        "startAlarm": "Start Alarm",
-        "noTitle": "Title Required",
-        "pleaseEnterTitle": "Please enter an alarm title.",
-        "locationError": "Location information is missing.",
-        "createFailed": "Failed to create alarm.",
-        "longDistanceTitle": "Long Distance Alarm",
-        "longDistanceMessage": "The destination is {{distance}} away. Long-distance alarms may consume more battery. Continue?",
-        "longDistanceConfirm": "Continue",
-        "batteryInfo": {
-            "title": "Smart Battery Saving",
-            "description": "Automatically adjusts location check intervals based on distance to save battery.",
-            "phase1": "• Over 10km → every 10 min",
-            "phase2": "• 2–10km → every 3 min",
-            "phase3": "• 1–2km → every 1 min",
-            "phase4": "• Under 1km → real-time tracking"
-        },
-        "iconLabel": "Icon",
-        "icons": {
-            "home": "Home",
-            "office": "Office",
-            "restaurant": "Restaurant",
-            "cafe": "Cafe",
-            "pin": "Pin",
-            "gym": "Gym",
-            "others": "Others"
-        },
-        "smartBattery": "Smart Battery Saving",
-        "smartBatteryDesc": "Automatically adjusts location check intervals based on distance.",
-        "shakeToDismiss": "Shake to Dismiss",
-        "shakeToDismissDesc": "Shake the device to dismiss the alarm when it rings.",
-        "locationLabel": "Destination",
-        "rawCoordinates": "Raw Coordinates (Debug)"
-    },
-    "navigation": {
-        "eta": "ETA {{time}}",
-        "distance": "Distance",
-        "speed": "Speed",
-        "toAlarm": "To Alarm",
-        "stopAlarm": "Cancel Alarm"
-    },
-    "history": {
-        "title": "Alarm History",
-        "total": "{{count}} total",
-        "empty": "No alarms yet",
-        "emptyHint": "Create an alarm from the home screen!",
-        "active": "Active",
-        "status": {
-            "inProgress": "Active",
-            "completed": "Complete",
-            "cancelled": "Cancelled"
-        },
-        "detail": {
-            "locationInfo": "Location Info",
-            "loading": "Searching address...",
-            "radius": "Radius {{radius}}",
-            "createdAt": "Created At",
-            "deleteAlarm": "Delete Alarm",
-            "title": "Alarm Details",
-            "addressNotFound": "Address not found",
-            "activated": "Activated"
-        },
-        "deleteAll": {
-            "button": "Delete All",
-            "title": "Delete All",
-            "message": "Delete all alarm records? This cannot be undone.",
-            "confirm": "Delete All"
-        },
-        "time": {
-            "justNow": "Just now",
-            "minutesAgo": "{{minutes}}m ago",
-            "hoursAgo": "{{hours}}h ago"
-        }
-    },
-    "settings": {
-        "title": "Settings",
-        "sections": {
-            "notification": "Notification Settings",
-            "app": "App Info",
-            "map": "Map Settings",
-            "locationAndMap": "Location & Map",
-            "dataManagement": "Data Management"
-        },
-        "items": {
-            "language": "Language",
-            "sound": "Alarm Sound",
-            "vibration": "Vibration",
-            "preview": "Preview Alarm",
-            "battery": "Battery Optimization",
-            "help": "Help",
-            "privacy": "Privacy Policy",
-            "terms": "Terms of Service",
-            "version": "Version",
-            "licenses": "Open Source Licenses",
-            "backgroundLocation": "Background Location",
-            "backgroundLocationDesc": "Automatically tracks your location when an alarm is active.",
-            "batterySaving": "Smart Battery Saving",
-            "smartVolume": "Smart Volume",
-            "shakeToOff": "Shake to Turn Off",
-            "alertType": "Alert Type",
-            "mapEngine": "Map Engine",
-            "theme": "Screen Theme",
-            "alarmBackground": "Alarm Background",
-            "distanceUnit": "Distance Unit",
-            "deleteAllData": "Delete All Data",
-            "deleteAllDataDesc": "Deletes all alarm history, routes, challenges, and other data"
-        },
-        "unit": {
-            "title": "Distance Unit",
-            "metric": "Metric (km, m)",
-            "imperial": "Imperial (mi, ft)",
-            "currentlyMetric": "Currently: Kilometers",
-            "currentlyImperial": "Currently: Miles"
-        },
-        "theme": {
-            "title": "Screen Theme",
-            "light": "Light Mode",
-            "dark": "Dark Mode",
-            "system": "System Default"
-        },
-        "alertType": {
-            "title": "Alert Type",
-            "both": "Sound + Vibration",
-            "soundOnly": "Sound Only",
-            "vibrationOnly": "Vibration Only"
-        },
-        "soundPicker": {
-            "title": "Select Alarm Sound"
-        },
-        "sounds": {
-            "breeze": "Breeze",
-            "alert": "Alert",
-            "digital": "Digital",
-            "crystal": "Crystal"
-        },
-        "backgroundPicker": {
-            "title": "Select Alarm Background",
-            "default": "Default",
-            "gallery": "Choose from Gallery"
-        },
-        "backgroundThemes": {
-            "pixelDream": "Pixel Dream",
-            "aura": "Aura",
-            "intoTheWild": "Into the Wild",
-            "cityLights": "City Lights",
-            "stillMoment": "Still Moment"
-        },
-        "deleteAll": {
-            "title": "Delete All Data",
-            "message": "All alarm history, route data, challenges, and other data will be permanently deleted. This cannot be undone.",
-            "confirm": "Delete"
-        }
-    },
-    "favoriteSetup": {
-        "title": "Add Favorite",
-        "nameLabel": "Name",
-        "namePlaceholder": "e.g. Home, Office, Cafe",
-        "iconLabel": "Icon",
-        "locationLabel": "Location",
-        "save": "Save",
-        "noName": "Name Required",
-        "pleaseEnterName": "Please enter a favorite name.",
-        "maxLimitReached": "You can add up to 3 favorites."
-    },
-    "onboarding": {
-        "welcome": "Drop an anchor\nat places you can't miss",
-        "subtitle": "We'll notify you\nwhen you're near your destination",
-        "permissions": {
-            "location": "Location Permission Required",
-            "locationDesc": "Location access is required for arrival alarms. Please allow in settings.",
-            "background": "Background Permission Required",
-            "backgroundDesc": "Select \"Always Allow\" to receive alarms even when the app is closed.",
-            "notification": "Notification Permission Required",
-            "notificationDesc": "Receive alerts before arrival"
-        },
-        "features": {
-            "battery": "Smart Battery Saving",
-            "location": "Precise Location Alarm",
-            "checklist": "To-do Checklist"
-        },
-        "start": "Get Started",
-        "requesting": "Requesting permissions...",
-        "permissionNote": "Location permission is required",
-        "permissionFailed": "Permission request failed. Please try again.",
-        "later": "Later",
-        "toSettings": "To Settings",
-        "expoGo": {
-            "title": "Expo Go Limitation",
-            "message": "Development Build is required to test location permissions on real devices. Continue without permission for now?",
-            "cancel": "Cancel",
-            "continue": "Continue"
-        }
-    },
-    "routes": {
-        "recommended": "Recommended",
-        "shortest": "Shortest Time",
-        "shortestDistance": "Shortest Distance",
-        "arrival": "Arrive at {{time}}"
-    },
-    "alarmDashboard": {
-        "distance": "{{distance}}",
-        "remainingDistance": "{{distance}} to destination",
-        "distanceLabel": "remaining distance",
-        "cancelAlarm": "Cancel Alarm",
-        "cancelConfirm": {
-            "title": "Cancel Alarm",
-            "message": "Cancel the active alarm?",
-            "confirm": "Cancel"
-        },
-        "checklist": "Checklist",
-        "elapsedTime": "elapsed"
-    },
-    "alarmDetail": {
-        "destination": "Destination",
-        "startPoint": "Start Point",
-        "travelInfo": "Travel Info",
-        "travelTime": "Travel Time",
-        "travelDistance": "Travel Distance",
-        "arrivedAt": "Arrived At",
-        "startedAt": "Started At",
-        "checklist": "Checklist",
-        "cancelled": "Cancelled",
-        "arrived": "Arrived",
-        "active": "Active",
-        "durationMinutes": "{{minutes}} min",
-        "durationHours": "{{hours}} hr",
-        "durationHoursMinutes": "{{hours}} hr {{minutes}} min",
-        "noStartLocation": "No start location",
-        "straightDistance": "Straight-line Distance",
-        "actualDistance": "Actual Distance Traveled",
-        "averageSpeed": "Average Speed",
-        "cancelledAt": "Cancelled at"
-    },
-    "alarmTrigger": {
-        "arrived": "You've arrived!",
-        "arrivedBadge": "Arrived",
-        "arrivedAt": "Arrived at {{place}}!",
-        "dismiss": "Slide to dismiss",
-        "dismissHint": "Slide all the way to dismiss",
-        "checklist": "Checklist",
-        "shakeHint": "Or shake to dismiss"
-    },
-    "alarmCompletion": {
-        "title": "Alarm Complete!",
-        "subtitle": "You've safely arrived at your destination"
-    },
-    "actionChecklist": {
-        "title": "Don't Forget!",
-        "subtitle": "You've arrived at {{destination}}!",
-        "done": "All Set",
-        "allChecked": "All done! Great job.",
-        "remaining": "{{count}} remaining"
-    },
-    "devDebug": {
-        "title": "Debug Panel",
-        "timeSection": "Time Offset",
-        "currentTime": "Current Time",
-        "offsetDays": "{{days}} day offset",
-        "resetTime": "Reset",
-        "visitSection": "Visit Simulator",
-        "simulateVisit": "Record Visit",
-        "simulateVisitDesc": "Add a visit record for the selected challenge",
-        "stateSection": "State Override",
-        "combo": "Combo",
-        "chances": "Chances",
-        "week": "Week",
-        "apply": "Apply",
-        "noActiveChallenge": "No active challenges",
-        "visitSuccess": "Visit recorded",
-        "visitFailed": "Visit failed: {{reason}}"
-    },
-    "days": {
-        "sun": "S",
-        "mon": "M",
-        "tue": "T",
-        "wed": "W",
-        "thu": "T",
-        "fri": "F",
-        "sat": "S",
-        "sunFull": "Sunday",
-        "monFull": "Monday",
-        "tueFull": "Tuesday",
-        "wedFull": "Wednesday",
-        "thuFull": "Thursday",
-        "friFull": "Friday",
-        "satFull": "Saturday",
-        "weekdays": "Weekdays",
-        "weekend": "Weekend",
-        "everyday": "Everyday"
-    },
-    "timePicker": {
-        "title": "Select Time",
-        "hour": "Hour",
-        "minute": "Min"
-    },
-    "activity": {
-        "title": "Activity",
-        "steps": "Steps",
-        "distance": "Distance",
-        "calories": "Calories",
-        "caloriesBurned": "Burned {{kcal}}kcal today",
-        "viewStats": "View Stats",
-        "pedometerUnavailable": "Pedometer is not available on this device",
-        "noDataYet": "No data yet",
-        "noDataHint": "Your activity data will appear here once you start walking!",
-        "stats": {
-            "title": "Activity Stats",
-            "weekly": "Weekly",
-            "monthly": "Monthly",
-            "totalSteps": "Total Steps",
-            "dailyAvg": "Daily Avg",
-            "bestDay": "Best Day",
-            "comparison": "{{percent}}% {{direction}} than before",
-            "more": "more",
-            "less": "less",
-            "noChange": "No change",
-            "stepsUnit": "steps",
-            "current": "This",
-            "previous": "Last"
-        },
-        "startChallenge": "Start a Challenge",
-        "startChallengeDesc": "Set visit goals and achieve them",
-        "messages": {
-            "ecoTreesTitle": "Planted {{trees}} Trees!",
-            "ecoTreesSub": "CO2 offset based on today's steps",
-            "carbonReductionTitle": "Saved {{grams}}g of CO2!",
-            "carbonReductionSub": "Carbon emissions reduced by walking",
-            "goalMotivationTitle": "{{remaining}} Steps Left!",
-            "goalMotivationSub": "Keep going to reach 10,000 steps",
-            "landmarkBurjTitle": "Passed Burj Khalifa ({{height}})!",
-            "landmarkBurjSub": "Total distance today exceeded its height",
-            "comparisonYesterdayTitle": "{{percent}}% More Than Yesterday!",
-            "comparisonYesterdaySub": "You're doing better than yesterday"
-        }
-    },
-    "challenge": {
-        "headerTitle": "Challenges",
-        "welcome": "Set visit goals for your\nfavorite places and stay consistent!",
-        "recommended": {
-            "title": "Recommended Challenges",
-            "subtitle": "How about these goals?"
-        },
-        "challenges": {
-            "walk": {
-                "title": "Easy Daily Walks",
-                "subtitle": "3x/week • Parks • Beginner friendly"
-            },
-            "study": {
-                "title": "Study Grind Mode",
-                "subtitle": "5x/week • Build study habits"
-            },
-            "gym": {
-                "title": "Gym Newbie No More",
-                "subtitle": "3x/week • Consistent workouts"
-            }
-        },
-        "createCustom": "Create Your Own Challenge",
-        "combo": "{{count}} Combo",
-        "chances": "{{count}} Chances",
-        "weekComplete": "Weekly goal achieved!",
-        "oneMore": "One more to go!",
-        "remainingVisits": "{{count}} more visits needed",
-        "weekInfo": "Week {{current}}/{{total}}",
-        "limitTitle": "Challenge Limit",
-        "limitMessage": "You can have up to 2 active challenges.",
-        "status": {
-            "active": "Active",
-            "graduated": "Graduated",
-            "failed": "Failed"
-        },
-        "graduated": {
-            "title": "Congratulations!",
-            "subtitle": "You've successfully completed the challenge",
-            "newChallenge": "Start New Challenge"
-        },
-        "detail": {
-            "title": "Challenge Detail",
-            "week": "Week {{current}} / {{total}}",
-            "visitRecords": "Visit Records ({{count}})",
-            "noVisits": "No visit records yet",
-            "min": "min",
-            "counted": "Counted",
-            "notCounted": "Not counted",
-            "delete": "Delete Challenge",
-            "deleteTitle": "Delete Challenge",
-            "deleteMessage": "Delete this challenge? This cannot be undone."
-        }
-    },
-    "geofence": {
-        "directions": {
-            "north": "N",
-            "northEast": "NE",
-            "east": "E",
-            "southEast": "SE",
-            "south": "S",
-            "southWest": "SW",
-            "west": "W",
-            "northWest": "NW"
-        }
-    },
-    "geocoding": {
-        "addressNotFound": "Address not found",
-        "failedToLoad": "Failed to load address"
-    },
-    "challengeCreate": {
-        "title": "Create Challenge",
-        "location": {
-            "label": "Target Location",
-            "select": "Select Place",
-            "change": "Change",
-            "searchTitle": "Search Place",
-            "searchPlaceholder": "Search for a place"
-        },
-        "goal": {
-            "label": "Goal Settings",
-            "duration": "Duration",
-            "week": "1 Week",
-            "month": "1 Month",
-            "frequency": "Weekly Goal",
-            "timesPerWeek": "{{count}}x / week",
-            "repeat": "Repeat Mode",
-            "daySpecific": "Day-Specific",
-            "daySpecificDesc": "Only count visits on selected days",
-            "daySpecificError": "{{selected}} selected / {{required}} required",
-            "weeksCount": "{{count}} weeks"
-        },
-        "identity": {
-            "iconLabel": "Icon",
-            "nameLabel": "Challenge Name",
-            "namePlaceholder": "e.g. Morning workout, Reading"
-        },
-        "dwell": {
-            "label": "Dwell Time",
-            "toggle": "Require Dwell Time",
-            "description": "Must stay for a minimum duration to count as a visit",
-            "minutes": "{{count}} min",
-            "hours": "{{count}} hr"
-        },
-        "start": "Start"
-    },
-    "notification": {
-        "arrival": {
-            "title": "You've arrived",
-            "body": "Tap to dismiss the alarm",
-            "defaultPlace": "Destination"
-        },
-        "tracking": {
-            "remaining": "{{distance}} remaining",
-            "elapsed": "{{time}} in transit",
-            "timeHours": "{{hours}}h {{minutes}}m",
-            "timeMinutes": "{{minutes}}m {{seconds}}s",
-            "timeSeconds": "{{seconds}}s"
-        }
-    },
-    "trackingNotification": {
-        "remaining": "{{distance}} remaining",
-        "elapsed": "{{time}} elapsed"
-    },
-    "trackingDetail": {
-        "title": "Tracking Detail",
-        "remainingDistance": "Remaining",
-        "traveledDistance": "Traveled",
-        "currentSpeed": "Speed",
-        "elapsedTime": "Elapsed",
-        "viewAll": "View All",
-        "currentLocation": "My Location",
-        "speedUnit": "km/h"
-    },
-    "accessibility": {
-        "tapToViewDetails": "Tap to view details",
-        "cancelAlarmHint": "Cancels the alarm",
-        "deleteAlarmHint": "Deletes the alarm",
-        "slideToDismiss": "Slide to dismiss alarm",
-        "mapShowingDestination": "Map showing destination {{destination}}",
-        "remainingDistance": "Remaining distance {{distance}}",
-        "searchLocation": "Search location",
-        "startNavigation": "Start navigation",
-        "stopNavigation": "Stop navigation",
-        "myLocation": "My location button",
-        "createAlarmButton": "Create alarm button",
-        "mapInteraction": "Interactive map showing selected location",
-        "dismissAlarm": "Dismiss the alarm by sliding",
-        "alarmTitle": "Alarm title {{title}}",
-        "statusBadge": "Status {{status}}",
-        "alarmHistoryCard": "{{title}}, {{status}}, {{time}}",
-        "alarmDetails": "Tap to view alarm details"
+    "deleteFavorite": {
+      "title": "Delete Favorite",
+      "message": "Delete '{{name}}' from favorites?",
+      "confirm": "Delete"
     }
+  },
+  "alarmSetup": {
+    "title": "Create Alarm",
+    "titleLabel": "Title",
+    "titlePlaceholder": "e.g. Station, Office, Home",
+    "startLocation": "Start Location",
+    "currentLocation": "Current Location",
+    "selectFromMap": "Select from Map",
+    "transportMode": "Transport Mode",
+    "driving": "Driving",
+    "transit": "Transit",
+    "walking": "Walking",
+    "cycling": "Cycling",
+    "routeOptions": "Route Options",
+    "radius": "Alarm Radius",
+    "radiusValue": "{{radius}}",
+    "alarmPreview": {
+      "beforeRadius": "{{radius}} before destination",
+      "estimatedTime": "Alarm will ring in about {{minutes}} minutes"
+    },
+    "memo": "Memo (Optional)",
+    "memoPlaceholder": "e.g. Bring umbrella, Exit 3",
+    "startAlarm": "Start Alarm",
+    "noTitle": "Title Required",
+    "pleaseEnterTitle": "Please enter an alarm title.",
+    "locationError": "Location information is missing.",
+    "createFailed": "Failed to create alarm.",
+    "longDistanceTitle": "Long Distance Alarm",
+    "longDistanceMessage": "The destination is {{distance}} away. Long-distance alarms may consume more battery. Continue?",
+    "longDistanceConfirm": "Continue",
+    "batteryInfo": {
+      "title": "Smart Battery Saving",
+      "description": "Automatically adjusts location check intervals based on distance to save battery.",
+      "phase1": "• Over 10km → every 10 min",
+      "phase2": "• 2–10km → every 3 min",
+      "phase3": "• 1–2km → every 1 min",
+      "phase4": "• Under 1km → real-time tracking"
+    },
+    "iconLabel": "Icon",
+    "icons": {
+      "home": "Home",
+      "office": "Office",
+      "restaurant": "Restaurant",
+      "cafe": "Cafe",
+      "pin": "Pin",
+      "gym": "Gym",
+      "others": "Others"
+    },
+    "smartBattery": "Smart Battery Saving",
+    "smartBatteryDesc": "Automatically adjusts location check intervals based on distance.",
+    "shakeToDismiss": "Shake to Dismiss",
+    "shakeToDismissDesc": "Shake the device to dismiss the alarm when it rings.",
+    "locationLabel": "Destination",
+    "rawCoordinates": "Raw Coordinates (Debug)"
+  },
+  "navigation": {
+    "eta": "ETA {{time}}",
+    "distance": "Distance",
+    "speed": "Speed",
+    "toAlarm": "To Alarm",
+    "stopAlarm": "Cancel Alarm"
+  },
+  "history": {
+    "title": "Alarm History",
+    "total": "{{count}} total",
+    "empty": "No alarms yet",
+    "emptyHint": "Create an alarm from the home screen!",
+    "active": "Active",
+    "status": {
+      "inProgress": "Active",
+      "completed": "Complete",
+      "cancelled": "Cancelled"
+    },
+    "detail": {
+      "locationInfo": "Location Info",
+      "loading": "Searching address...",
+      "radius": "Radius {{radius}}",
+      "createdAt": "Created At",
+      "deleteAlarm": "Delete Alarm",
+      "title": "Alarm Details",
+      "addressNotFound": "Address not found",
+      "activated": "Activated"
+    },
+    "deleteAll": {
+      "button": "Delete All",
+      "title": "Delete All",
+      "message": "Delete all alarm records? This cannot be undone.",
+      "confirm": "Delete All"
+    },
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo": "{{minutes}}m ago",
+      "hoursAgo": "{{hours}}h ago"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "sections": {
+      "notification": "Notification Settings",
+      "app": "App Info",
+      "map": "Map Settings",
+      "locationAndMap": "Location & Map",
+      "dataManagement": "Data Management"
+    },
+    "items": {
+      "language": "Language",
+      "sound": "Alarm Sound",
+      "vibration": "Vibration",
+      "preview": "Preview Alarm",
+      "battery": "Battery Optimization",
+      "help": "Help",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "version": "Version",
+      "licenses": "Open Source Licenses",
+      "backgroundLocation": "Background Location",
+      "backgroundLocationDesc": "Automatically tracks your location when an alarm is active.",
+      "batterySaving": "Smart Battery Saving",
+      "smartVolume": "Smart Volume",
+      "shakeToOff": "Shake to Turn Off",
+      "alertType": "Alert Type",
+      "mapEngine": "Map Engine",
+      "theme": "Screen Theme",
+      "alarmBackground": "Alarm Background",
+      "distanceUnit": "Distance Unit",
+      "deleteAllData": "Delete All Data",
+      "deleteAllDataDesc": "Deletes all alarm history, routes, challenges, and other data"
+    },
+    "unit": {
+      "title": "Distance Unit",
+      "metric": "Metric (km, m)",
+      "imperial": "Imperial (mi, ft)",
+      "currentlyMetric": "Currently: Kilometers",
+      "currentlyImperial": "Currently: Miles"
+    },
+    "theme": {
+      "title": "Screen Theme",
+      "light": "Light Mode",
+      "dark": "Dark Mode",
+      "system": "System Default"
+    },
+    "alertType": {
+      "title": "Alert Type",
+      "both": "Sound + Vibration",
+      "soundOnly": "Sound Only",
+      "vibrationOnly": "Vibration Only"
+    },
+    "soundPicker": {
+      "title": "Select Alarm Sound"
+    },
+    "sounds": {
+      "breeze": "Breeze",
+      "alert": "Alert",
+      "digital": "Digital",
+      "crystal": "Crystal"
+    },
+    "backgroundPicker": {
+      "title": "Select Alarm Background",
+      "default": "Default",
+      "gallery": "Choose from Gallery"
+    },
+    "backgroundThemes": {
+      "pixelDream": "Pixel Dream",
+      "aura": "Aura",
+      "intoTheWild": "Into the Wild",
+      "cityLights": "City Lights",
+      "stillMoment": "Still Moment"
+    },
+    "deleteAll": {
+      "title": "Delete All Data",
+      "message": "All alarm history, route data, challenges, and other data will be permanently deleted. This cannot be undone.",
+      "confirm": "Delete"
+    }
+  },
+  "favoriteSetup": {
+    "title": "Add Favorite",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. Home, Office, Cafe",
+    "iconLabel": "Icon",
+    "locationLabel": "Location",
+    "save": "Save",
+    "noName": "Name Required",
+    "pleaseEnterName": "Please enter a favorite name.",
+    "maxLimitReached": "You can add up to 3 favorites."
+  },
+  "onboarding": {
+    "welcome": "Drop an anchor\nat places you can't miss",
+    "subtitle": "We'll notify you\nwhen you're near your destination",
+    "permissions": {
+      "location": "Location Permission Required",
+      "locationDesc": "Location access is required for arrival alarms. Please allow in settings.",
+      "background": "Background Permission Required",
+      "backgroundDesc": "Select \"Always Allow\" to receive alarms even when the app is closed.",
+      "notification": "Notification Permission Required",
+      "notificationDesc": "Receive alerts before arrival"
+    },
+    "features": {
+      "battery": "Smart Battery Saving",
+      "location": "Precise Location Alarm",
+      "checklist": "To-do Checklist"
+    },
+    "start": "Get Started",
+    "requesting": "Requesting permissions...",
+    "permissionNote": "Location permission is required",
+    "permissionFailed": "Permission request failed. Please try again.",
+    "later": "Later",
+    "toSettings": "To Settings",
+    "expoGo": {
+      "title": "Expo Go Limitation",
+      "message": "Development Build is required to test location permissions on real devices. Continue without permission for now?",
+      "cancel": "Cancel",
+      "continue": "Continue"
+    }
+  },
+  "routes": {
+    "recommended": "Recommended",
+    "shortest": "Shortest Time",
+    "shortestDistance": "Shortest Distance",
+    "arrival": "Arrive at {{time}}"
+  },
+  "alarmDashboard": {
+    "distance": "{{distance}}",
+    "remainingDistance": "{{distance}} to destination",
+    "distanceLabel": "remaining distance",
+    "cancelAlarm": "Cancel Alarm",
+    "cancelConfirm": {
+      "title": "Cancel Alarm",
+      "message": "Cancel the active alarm?",
+      "confirm": "Cancel"
+    },
+    "checklist": "Checklist",
+    "elapsedTime": "elapsed"
+  },
+  "alarmDetail": {
+    "destination": "Destination",
+    "startPoint": "Start Point",
+    "travelInfo": "Travel Info",
+    "travelTime": "Travel Time",
+    "travelDistance": "Travel Distance",
+    "arrivedAt": "Arrived At",
+    "startedAt": "Started At",
+    "checklist": "Checklist",
+    "cancelled": "Cancelled",
+    "arrived": "Arrived",
+    "active": "Active",
+    "durationMinutes": "{{minutes}} min",
+    "durationHours": "{{hours}} hr",
+    "durationHoursMinutes": "{{hours}} hr {{minutes}} min",
+    "noStartLocation": "No start location",
+    "straightDistance": "Straight-line Distance",
+    "actualDistance": "Actual Distance Traveled",
+    "averageSpeed": "Average Speed",
+    "cancelledAt": "Cancelled at"
+  },
+  "alarmTrigger": {
+    "arrived": "You've arrived!",
+    "arrivedBadge": "Arrived",
+    "arrivedAt": "Arrived at {{place}}!",
+    "dismiss": "Slide to dismiss",
+    "dismissHint": "Slide all the way to dismiss",
+    "checklist": "Checklist",
+    "shakeHint": "Or shake to dismiss"
+  },
+  "alarmCompletion": {
+    "title": "Alarm Complete!",
+    "subtitle": "You've safely arrived at your destination"
+  },
+  "actionChecklist": {
+    "title": "Don't Forget!",
+    "subtitle": "You've arrived at {{destination}}!",
+    "done": "All Set",
+    "allChecked": "All done! Great job.",
+    "remaining": "{{count}} remaining"
+  },
+  "devDebug": {
+    "title": "Debug Panel",
+    "timeSection": "Time Offset",
+    "currentTime": "Current Time",
+    "offsetDays": "{{days}} day offset",
+    "resetTime": "Reset",
+    "visitSection": "Visit Simulator",
+    "simulateVisit": "Record Visit",
+    "simulateVisitDesc": "Add a visit record for the selected challenge",
+    "stateSection": "State Override",
+    "combo": "Combo",
+    "chances": "Chances",
+    "week": "Week",
+    "apply": "Apply",
+    "noActiveChallenge": "No active challenges",
+    "visitSuccess": "Visit recorded",
+    "visitFailed": "Visit failed: {{reason}}"
+  },
+  "days": {
+    "sun": "S",
+    "mon": "M",
+    "tue": "T",
+    "wed": "W",
+    "thu": "T",
+    "fri": "F",
+    "sat": "S",
+    "sunFull": "Sunday",
+    "monFull": "Monday",
+    "tueFull": "Tuesday",
+    "wedFull": "Wednesday",
+    "thuFull": "Thursday",
+    "friFull": "Friday",
+    "satFull": "Saturday",
+    "weekdays": "Weekdays",
+    "weekend": "Weekend",
+    "everyday": "Everyday"
+  },
+  "timePicker": {
+    "title": "Select Time",
+    "hour": "Hour",
+    "minute": "Min"
+  },
+  "activity": {
+    "title": "Activity",
+    "steps": "Steps",
+    "distance": "Distance",
+    "calories": "Calories",
+    "caloriesBurned": "Burned {{kcal}}kcal today",
+    "viewStats": "View Stats",
+    "pedometerUnavailable": "Pedometer is not available on this device",
+    "noDataYet": "No data yet",
+    "noDataHint": "Your activity data will appear here once you start walking!",
+    "stats": {
+      "title": "Activity Stats",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "totalSteps": "Total Steps",
+      "dailyAvg": "Daily Avg",
+      "bestDay": "Best Day",
+      "comparison": "{{percent}}% {{direction}} than before",
+      "more": "more",
+      "less": "less",
+      "noChange": "No change",
+      "stepsUnit": "steps",
+      "current": "This",
+      "previous": "Last"
+    },
+    "startChallenge": "Start a Challenge",
+    "startChallengeDesc": "Set visit goals and achieve them",
+    "messages": {
+      "ecoTreesTitle": "Planted {{trees}} Trees!",
+      "ecoTreesSub": "CO2 offset based on today's steps",
+      "carbonReductionTitle": "Saved {{grams}}g of CO2!",
+      "carbonReductionSub": "Carbon emissions reduced by walking",
+      "goalMotivationTitle": "{{remaining}} Steps Left!",
+      "goalMotivationSub": "Keep going to reach 10,000 steps",
+      "landmarkBurjTitle": "Passed Burj Khalifa ({{height}})!",
+      "landmarkBurjSub": "Total distance today exceeded its height",
+      "comparisonYesterdayTitle": "{{percent}}% More Than Yesterday!",
+      "comparisonYesterdaySub": "You're doing better than yesterday"
+    }
+  },
+  "challenge": {
+    "headerTitle": "Challenges",
+    "welcome": "Set visit goals for your\nfavorite places and stay consistent!",
+    "recommended": {
+      "title": "Recommended Challenges",
+      "subtitle": "How about these goals?"
+    },
+    "challenges": {
+      "walk": {
+        "title": "Easy Daily Walks",
+        "subtitle": "3x/week • Parks • Beginner friendly"
+      },
+      "study": {
+        "title": "Study Grind Mode",
+        "subtitle": "5x/week • Build study habits"
+      },
+      "gym": {
+        "title": "Gym Newbie No More",
+        "subtitle": "3x/week • Consistent workouts"
+      }
+    },
+    "createCustom": "Create Your Own Challenge",
+    "combo": "{{count}} Combo",
+    "chances": "{{count}} Chances",
+    "weekComplete": "Weekly goal achieved!",
+    "oneMore": "One more to go!",
+    "remainingVisits": "{{count}} more visits needed",
+    "weekInfo": "Week {{current}}/{{total}}",
+    "limitTitle": "Challenge Limit",
+    "limitMessage": "You can have up to 2 active challenges.",
+    "status": {
+      "active": "Active",
+      "graduated": "Graduated",
+      "failed": "Failed"
+    },
+    "graduated": {
+      "title": "Congratulations!",
+      "subtitle": "You've successfully completed the challenge",
+      "newChallenge": "Start New Challenge"
+    },
+    "detail": {
+      "title": "Challenge Detail",
+      "week": "Week {{current}} / {{total}}",
+      "visitRecords": "Visit Records ({{count}})",
+      "noVisits": "No visit records yet",
+      "min": "min",
+      "counted": "Counted",
+      "notCounted": "Not counted",
+      "delete": "Delete Challenge",
+      "deleteTitle": "Delete Challenge",
+      "deleteMessage": "Delete this challenge? This cannot be undone."
+    }
+  },
+  "geofence": {
+    "directions": {
+      "north": "N",
+      "northEast": "NE",
+      "east": "E",
+      "southEast": "SE",
+      "south": "S",
+      "southWest": "SW",
+      "west": "W",
+      "northWest": "NW"
+    }
+  },
+  "geocoding": {
+    "addressNotFound": "Address not found",
+    "failedToLoad": "Failed to load address"
+  },
+  "challengeCreate": {
+    "title": "Create Challenge",
+    "location": {
+      "label": "Target Location",
+      "select": "Select Place",
+      "change": "Change",
+      "searchTitle": "Search Place",
+      "searchPlaceholder": "Search for a place",
+      "mapSelectHint": "Tap the map to select a location",
+      "selectedLocation": "Selected location",
+      "selectThisLocation": "Select this location"
+    },
+    "goal": {
+      "label": "Goal Settings",
+      "duration": "Duration",
+      "week": "1 Week",
+      "month": "1 Month",
+      "frequency": "Weekly Goal",
+      "timesPerWeek": "{{count}}x / week",
+      "repeat": "Repeat Mode",
+      "daySpecific": "Day-Specific",
+      "daySpecificDesc": "Only count visits on selected days",
+      "daySpecificError": "{{selected}} selected / {{required}} required",
+      "weeksCount": "{{count}} weeks"
+    },
+    "identity": {
+      "iconLabel": "Icon",
+      "nameLabel": "Challenge Name",
+      "namePlaceholder": "e.g. Morning workout, Reading"
+    },
+    "dwell": {
+      "label": "Dwell Time",
+      "toggle": "Require Dwell Time",
+      "description": "Must stay for a minimum duration to count as a visit",
+      "minutes": "{{count}} min",
+      "hours": "{{count}} hr"
+    },
+    "start": "Start"
+  },
+  "notification": {
+    "arrival": {
+      "title": "You've arrived",
+      "body": "Tap to dismiss the alarm",
+      "defaultPlace": "Destination"
+    },
+    "tracking": {
+      "remaining": "{{distance}} remaining",
+      "elapsed": "{{time}} in transit",
+      "timeHours": "{{hours}}h {{minutes}}m",
+      "timeMinutes": "{{minutes}}m {{seconds}}s",
+      "timeSeconds": "{{seconds}}s"
+    }
+  },
+  "trackingNotification": {
+    "remaining": "{{distance}} remaining",
+    "elapsed": "{{time}} elapsed"
+  },
+  "trackingDetail": {
+    "title": "Tracking Detail",
+    "remainingDistance": "Remaining",
+    "traveledDistance": "Traveled",
+    "currentSpeed": "Speed",
+    "elapsedTime": "Elapsed",
+    "viewAll": "View All",
+    "currentLocation": "My Location",
+    "speedUnit": "km/h"
+  },
+  "accessibility": {
+    "tapToViewDetails": "Tap to view details",
+    "cancelAlarmHint": "Cancels the alarm",
+    "deleteAlarmHint": "Deletes the alarm",
+    "slideToDismiss": "Slide to dismiss alarm",
+    "mapShowingDestination": "Map showing destination {{destination}}",
+    "remainingDistance": "Remaining distance {{distance}}",
+    "searchLocation": "Search location",
+    "startNavigation": "Start navigation",
+    "stopNavigation": "Stop navigation",
+    "myLocation": "My location button",
+    "createAlarmButton": "Create alarm button",
+    "mapInteraction": "Interactive map showing selected location",
+    "dismissAlarm": "Dismiss the alarm by sliding",
+    "alarmTitle": "Alarm title {{title}}",
+    "statusBadge": "Status {{status}}",
+    "alarmHistoryCard": "{{title}}, {{status}}, {{time}}",
+    "alarmDetails": "Tap to view alarm details"
+  }
 }

@@ -17,15 +17,19 @@ import Animated, { FadeInDown, FadeInUp, BounceIn } from 'react-native-reanimate
 import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
 import { useChallengeStore } from '../../src/stores/challengeStore';
 import { ChallengeCard } from '../../src/components/challenge/ChallengeCard';
+import { ChallengeIcon } from '../../src/db/schema';
 
 interface RecommendedTemplate {
     id: string;
     translationKey: string;
     icon: keyof typeof Ionicons.glyphMap;
+    iconKey: ChallengeIcon;
     iconColor: string;
     iconBgColor: string;
     weeklyGoal: number;
     durationWeeks: number;
+    dwellTimeEnabled: boolean;
+    dwellTimeMinutes: number;
 }
 
 const RECOMMENDED_TEMPLATES: RecommendedTemplate[] = [
@@ -33,28 +37,37 @@ const RECOMMENDED_TEMPLATES: RecommendedTemplate[] = [
         id: 'gym',
         translationKey: 'gym',
         icon: 'fitness',
+        iconKey: 'fitness',
         iconColor: '#3182F6',
         iconBgColor: '#E8F3FF',
         weeklyGoal: 3,
         durationWeeks: 4,
+        dwellTimeEnabled: true,
+        dwellTimeMinutes: 60,
     },
     {
         id: 'walk',
         translationKey: 'walk',
         icon: 'walk',
+        iconKey: 'walk',
         iconColor: '#00C853',
         iconBgColor: '#E6F9EE',
         weeklyGoal: 3,
         durationWeeks: 3,
+        dwellTimeEnabled: false,
+        dwellTimeMinutes: 30,
     },
     {
         id: 'study',
         translationKey: 'study',
         icon: 'book',
+        iconKey: 'book',
         iconColor: '#FF9800',
         iconBgColor: '#FFF3E0',
         weeklyGoal: 5,
         durationWeeks: 4,
+        dwellTimeEnabled: true,
+        dwellTimeMinutes: 120,
     },
 ];
 
@@ -77,16 +90,18 @@ export default function ChallengeTab() {
 
     const hasActiveChallenges = activeChallenges.length > 0;
     const hasRecentGraduation = graduatedChallenges.length > 0 && !hasActiveChallenges;
-    const canAddMore = activeChallenges.length < 2;
 
     const handleTemplatePress = useCallback((template: RecommendedTemplate) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push({
             pathname: '/challenge-create',
             params: {
-                templateIcon: template.id,
+                templateIcon: template.iconKey,
                 templateGoal: String(template.weeklyGoal),
                 templateDuration: String(template.durationWeeks),
+                templateName: template.translationKey,
+                templateDwellEnabled: String(template.dwellTimeEnabled),
+                templateDwellMinutes: String(template.dwellTimeMinutes),
             },
         });
     }, []);
@@ -123,45 +138,45 @@ export default function ChallengeTab() {
 
                 {/* State 1: No active challenges */}
                 {!hasActiveChallenges && !hasRecentGraduation && (
-                    <>
-                        <View style={styles.welcomeContainer}>
-                            <Text style={styles.welcomeText}>
-                                {t('challenge.welcome')}
-                            </Text>
+                    <View style={styles.welcomeContainer}>
+                        <Text style={styles.welcomeText}>
+                            {t('challenge.welcome')}
+                        </Text>
+                    </View>
+                )}
+
+                {!hasActiveChallenges && (
+                    <View style={styles.recommendedCard}>
+                        <View style={styles.recommendedHeader}>
+                            <Text style={styles.recommendedTitle}>{t('challenge.recommended.title')}</Text>
+                            <Text style={styles.recommendedSubtitle}>{t('challenge.recommended.subtitle')}</Text>
                         </View>
 
-                        <View style={styles.recommendedCard}>
-                            <View style={styles.recommendedHeader}>
-                                <Text style={styles.recommendedTitle}>{t('challenge.recommended.title')}</Text>
-                                <Text style={styles.recommendedSubtitle}>{t('challenge.recommended.subtitle')}</Text>
-                            </View>
-
-                            {RECOMMENDED_TEMPLATES.map((template, index) => (
-                                <TouchableOpacity
-                                    key={template.id}
-                                    style={[
-                                        styles.challengeRow,
-                                        index < RECOMMENDED_TEMPLATES.length - 1 && styles.challengeRowBorder,
-                                    ]}
-                                    activeOpacity={0.7}
-                                    onPress={() => handleTemplatePress(template)}
-                                >
-                                    <View style={[styles.iconBox, { backgroundColor: template.iconBgColor }]}>
-                                        <Ionicons name={template.icon} size={24} color={template.iconColor} />
-                                    </View>
-                                    <View style={styles.challengeInfo}>
-                                        <Text style={styles.challengeTitle}>
-                                            {t(`challenge.challenges.${template.translationKey}.title`)}
-                                        </Text>
-                                        <Text style={styles.challengeSubtitle}>
-                                            {t(`challenge.challenges.${template.translationKey}.subtitle`)}
-                                        </Text>
-                                    </View>
-                                    <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </>
+                        {RECOMMENDED_TEMPLATES.map((template, index) => (
+                            <TouchableOpacity
+                                key={template.id}
+                                style={[
+                                    styles.challengeRow,
+                                    index < RECOMMENDED_TEMPLATES.length - 1 && styles.challengeRowBorder,
+                                ]}
+                                activeOpacity={0.7}
+                                onPress={() => handleTemplatePress(template)}
+                            >
+                                <View style={[styles.iconBox, { backgroundColor: template.iconBgColor }]}>
+                                    <Ionicons name={template.icon} size={24} color={template.iconColor} />
+                                </View>
+                                <View style={styles.challengeInfo}>
+                                    <Text style={styles.challengeTitle}>
+                                        {t(`challenge.challenges.${template.translationKey}.title`)}
+                                    </Text>
+                                    <Text style={styles.challengeSubtitle}>
+                                        {t(`challenge.challenges.${template.translationKey}.subtitle`)}
+                                    </Text>
+                                </View>
+                                <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+                            </TouchableOpacity>
+                        ))}
+                    </View>
                 )}
 
                 {/* State 2: Active challenges */}
@@ -213,39 +228,6 @@ export default function ChallengeTab() {
                 )}
 
                 {/* Recommended section (when active challenges exist but < 2) */}
-                {hasActiveChallenges && canAddMore && (
-                    <View style={styles.recommendedCard}>
-                        <View style={styles.recommendedHeader}>
-                            <Text style={styles.recommendedTitle}>{t('challenge.recommended.title')}</Text>
-                            <Text style={styles.recommendedSubtitle}>{t('challenge.recommended.subtitle')}</Text>
-                        </View>
-
-                        {RECOMMENDED_TEMPLATES.map((template, index) => (
-                            <TouchableOpacity
-                                key={template.id}
-                                style={[
-                                    styles.challengeRow,
-                                    index < RECOMMENDED_TEMPLATES.length - 1 && styles.challengeRowBorder,
-                                ]}
-                                activeOpacity={0.7}
-                                onPress={() => handleTemplatePress(template)}
-                            >
-                                <View style={[styles.iconBox, { backgroundColor: template.iconBgColor }]}>
-                                    <Ionicons name={template.icon} size={24} color={template.iconColor} />
-                                </View>
-                                <View style={styles.challengeInfo}>
-                                    <Text style={styles.challengeTitle}>
-                                        {t(`challenge.challenges.${template.translationKey}.title`)}
-                                    </Text>
-                                    <Text style={styles.challengeSubtitle}>
-                                        {t(`challenge.challenges.${template.translationKey}.subtitle`)}
-                                    </Text>
-                                </View>
-                                <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                )}
 
                 {/* Create custom button */}
                 <TouchableOpacity

@@ -53,6 +53,9 @@ export default function ChallengeCreate() {
         templateIcon?: string;
         templateGoal?: string;
         templateDuration?: string;
+        templateName?: string;
+        templateDwellEnabled?: string;
+        templateDwellMinutes?: string;
     }>();
 
     const { createChallenge, canCreateChallenge } = useChallengeStore();
@@ -82,6 +85,15 @@ export default function ChallengeCreate() {
         }
         if (params.templateDuration) {
             setDurationWeeks(Number(params.templateDuration));
+        }
+        if (params.templateName) {
+            setName(t(`challenge.challenges.${params.templateName}.title`));
+        }
+        if (params.templateDwellEnabled === 'true') {
+            setIsDwellEnabled(true);
+            if (params.templateDwellMinutes) {
+                setDwellMinutes(Number(params.templateDwellMinutes));
+            }
         }
     }, []);
 
