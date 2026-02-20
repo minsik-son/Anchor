@@ -26,7 +26,8 @@
         "UIBackgroundModes": [
           "location",
           "fetch",
-          "remote-notification"
+          "remote-notification",
+          "audio"
         ],
         "NSPhotoLibraryUsageDescription": "Gallery access is needed to select alarm background images."
       }
@@ -93,7 +94,15 @@
         }
       ],
       "expo-live-activity",
-      "./plugins/withCxx20"
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "locaalert",
+          "project": "locaalert-mobile"
+        }
+      ],
+      "./plugins/withCxx20",
+      "@sentry/react-native"
     ]
   }
 }

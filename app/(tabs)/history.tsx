@@ -94,10 +94,10 @@ function formatSectionDate(dateKey: string, i18n: any): string {
     const yesterdayKey = getDateKey(yesterday.toISOString());
 
     if (dateKey === today) {
-        return i18n.language === 'ko' ? '오늘' : i18n.language === 'ja' ? '今日' : 'Today';
+        return i18n.t('history.today');
     }
     if (dateKey === yesterdayKey) {
-        return i18n.language === 'ko' ? '어제' : i18n.language === 'ja' ? '昨日' : 'Yesterday';
+        return i18n.t('history.yesterday');
     }
 
     return date.toLocaleDateString(i18n.language, {

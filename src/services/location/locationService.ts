@@ -25,6 +25,7 @@ import { useChallengeStore } from '../../stores/challengeStore';
 import { useAlarmStore } from '../../stores/alarmStore';
 import { useAlarmSettingsStore } from '../../stores/alarmSettingsStore';
 import { sendArrivalNotification, isAppInForeground, sendTrackingNotification, clearTrackingNotification, clearAllAlarmNotifications } from '../notification/notificationService';
+import { startBackgroundAlarm } from '../alarm/backgroundAlarmService';
 import {
     startTrackingActivity,
     updateTrackingActivity,
@@ -190,24 +191,33 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
             console.warn('[LocationService] Failed to clear tracking notification:', err),
         );
 
-        // Stop all location updates IMMEDIATELY to prevent repeated triggers
-        // NOTE: Route data is preserved in the store (stopAllTracking does NOT clear it)
-        await teardownPhase(currentServicePhase);
-        currentServicePhase = 'IDLE';
+        // 1) Start alarm sound + vibration IMMEDIATELY (works in background/lock screen)
+        // Must happen BEFORE teardown so iOS audio session is established
+        // while the background task is still alive
+        const alarmSettings = useAlarmSettingsStore.getState();
+        try {
+            await startBackgroundAlarm(alarmSettings.alertType, alarmSettings.selectedSound);
+        } catch (err) {
+            console.warn('[LocationService] Failed to start background alarm:', err);
+        }
 
+        // 2) Navigate or send notification
         if (isAppInForeground()) {
-            // App is active: navigate directly to full-screen alarm (no notification needed)
             router.navigate('/alarm-trigger');
         } else {
-            // App is in background/lock screen: send ONE notification to wake the app
-            // This is the ONLY time we send an arrival notification — once per alarm
+            // Send notification as visual indicator (sound already playing via backgroundAlarmService)
             const alarmTitle = alarmStore.activeAlarm.title ?? '';
             const alarmId = alarmStore.activeAlarm.id;
-            const alarmSettings = useAlarmSettingsStore.getState();
-            sendArrivalNotification(alarmTitle, alarmId, alarmSettings.selectedSound).catch(err =>
-                console.warn('[LocationService] Failed to send notification:', err),
-            );
+            try {
+                await sendArrivalNotification(alarmTitle, alarmId, alarmSettings.selectedSound);
+            } catch (err) {
+                console.warn('[LocationService] Failed to send notification:', err);
+            }
         }
+
+        // 3) Stop GPS tracking LAST — audio session already established above
+        await teardownPhase(currentServicePhase);
+        currentServicePhase = 'IDLE';
         return;
     }
 

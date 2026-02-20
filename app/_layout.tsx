@@ -21,9 +21,19 @@ import {
     setupNotificationResponseHandler,
     removeNotificationResponseHandler,
 } from '../src/services/notification/notificationService';
+import * as Sentry from '@sentry/react-native';
 import { OfflineBanner } from '../src/components/common/OfflineBanner';
 import { cleanExpiredData } from '../src/services/privacy/dataRetentionService';
 import '../src/i18n'; // Initialize i18n
+
+// Initialize Sentry (production only)
+Sentry.init({
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || '',
+    enabled: !__DEV__,
+    tracesSampleRate: 0.2,
+    attachScreenshot: true,
+    enableAutoSessionTracking: true,
+});
 
 export default function RootLayout() {
     const [isReady, setIsReady] = useState(false);

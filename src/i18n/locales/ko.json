@@ -112,6 +112,8 @@
   },
   "history": {
     "title": "알람 히스토리",
+    "today": "오늘",
+    "yesterday": "어제",
     "total": "총 {{count}}개",
     "empty": "아직 생성된 알람이 없습니다",
     "emptyHint": "홈 화면에서 알람을 만들어보세요!",

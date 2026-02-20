@@ -4,7 +4,8 @@
  * Platform-aware search with prioritized API selection:
  * 1. Korea → Kakao Maps API
  * 2. iOS (Global) → Apple MapKit JS API
- * 3. Android/Fallback → Google Places API
+ * 3. Android/Fallback → OSM Nominatim (free, no API key)
+ * 4. Final Fallback → Expo Location geocoding
  */
 
 import { Platform } from 'react-native';
@@ -21,7 +22,7 @@ export interface SearchResult {
     latitude?: number;
     longitude?: number;
     placeId?: string;
-    source: 'KAKAO' | 'GOOGLE' | 'APPLE' | 'EXPO';
+    source: 'KAKAO' | 'APPLE' | 'OSM' | 'EXPO';
     relevanceScore?: number;
 }
 
@@ -34,7 +35,6 @@ export interface SearchOptions {
 
 export interface SearchConfig {
     kakaoApiKey?: string;
-    googleApiKey?: string;
     appleMapKitToken?: string;
 }
 
@@ -44,13 +44,11 @@ export interface SearchConfig {
 // SECURITY NOTE: EXPO_PUBLIC_ prefixed keys are embedded in the JS bundle.
 // Protect these keys by configuring platform restrictions:
 //   - Kakao: Kakao Developers Console → App Settings → Platform → iOS Bundle ID (com.mnisik.app)
-//   - Google: Google Cloud Console → API Credentials → Application Restrictions → iOS apps
 //   - Apple: Managed via short-lived JWT tokens (inherently safer)
 // =============================================================================
 
 const config: SearchConfig = {
     kakaoApiKey: process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY || '',
-    googleApiKey: process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || '',
     appleMapKitToken: process.env.EXPO_PUBLIC_APPLE_MAPKIT_TOKEN || '',
 };
 
@@ -60,44 +58,6 @@ const config: SearchConfig = {
 
 export function isInKorea(lat: number, lon: number): boolean {
     return lat >= 33.0 && lat <= 38.9 && lon >= 124.5 && lon <= 132.0;
-}
-
-// =============================================================================
-// Session Token Management (Google Places billing optimization)
-// =============================================================================
-
-function generateUUID(): string {
-    // Use crypto.getRandomValues for better randomness (supported in Hermes/JSC)
-    const bytes = new Uint8Array(16);
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-        crypto.getRandomValues(bytes);
-    } else {
-        // Fallback for environments without crypto
-        for (let i = 0; i < 16; i++) bytes[i] = (Math.random() * 256) | 0;
-    }
-    // Set version (4) and variant (RFC 4122)
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
-
-let googleSessionToken: string | null = null;
-let sessionTokenCreatedAt: number = 0;
-const SESSION_TOKEN_EXPIRY_MS = 3 * 60 * 1000;
-
-function getOrCreateGoogleSessionToken(): string {
-    const now = Date.now();
-    if (!googleSessionToken || (now - sessionTokenCreatedAt) > SESSION_TOKEN_EXPIRY_MS) {
-        googleSessionToken = generateUUID();
-        sessionTokenCreatedAt = now;
-    }
-    return googleSessionToken;
-}
-
-export function resetGoogleSessionToken(): void {
-    googleSessionToken = null;
-    sessionTokenCreatedAt = 0;
 }
 
 // =============================================================================
@@ -291,104 +251,80 @@ async function autocompleteApple(
 }
 
 // =============================================================================
-// Google Places API (Android/Global Fallback)
+// OSM Nominatim API (Android/Global — free, no API key)
 // =============================================================================
 
-interface GooglePrediction {
-    place_id: string;
-    structured_formatting: { main_text: string; secondary_text: string };
-    description: string;
-}
-
-interface GoogleAutocompleteResponse {
-    predictions: GooglePrediction[];
-    status: string;
-    error_message?: string;
-}
-
-interface GooglePlaceDetailsResponse {
-    result: {
-        geometry: { location: { lat: number; lng: number } };
-        formatted_address: string;
-        name: string;
+interface NominatimResult {
+    place_id: number;
+    display_name: string;
+    lat: string;
+    lon: string;
+    name?: string;
+    address?: {
+        road?: string;
+        city?: string;
+        town?: string;
+        village?: string;
+        state?: string;
+        country?: string;
+        suburb?: string;
     };
-    status: string;
-}
-
-async function searchGoogle(
-    query: string,
-    language: string = 'en',
-    limit: number = 10
-): Promise<SearchResult[]> {
-    // Skip Google on iOS if no key configured - use Apple/Expo instead
-    if (!config.googleApiKey) {
-        if (Platform.OS === 'ios') {
-            return []; // Will fall through to Expo
-        }
-        console.warn('[SearchService] Google API key not configured');
-        return [];
-    }
-
-    try {
-        const sessionToken = getOrCreateGoogleSessionToken();
-        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${config.googleApiKey}&sessiontoken=${sessionToken}&language=${language}`;
-
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(`Google API error: ${response.status}`);
-        }
-
-        const json: GoogleAutocompleteResponse = await response.json();
-
-        if (json.status !== 'OK' && json.status !== 'ZERO_RESULTS') {
-            throw new Error(`Google API status: ${json.status} - ${json.error_message}`);
-        }
-
-        return json.predictions.slice(0, limit).map((item, index) => ({
-            id: item.place_id,
-            name: item.structured_formatting.main_text,
-            address: item.structured_formatting.secondary_text || item.description,
-            placeId: item.place_id,
-            source: 'GOOGLE' as const,
-            relevanceScore: 100 - index,
-        }));
-    } catch (error) {
-        console.error('[SearchService] Google search error:', error);
-        return [];
-    }
 }
 
 /**
- * Get coordinates from Google Place ID
+ * Search using OpenStreetMap Nominatim API
+ * Free, no API key required, rate limit: 1 request/second
+ * https://nominatim.org/release-docs/latest/api/Search/
  */
-export async function getGooglePlaceDetails(
-    placeId: string
-): Promise<{ latitude: number; longitude: number } | null> {
-    if (!config.googleApiKey) {
-        return null;
-    }
-
+async function searchNominatim(
+    query: string,
+    language: string = 'en',
+    limit: number = 10,
+): Promise<SearchResult[]> {
     try {
-        const sessionToken = getOrCreateGoogleSessionToken();
-        const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry,formatted_address,name&key=${config.googleApiKey}&sessiontoken=${sessionToken}`;
+        const params = new URLSearchParams({
+            q: query,
+            format: 'json',
+            limit: String(limit),
+            addressdetails: '1',
+            'accept-language': language,
+        });
 
-        const response = await fetch(url);
-        const json: GooglePlaceDetailsResponse = await response.json();
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+            {
+                headers: {
+                    'User-Agent': 'LocaAlert/1.0 (com.mnisik.app)',
+                },
+            },
+        );
 
-        if (json.status !== 'OK') {
-            throw new Error(`Google Place Details error: ${json.status}`);
+        if (!response.ok) {
+            throw new Error(`Nominatim API error: ${response.status}`);
         }
 
-        resetGoogleSessionToken();
+        const json: NominatimResult[] = await response.json();
 
-        return {
-            latitude: json.result.geometry.location.lat,
-            longitude: json.result.geometry.location.lng,
-        };
+        return json.map((item, index) => {
+            const addr = item.address;
+            const city = addr?.city || addr?.town || addr?.village || '';
+            const addressStr = [addr?.road, addr?.suburb, city, addr?.state]
+                .filter(Boolean)
+                .join(', ') || item.display_name;
+
+            return {
+                id: `osm-${item.place_id}`,
+                name: item.name || item.display_name.split(',')[0],
+                address: addressStr,
+                latitude: parseFloat(item.lat),
+                longitude: parseFloat(item.lon),
+                source: 'OSM' as const,
+                relevanceScore: 100 - index,
+            };
+        }).filter(r => !isNaN(r.latitude!) && !isNaN(r.longitude!));
     } catch (error) {
-        console.error('[SearchService] Google place details error:', error);
-        return null;
+        console.error('[SearchService] Nominatim search error:', error);
+        return [];
     }
 }
 
@@ -459,7 +395,7 @@ async function searchExpoFallback(query: string, limit: number = 5): Promise<Sea
  * Priority:
  * 1. Korea → Kakao Maps API (best Korean address coverage)
  * 2. iOS + Global → Apple MapKit JS (native iOS experience)
- * 3. Android + Global → Google Places API
+ * 3. Android + Global → OSM Nominatim (free, no API key)
  * 4. Fallback → Expo Location geocoding
  */
 export async function searchPlaces(options: SearchOptions): Promise<SearchResult[]> {
@@ -493,9 +429,9 @@ export async function searchPlaces(options: SearchOptions): Promise<SearchResult
         }
     }
 
-    // Priority 3: Android or iOS fallback → Google Places
+    // Priority 3: Android or iOS fallback → OSM Nominatim
     if (!isIOS || results.length === 0) {
-        results = await searchGoogle(trimmedQuery, language, limit);
+        results = await searchNominatim(trimmedQuery, language, limit);
         if (results.length > 0) {
             return results;
         }
@@ -534,8 +470,8 @@ export async function autocompleteSearch(options: SearchOptions): Promise<Search
         }
     }
 
-    // Android/fallback → Google
-    return searchGoogle(trimmedQuery, language, limit);
+    // Android/fallback → OSM Nominatim
+    return searchNominatim(trimmedQuery, language, limit);
 }
 
 // =============================================================================
@@ -573,9 +509,3 @@ export function cancelPendingSearch(): void {
     }
     lastSearchQuery = '';
 }
-
-// =============================================================================
-// Re-exports for backward compatibility
-// =============================================================================
-
-export { resetGoogleSessionToken as resetSessionToken };

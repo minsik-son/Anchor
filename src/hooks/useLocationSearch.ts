@@ -12,8 +12,6 @@ import {
     SearchResult,
     debouncedSearch,
     cancelPendingSearch,
-    getGooglePlaceDetails,
-    resetSessionToken,
 } from '../services/location/searchService';
 import { getRecentDestinations, RecentDestination } from '../db/database';
 
@@ -150,8 +148,8 @@ function rankResults(results: SearchResult[], query: string): SearchResult[] {
         if (aStarts && !bStarts) return -1;
         if (!aStarts && bStarts) return 1;
 
-        // Priority 3: Source preference (KAKAO > APPLE > GOOGLE > EXPO)
-        const sourceOrder = { KAKAO: 0, APPLE: 1, GOOGLE: 2, EXPO: 3 };
+        // Priority 3: Source preference (KAKAO > APPLE > OSM > EXPO)
+        const sourceOrder = { KAKAO: 0, APPLE: 1, OSM: 2, EXPO: 3 };
         const aOrder = sourceOrder[a.source] ?? 3;
         const bOrder = sourceOrder[b.source] ?? 3;
         if (aOrder !== bOrder) return aOrder - bOrder;
@@ -328,30 +326,16 @@ export function useLocationSearch({
             setQueryState('');
             Keyboard.dismiss();
 
-            let finalLocation: Coords | null = null;
-
-            // Kakao, Apple, and Expo results have coordinates directly
-            if (result.latitude !== undefined && result.longitude !== undefined) {
-                finalLocation = {
-                    latitude: result.latitude,
-                    longitude: result.longitude,
-                };
-            }
-            // Google results need an additional API call
-            else if (result.source === 'GOOGLE' && result.placeId) {
-                const coords = await getGooglePlaceDetails(result.placeId);
-                if (coords) {
-                    finalLocation = coords;
-                }
-            }
-
-            if (!finalLocation) {
+            // All search providers (Kakao, Apple, OSM, Expo) return coordinates directly
+            if (result.latitude === undefined || result.longitude === undefined) {
                 console.error('[useLocationSearch] Could not get coordinates for selected place');
                 return null;
             }
 
-            // Reset session token after selection (Google billing optimization)
-            resetSessionToken();
+            const finalLocation: Coords = {
+                latitude: result.latitude,
+                longitude: result.longitude,
+            };
 
             // Haptic feedback
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

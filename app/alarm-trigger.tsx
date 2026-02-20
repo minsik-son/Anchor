@@ -27,6 +27,7 @@ import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
 import { useAlarmSettingsStore, getBackgroundAsset } from '../src/stores/alarmSettingsStore';
 import { clearAllAlarmNotifications } from '../src/services/notification/notificationService';
+import { isBackgroundAlarmActive, stopBackgroundAlarm } from '../src/services/alarm/backgroundAlarmService';
 import { useAlarmSound } from '../src/hooks/useAlarmSound';
 import { useAlarmVibration } from '../src/hooks/useAlarmVibration';
 import { useShakeDetection } from '../src/hooks/useShakeDetection';
@@ -79,20 +80,25 @@ export default function AlarmTrigger() {
     }, [activeAlarm]);
 
     // Start sound and vibration based on settings
+    // If backgroundAlarmService already started alarm (background arrival),
+    // skip duplicate playback — the background service handles it.
     useEffect(() => {
-        const shouldPlaySound = alertType === 'both' || alertType === 'sound';
-        const shouldVibrate = alertType === 'both' || alertType === 'vibration';
+        if (!isBackgroundAlarmActive()) {
+            const shouldPlaySound = alertType === 'both' || alertType === 'sound';
+            const shouldVibrate = alertType === 'both' || alertType === 'vibration';
 
-        if (shouldPlaySound) {
-            play(selectedSound);
-        }
-        if (shouldVibrate) {
-            startLoop();
+            if (shouldPlaySound) {
+                play(selectedSound);
+            }
+            if (shouldVibrate) {
+                startLoop();
+            }
         }
 
         return () => {
             stopSound();
             stopLoop();
+            stopBackgroundAlarm();
         };
     }, []);
 
@@ -151,6 +157,8 @@ export default function AlarmTrigger() {
         const alarmTitle = activeAlarm.title;
         const hasMemos = currentMemos.length > 0;
 
+        // Stop all alarm sources (background service + hook-based)
+        await stopBackgroundAlarm();
         await stopSound();
         stopLoop();
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

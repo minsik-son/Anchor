@@ -112,6 +112,8 @@
   },
   "history": {
     "title": "アラーム履歴",
+    "today": "今日",
+    "yesterday": "昨日",
     "total": "全 {{count}}件",
     "empty": "まだアラームがありません",
     "emptyHint": "ホーム画面からアラームを作成してみましょう！",

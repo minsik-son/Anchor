@@ -112,6 +112,8 @@
   },
   "history": {
     "title": "Alarm History",
+    "today": "Today",
+    "yesterday": "Yesterday",
     "total": "{{count}} total",
     "empty": "No alarms yet",
     "emptyHint": "Create an alarm from the home screen!",
