@@ -25,10 +25,8 @@ try {
     // Native module not available (Expo Go)
 }
 
-// Ad unit ID (replace with your actual ID)
-const AD_UNIT_ID = __DEV__
-    ? TestIds?.INTERSTITIAL ?? 'ca-app-pub-3940256099942544/1033173712'
-    : 'ca-app-pub-xxxxxxxxxxxxx/yyyyyyyyyy'; // ← Replace with production ID
+// Ad unit ID — using test ID for both dev and release until production ID is ready
+const AD_UNIT_ID = TestIds?.INTERSTITIAL ?? 'ca-app-pub-3940256099942544/1033173712';
 
 export default function InterstitialAdScreen() {
     const [adLoaded, setAdLoaded] = useState(false);

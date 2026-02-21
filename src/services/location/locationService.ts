@@ -10,6 +10,7 @@
 
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
+import { Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useLocationStore, TrackingPhase } from '../../stores/locationStore';
 import { maybeCheckpoint, resetCheckpoint, finalizeCheckpoint } from '../checkpoint/checkpointService';
@@ -25,6 +26,7 @@ import { useChallengeStore } from '../../stores/challengeStore';
 import { useAlarmStore } from '../../stores/alarmStore';
 import { useAlarmSettingsStore } from '../../stores/alarmSettingsStore';
 import { sendArrivalNotification, isAppInForeground, sendTrackingNotification, clearTrackingNotification, clearAllAlarmNotifications } from '../notification/notificationService';
+import { sendAndroidFullScreenNotification } from '../notification/androidFullScreenModule';
 import { startBackgroundAlarm } from '../alarm/backgroundAlarmService';
 import {
     startTrackingActivity,
@@ -205,11 +207,16 @@ TaskManager.defineTask(TASK_NAMES.LOCATION, async ({ data, error }) => {
         if (isAppInForeground()) {
             router.navigate('/alarm-trigger');
         } else {
-            // Send notification as visual indicator (sound already playing via backgroundAlarmService)
             const alarmTitle = alarmStore.activeAlarm.title ?? '';
             const alarmId = alarmStore.activeAlarm.id;
             try {
-                await sendArrivalNotification(alarmTitle, alarmId, alarmSettings.selectedSound);
+                if (Platform.OS === 'android') {
+                    // Android: Full-screen intent notification (shows alarm over lock screen)
+                    await sendAndroidFullScreenNotification(alarmTitle, alarmId, alarmSettings.selectedSound);
+                } else {
+                    // iOS: Critical notification with action buttons (dismiss from lock screen)
+                    await sendArrivalNotification(alarmTitle, alarmId, alarmSettings.selectedSound);
+                }
             } catch (err) {
                 console.warn('[LocationService] Failed to send notification:', err);
             }

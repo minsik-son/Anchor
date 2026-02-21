@@ -15,8 +15,8 @@ import * as Notifications from 'expo-notifications';
 import { Platform, AppState } from 'react-native';
 import { router } from 'expo-router';
 import { AlarmSoundKey } from '../../stores/alarmSettingsStore';
-import { captureError } from '../../utils/errorReporting';
 import i18n from '../../i18n';
+import { dismissAlarmFromBackground } from '../alarm/alarmDismissService';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -89,6 +89,30 @@ export async function initNotifications(): Promise<void> {
         });
     }
 
+    // Register notification category with action buttons for lock screen interaction
+    try {
+        await Notifications.setNotificationCategoryAsync('ARRIVAL_ALARM', [
+            {
+                identifier: 'DISMISS_ALARM',
+                buttonTitle: i18n.t('notification.action.dismiss'),
+                options: {
+                    isDestructive: true,
+                    opensAppToForeground: false,
+                },
+            },
+            {
+                identifier: 'OPEN_ALARM',
+                buttonTitle: i18n.t('notification.action.open'),
+                options: {
+                    opensAppToForeground: true,
+                },
+            },
+        ]);
+        console.log('[NotificationService] Notification category registered');
+    } catch (err) {
+        console.warn('[NotificationService] Failed to register notification category:', err);
+    }
+
     console.log('[NotificationService] Initialized');
 }
 
@@ -109,7 +133,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
             allowAlert: true,
             allowSound: true,
             allowBadge: false,
-            allowCriticalAlerts: true,
+            allowCriticalAlerts: false,
         },
     });
 
@@ -143,8 +167,9 @@ export async function sendArrivalNotification(
                 alarmId: alarmId ?? null,
                 screen: '/alarm-trigger',
             },
+            categoryIdentifier: 'ARRIVAL_ALARM',
             ...(Platform.OS === 'ios' && {
-                interruptionLevel: 'critical',
+                interruptionLevel: 'timeSensitive',
             }),
             ...(Platform.OS === 'android' && {
                 channelId: CHANNEL_ID,
@@ -242,15 +267,26 @@ export function setupNotificationResponseHandler(): void {
     responseSubscription = Notifications.addNotificationResponseReceivedListener(
         (response) => {
             const data = response.notification.request.content.data;
-            console.log('[NotificationService] Notification tapped:', data);
+            const actionId = response.actionIdentifier;
+            console.log('[NotificationService] Notification response:', { actionId, data });
 
-            if (data?.screen === '/alarm-trigger') {
-                // Small delay to ensure navigation context is ready
-                // (especially when app was terminated/backgrounded)
-                // Use navigate instead of push to prevent stacking multiple modal instances
-                setTimeout(() => {
-                    router.navigate('/alarm-trigger');
-                }, 300);
+            // Handle "Dismiss Alarm" action button (works from lock screen without opening app)
+            if (actionId === 'DISMISS_ALARM') {
+                console.log('[NotificationService] Dismiss action from notification');
+                dismissAlarmFromBackground(data?.alarmId as number | null);
+                return;
+            }
+
+            // Handle "Open Alarm" action button or default tap on notification
+            if (
+                actionId === 'OPEN_ALARM' ||
+                actionId === Notifications.DEFAULT_ACTION_IDENTIFIER
+            ) {
+                if (data?.screen === '/alarm-trigger') {
+                    setTimeout(() => {
+                        router.navigate('/alarm-trigger');
+                    }, 300);
+                }
             }
         },
     );

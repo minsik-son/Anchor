@@ -520,6 +520,10 @@
       "body": "タップしてアラームを解除",
       "defaultPlace": "目的地"
     },
+    "action": {
+      "dismiss": "アラーム解除",
+      "open": "アラームを見る"
+    },
     "tracking": {
       "remaining": "残り {{distance}}",
       "elapsed": "{{time}} 移動中",

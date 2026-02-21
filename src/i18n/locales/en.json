@@ -520,6 +520,10 @@
       "body": "Tap to dismiss the alarm",
       "defaultPlace": "Destination"
     },
+    "action": {
+      "dismiss": "Dismiss Alarm",
+      "open": "View Alarm"
+    },
     "tracking": {
       "remaining": "{{distance}} remaining",
       "elapsed": "{{time}} in transit",

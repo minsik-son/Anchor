@@ -1,7 +1,6 @@
 /**
  * Error Reporting Utility
- * Centralized error handling — currently logs to console,
- * ready for Sentry integration when available.
+ * Centralized error handling — logs to console.
  *
  * Usage:
  *   import { captureError, captureMessage } from '../utils/errorReporting';
@@ -23,7 +22,6 @@ interface ErrorContext {
 
 /**
  * Capture and report an error with optional context.
- * Currently logs to console; will integrate with Sentry when available.
  */
 export function captureError(error: unknown, context?: ErrorContext): void {
     const errorObj = error instanceof Error ? error : new Error(String(error));
@@ -35,9 +33,6 @@ export function captureError(error: unknown, context?: ErrorContext): void {
     if (__DEV__ && context) {
         console.debug(`${prefix} Error context:`, JSON.stringify(context, null, 2));
     }
-
-    // TODO: Sentry integration
-    // Sentry.captureException(errorObj, { extra: context });
 }
 
 /**
@@ -58,9 +53,6 @@ export function captureMessage(message: string, level: ErrorLevel = 'warning', c
             console.error(`${prefix} ${message}`);
             break;
     }
-
-    // TODO: Sentry integration
-    // Sentry.captureMessage(message, level);
 }
 
 /**
@@ -69,8 +61,6 @@ export function captureMessage(message: string, level: ErrorLevel = 'warning', c
  */
 export function setUserContext(userId: string): void {
     console.log('[ErrorReporting] User context set:', userId);
-    // TODO: Sentry integration
-    // Sentry.setUser({ id: userId });
 }
 
 /**
@@ -80,6 +70,4 @@ export function addBreadcrumb(category: string, message: string, data?: Record<s
     if (__DEV__) {
         console.debug(`[Breadcrumb:${category}] ${message}`, data || '');
     }
-    // TODO: Sentry integration
-    // Sentry.addBreadcrumb({ category, message, data, level: 'info' });
 }

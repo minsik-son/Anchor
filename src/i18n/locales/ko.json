@@ -520,6 +520,10 @@
       "body": "탭하여 알람을 해제하세요",
       "defaultPlace": "목적지"
     },
+    "action": {
+      "dismiss": "알람 해제",
+      "open": "알람 보기"
+    },
     "tracking": {
       "remaining": "{{distance}} 남음",
       "elapsed": "{{time}}째 이동 중",

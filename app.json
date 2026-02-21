@@ -57,7 +57,9 @@
         "VIBRATE",
         "RECEIVE_BOOT_COMPLETED",
         "SYSTEM_ALERT_WINDOW",
-        "ACTIVITY_RECOGNITION"
+        "ACTIVITY_RECOGNITION",
+        "USE_FULL_SCREEN_INTENT",
+        "WAKE_LOCK"
       ]
     },
     "web": {
@@ -94,15 +96,8 @@
         }
       ],
       "expo-live-activity",
-      [
-        "@sentry/react-native/expo",
-        {
-          "organization": "locaalert",
-          "project": "locaalert-mobile"
-        }
-      ],
       "./plugins/withCxx20",
-      "@sentry/react-native"
+      "./plugins/withFullScreenNotification"
     ]
   }
 }

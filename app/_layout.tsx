@@ -16,24 +16,16 @@ import { useThemeStore } from '../src/stores/themeStore';
 import { useChallengeStore } from '../src/stores/challengeStore';
 import { useAlarmStore } from '../src/stores/alarmStore';
 import { useLocationStore } from '../src/stores/locationStore';
+import * as Notifications from 'expo-notifications';
+import { router as expoRouter } from 'expo-router';
 import {
     initNotifications,
     setupNotificationResponseHandler,
     removeNotificationResponseHandler,
 } from '../src/services/notification/notificationService';
-import * as Sentry from '@sentry/react-native';
 import { OfflineBanner } from '../src/components/common/OfflineBanner';
 import { cleanExpiredData } from '../src/services/privacy/dataRetentionService';
 import '../src/i18n'; // Initialize i18n
-
-// Initialize Sentry (production only)
-Sentry.init({
-    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || '',
-    enabled: !__DEV__,
-    tracesSampleRate: 0.2,
-    attachScreenshot: true,
-    enableAutoSessionTracking: true,
-});
 
 export default function RootLayout() {
     const [isReady, setIsReady] = useState(false);
@@ -102,10 +94,27 @@ export default function RootLayout() {
         initialize();
     }, []);
 
-    // Set up notification tap handler
+    // Set up notification tap handler + check cold start notification
     useEffect(() => {
         if (!isReady) return;
         setupNotificationResponseHandler();
+
+        // Cold start: check if app was launched by tapping a notification
+        // The listener above only catches taps while the app is already running.
+        // For cold starts, the event fires before the listener is registered,
+        // so we need to manually check the launch notification.
+        Notifications.getLastNotificationResponseAsync().then((response) => {
+            if (response) {
+                const data = response.notification.request.content.data;
+                if (data?.screen === '/alarm-trigger') {
+                    console.log('[RootLayout] Cold start from notification → navigating to alarm-trigger');
+                    setTimeout(() => {
+                        expoRouter.navigate('/alarm-trigger');
+                    }, 500);
+                }
+            }
+        });
+
         return () => removeNotificationResponseHandler();
     }, [isReady]);
 
