@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Animated, FlatList, ActivityIndicator, Alert, Platform, useColorScheme, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Keyboard, Animated, FlatList, ActivityIndicator, Alert, Platform, useColorScheme, useWindowDimensions } from 'react-native';
 import ReanimatedAnimated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MapView, { PROVIDER_GOOGLE, Circle, Marker, UrlTile, Polyline } from 'react-native-maps';
@@ -19,6 +19,8 @@ import { useLocationStore } from '../../src/stores/locationStore';
 import { useFavoritePlaceStore } from '../../src/stores/favoritePlaceStore';
 import { typography, spacing, radius, shadows, useThemeColors, ThemeColors } from '../../src/styles/theme';
 import CenterPinMarker from '../../src/components/map/CenterPinMarker';
+import MapSearchBar from '../../src/components/map/MapSearchBar';
+import { SearchResultsDropdown } from '../../src/components/map/SearchResultsDropdown';
 import NavigationPanel from '../../src/components/navigation/NavigationPanel';
 import BottomSheetDashboard, {
     BOTTOM_SHEET_COLLAPSED,
@@ -602,132 +604,35 @@ export default function Home() {
                 />
             )}
 
-            {/* Top Bar Container - Search + Location Button aligned */}
+            {/* Top Bar Container - Search + Location Button */}
             <View style={[styles.topBarContainer, { top: insets.top + spacing.sm }]}>
-                {/* Search Bar (fades during drag) */}
-                <Animated.View style={[styles.searchBar, { opacity: searchBarOpacity }]}>
-                    <Ionicons name="search" size={20} color={colors.textWeak} />
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder={t('home.searchPlaceholder')}
-                        placeholderTextColor={colors.textWeak}
-                        value={searchState.query}
-                        onChangeText={setQuery}
-                        onFocus={() => {
-                            showResults();
-                            setBottomSheetExpanded(false);
-                        }}
-                        onSubmitEditing={handleSearchSubmit}
-                        returnKeyType="search"
-                        accessibilityRole="search"
-                        accessibilityLabel={t('accessibility.searchLocation')}
-                        accessibilityHint={t('home.searchPlaceholder')}
-                    />
-                    {searchState.query.length > 0 && (
-                        <Pressable onPress={clearSearch}>
-                            <Ionicons name="close-circle" size={20} color={colors.textWeak} />
-                        </Pressable>
-                    )}
-                </Animated.View>
-
-                {/* My Location Button - Same height as search bar */}
-                <Pressable
-                    style={styles.myLocationButton}
-                    onPress={handleMyLocationPress}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('accessibility.myLocation')}
-                    accessibilityHint={t('accessibility.myLocation')}
-                >
-                    <Ionicons name="locate" size={24} color={colors.primary} />
-                </Pressable>
+                <MapSearchBar
+                    query={searchState.query}
+                    onQueryChange={setQuery}
+                    onFocus={() => {
+                        showResults();
+                        setBottomSheetExpanded(false);
+                    }}
+                    onClear={clearSearch}
+                    onSubmit={handleSearchSubmit}
+                    onMyLocationPress={handleMyLocationPress}
+                    animatedOpacity={searchBarOpacity}
+                />
             </View>
 
             {/* Search Results Dropdown */}
-            {searchState.isVisible && (
-                <View style={[styles.searchResultsContainer, { top: insets.top + spacing.sm + 56 }]}>
-                    {searchState.showingRecent && searchState.recentDestinations.length > 0 ? (
-                        /* Recent Destinations */
-                        <View>
-                            <View style={styles.recentHeader}>
-                                <Ionicons name="time-outline" size={16} color={colors.textWeak} />
-                                <Text style={styles.recentHeaderText}>{t('home.recentDestinations', '최근 목적지')}</Text>
-                            </View>
-                            <FlatList
-                                data={searchState.recentDestinations}
-                                keyExtractor={(item) => item.id}
-                                keyboardShouldPersistTaps="handled"
-                                scrollEnabled={false}
-                                renderItem={({ item }) => (
-                                    <Pressable
-                                        style={styles.searchResultItem}
-                                        onPress={() => selectPlace(item)}
-                                    >
-                                        <View style={styles.searchResultIconContainer}>
-                                            <Ionicons
-                                                name="time"
-                                                size={20}
-                                                color={colors.textMedium}
-                                            />
-                                        </View>
-                                        <View style={styles.searchResultTextContainer}>
-                                            <Text style={styles.searchResultName} numberOfLines={1}>
-                                                {item.name}
-                                            </Text>
-                                        </View>
-                                    </Pressable>
-                                )}
-                            />
-                        </View>
-                    ) : searchState.isSearching ? (
-                        <View style={styles.searchLoadingContainer}>
-                            <ActivityIndicator size="small" color={colors.primary} />
-                            <Text style={styles.searchLoadingText}>{t('home.searching')}</Text>
-                        </View>
-                    ) : searchState.results.length > 0 ? (
-                        <FlatList
-                            data={searchState.results}
-                            keyExtractor={(item) => item.id}
-                            keyboardShouldPersistTaps="handled"
-                            renderItem={({ item }) => {
-                                const isTopMatch = searchState.topMatch?.id === item.id;
-                                return (
-                                    <Pressable
-                                        style={styles.searchResultItem}
-                                        onPress={() => selectPlace(item)}
-                                    >
-                                        <View style={styles.searchResultIconContainer}>
-                                            <Ionicons
-                                                name={isTopMatch ? 'location' : 'location-outline'}
-                                                size={20}
-                                                color={isTopMatch ? colors.primary : colors.textMedium}
-                                            />
-                                        </View>
-                                        <View style={styles.searchResultTextContainer}>
-                                            <Text
-                                                style={[
-                                                    styles.searchResultName,
-                                                    isTopMatch && styles.searchResultNameTop,
-                                                ]}
-                                                numberOfLines={1}
-                                            >
-                                                {item.name}
-                                            </Text>
-                                            <Text style={styles.searchResultAddress} numberOfLines={1}>
-                                                {item.address}
-                                            </Text>
-                                        </View>
-                                    </Pressable>
-                                );
-                            }}
-                        />
-                    ) : searchState.query.length >= 2 ? (
-                        <View style={styles.searchLoadingContainer}>
-                            <Ionicons name="search-outline" size={24} color={colors.textWeak} />
-                            <Text style={styles.searchLoadingText}>{t('common.noResults', '검색 결과가 없습니다')}</Text>
-                        </View>
-                    ) : null}
-                </View>
-            )}
+            <View style={[styles.searchResultsPositioner, { top: insets.top + spacing.sm + 56 }]}>
+                <SearchResultsDropdown
+                    isVisible={searchState.isVisible}
+                    query={searchState.query}
+                    results={searchState.results}
+                    topMatch={searchState.topMatch}
+                    isSearching={searchState.isSearching}
+                    showingRecent={searchState.showingRecent}
+                    recentDestinations={searchState.recentDestinations}
+                    onSelectPlace={selectPlace}
+                />
+            </View>
 
             {/* First time hint toast */}
             {isFirstHint && !isDragging && centerLocation && !isNavigating && (
@@ -904,6 +809,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         ...shadows.button,
+    },
+    searchResultsPositioner: {
+        position: 'absolute',
+        left: spacing.sm,
+        right: spacing.sm,
+        zIndex: 1000,
     },
     searchResultsContainer: {
         position: 'absolute',

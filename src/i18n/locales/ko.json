@@ -176,7 +176,9 @@
       "alarmBackground": "알람 배경",
       "distanceUnit": "거리 단위",
       "deleteAllData": "모든 데이터 삭제",
-      "deleteAllDataDesc": "알람 기록, 경로, 챌린지 등 모든 데이터를 삭제합니다"
+      "deleteAllDataDesc": "알람 기록, 경로, 챌린지 등 모든 데이터를 삭제합니다",
+      "favoriteManage": "즐겨찾기 관리",
+      "favoriteManageDesc": "{{count}}개 등록됨"
     },
     "unit": {
       "title": "거리 단위",
@@ -226,14 +228,33 @@
   },
   "favoriteSetup": {
     "title": "즐겨찾기 추가",
+    "editTitle": "즐겨찾기 수정",
     "nameLabel": "이름",
     "namePlaceholder": "예: 집, 회사, 카페",
     "iconLabel": "아이콘",
     "locationLabel": "위치",
     "save": "저장하기",
+    "scheduleLabel": "스케줄",
+    "daysLabel": "요일",
+    "startTime": "시작",
+    "endTime": "종료",
     "noName": "이름 필요",
     "pleaseEnterName": "즐겨찾기 이름을 입력해주세요.",
-    "maxLimitReached": "즐겨찾기는 최대 3개까지 등록할 수 있습니다."
+    "maxLimitReached": "즐겨찾기는 최대 3개까지 등록할 수 있습니다.",
+    "tapToSetLocation": "지도에서 위치를 선택하세요",
+    "noLocation": "위치를 먼저 설정해주세요."
+  },
+  "locationPicker": {
+    "title": "위치 선택",
+    "confirm": "이 위치로 설정"
+  },
+  "favoriteManage": {
+    "title": "즐겨찾기 관리",
+    "empty": "등록된 즐겨찾기가 없습니다.\n자주 가는 장소를 추가해보세요.",
+    "addNew": "새 즐겨찾기 추가",
+    "noSchedule": "스케줄 없음",
+    "everyday": "매일",
+    "weekdays": "평일"
   },
   "onboarding": {
     "welcome": "놓치면 안 되는 장소에\n닻을 내려두세요",

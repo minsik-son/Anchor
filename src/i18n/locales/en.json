@@ -176,7 +176,9 @@
       "alarmBackground": "Alarm Background",
       "distanceUnit": "Distance Unit",
       "deleteAllData": "Delete All Data",
-      "deleteAllDataDesc": "Deletes all alarm history, routes, challenges, and other data"
+      "deleteAllDataDesc": "Deletes all alarm history, routes, challenges, and other data",
+      "favoriteManage": "Manage Favorites",
+      "favoriteManageDesc": "{{count}} registered"
     },
     "unit": {
       "title": "Distance Unit",
@@ -226,14 +228,33 @@
   },
   "favoriteSetup": {
     "title": "Add Favorite",
+    "editTitle": "Edit Favorite",
     "nameLabel": "Name",
     "namePlaceholder": "e.g. Home, Office, Cafe",
     "iconLabel": "Icon",
     "locationLabel": "Location",
     "save": "Save",
+    "scheduleLabel": "Schedule",
+    "daysLabel": "Days",
+    "startTime": "Start",
+    "endTime": "End",
     "noName": "Name Required",
     "pleaseEnterName": "Please enter a favorite name.",
-    "maxLimitReached": "You can add up to 3 favorites."
+    "maxLimitReached": "You can add up to 3 favorites.",
+    "tapToSetLocation": "Tap to select location on map",
+    "noLocation": "Please set a location first."
+  },
+  "locationPicker": {
+    "title": "Select Location",
+    "confirm": "Set this location"
+  },
+  "favoriteManage": {
+    "title": "Manage Favorites",
+    "empty": "No favorites yet.\nAdd your frequently visited places.",
+    "addNew": "Add New Favorite",
+    "noSchedule": "No schedule",
+    "everyday": "Everyday",
+    "weekdays": "Weekdays"
   },
   "onboarding": {
     "welcome": "Drop an anchor\nat places you can't miss",

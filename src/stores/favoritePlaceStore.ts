@@ -8,6 +8,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEY = '@locaalert:favorite_places';
 
+export interface FavoriteSchedule {
+    enabled: boolean;
+    days: number[];      // 0(일)~6(토), 빈 배열이면 매일
+    startTime: string;   // "HH:mm"
+    endTime: string;     // "HH:mm"
+}
+
 export interface FavoritePlace {
     id: string;
     label: string; // '집', '회사', etc.
@@ -15,6 +22,8 @@ export interface FavoritePlace {
     latitude: number;
     longitude: number;
     radius: number;
+    schedule?: FavoriteSchedule;
+    isActive: boolean;
 }
 
 interface FavoritePlaceStore {
@@ -26,6 +35,7 @@ interface FavoritePlaceStore {
     addFavorite: (place: Omit<FavoritePlace, 'id'>) => Promise<void>;
     updateFavorite: (id: string, updates: Partial<Omit<FavoritePlace, 'id'>>) => Promise<void>;
     deleteFavorite: (id: string) => Promise<void>;
+    toggleActive: (id: string) => Promise<void>;
 }
 
 export const useFavoritePlaceStore = create<FavoritePlaceStore>((set, get) => ({
@@ -36,7 +46,12 @@ export const useFavoritePlaceStore = create<FavoritePlaceStore>((set, get) => ({
         try {
             const stored = await AsyncStorage.getItem(STORAGE_KEY);
             if (stored) {
-                const favorites = JSON.parse(stored);
+                const raw = JSON.parse(stored);
+                // 마이그레이션: isActive 없으면 true로 기본값
+                const favorites = raw.map((fav: any) => ({
+                    ...fav,
+                    isActive: fav.isActive !== undefined ? fav.isActive : true,
+                }));
                 set({ favorites, isLoaded: true });
             } else {
                 set({ isLoaded: true });
@@ -58,6 +73,7 @@ export const useFavoritePlaceStore = create<FavoritePlaceStore>((set, get) => ({
         const newPlace: FavoritePlace = {
             ...place,
             id: Date.now().toString(),
+            isActive: place.isActive !== undefined ? place.isActive : true,
         };
 
         const updated = [...favorites, newPlace];
@@ -95,6 +111,20 @@ export const useFavoritePlaceStore = create<FavoritePlaceStore>((set, get) => ({
             set({ favorites: updated });
         } catch (error) {
             console.error('[FavoritePlaceStore] Delete error:', error);
+            throw error;
+        }
+    },
+
+    toggleActive: async (id) => {
+        const { favorites } = get();
+        const updated = favorites.map(fav =>
+            fav.id === id ? { ...fav, isActive: !fav.isActive } : fav
+        );
+        try {
+            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+            set({ favorites: updated });
+        } catch (error) {
+            console.error('[FavoritePlaceStore] Toggle error:', error);
             throw error;
         }
     },

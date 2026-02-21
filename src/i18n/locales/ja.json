@@ -176,7 +176,9 @@
       "alarmBackground": "アラーム背景",
       "distanceUnit": "距離単位",
       "deleteAllData": "すべてのデータを削除",
-      "deleteAllDataDesc": "アラーム履歴、ルート、チャレンジなどすべてのデータを削除します"
+      "deleteAllDataDesc": "アラーム履歴、ルート、チャレンジなどすべてのデータを削除します",
+      "favoriteManage": "お気に入り管理",
+      "favoriteManageDesc": "{{count}}件登録済み"
     },
     "unit": {
       "title": "距離単位",
@@ -226,14 +228,33 @@
   },
   "favoriteSetup": {
     "title": "お気に入り追加",
+    "editTitle": "お気に入り編集",
     "nameLabel": "名前",
     "namePlaceholder": "例：家、会社、カフェ",
     "iconLabel": "アイコン",
     "locationLabel": "位置",
     "save": "保存する",
+    "scheduleLabel": "スケジュール",
+    "daysLabel": "曜日",
+    "startTime": "開始",
+    "endTime": "終了",
     "noName": "名前が必要です",
     "pleaseEnterName": "お気に入りの名前を入力してください。",
-    "maxLimitReached": "お気に入りは最大3件まで登録できます。"
+    "maxLimitReached": "お気に入りは最大3件まで登録できます。",
+    "tapToSetLocation": "地図で位置を選択してください",
+    "noLocation": "先に位置を設定してください。"
+  },
+  "locationPicker": {
+    "title": "位置選択",
+    "confirm": "この位置に設定"
+  },
+  "favoriteManage": {
+    "title": "お気に入り管理",
+    "empty": "お気に入りがありません。\nよく行く場所を追加してみましょう。",
+    "addNew": "新しいお気に入りを追加",
+    "noSchedule": "スケジュールなし",
+    "everyday": "毎日",
+    "weekdays": "平日"
   },
   "onboarding": {
     "welcome": "見逃せない場所に\nアンカーを下ろそう",

@@ -7,6 +7,7 @@
 import { useMemo, useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { router } from 'expo-router';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -318,11 +319,19 @@ function BottomSheetDashboard({
                 {/* Favorites Header with Manage Button (expanded only) */}
                 <Animated.View style={[styles.favoritesHeader, favoritesHeaderStyle]}>
                     <Text style={styles.favoritesTitle}>{t('home.favorites')}</Text>
-                    <Pressable style={styles.manageButton} onPress={toggleDeleteMode}>
-                        <Text style={styles.manageButtonText}>
-                            {isDeleteMode ? t('common.close') : t('common.edit')}
-                        </Text>
-                    </Pressable>
+                    <View style={styles.favoritesHeaderRight}>
+                        <Pressable
+                            style={styles.manageIconButton}
+                            onPress={() => router.push('/favorite-manage')}
+                        >
+                            <Ionicons name="settings-outline" size={16} color={colors.textMedium} />
+                        </Pressable>
+                        <Pressable style={styles.manageButton} onPress={toggleDeleteMode}>
+                            <Text style={styles.manageButtonText}>
+                                {isDeleteMode ? t('common.close') : t('common.edit')}
+                            </Text>
+                        </Pressable>
+                    </View>
                 </Animated.View>
 
                 {/* Favorite Places */}
@@ -508,6 +517,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
         ...typography.caption,
         color: colors.textMedium,
         fontWeight: '600',
+    },
+    favoritesHeaderRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.xs,
+    },
+    manageIconButton: {
+        padding: 4,
     },
     manageButton: {
         paddingHorizontal: spacing.xs,

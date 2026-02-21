@@ -169,6 +169,9 @@ export default function RootLayout() {
                 <Stack.Screen name="challenge-detail" options={{ headerShown: false }} />
                 <Stack.Screen name="challenge-location-picker" options={{ headerShown: false }} />
                 {__DEV__ && <Stack.Screen name="dev-debug" options={{ headerShown: false }} />}
+                <Stack.Screen name="favorite-manage" options={{ headerShown: false }} />
+                <Stack.Screen name="favorite-place-setup" options={{ headerShown: false }} />
+                <Stack.Screen name="location-picker" options={{ headerShown: false }} />
                 <Stack.Screen
                     name="action-checklist"
                     options={{

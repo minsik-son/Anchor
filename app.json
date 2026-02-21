@@ -97,7 +97,8 @@
       ],
       "expo-live-activity",
       "./plugins/withCxx20",
-      "./plugins/withFullScreenNotification"
+      "./plugins/withFullScreenNotification",
+      "@react-native-community/datetimepicker"
     ]
   }
 }

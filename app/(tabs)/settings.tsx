@@ -32,6 +32,7 @@ import { useAlarmSound } from '../../src/hooks/useAlarmSound';
 import { deleteAllUserData } from '../../src/services/privacy/dataRetentionService';
 import { useAlarmStore } from '../../src/stores/alarmStore';
 import { useChallengeStore } from '../../src/stores/challengeStore';
+import { useFavoritePlaceStore } from '../../src/stores/favoritePlaceStore';
 
 const ALERT_TYPE_OPTIONS: { code: AlertType; labelKey: string; icon: string }[] = [
     { code: 'both', labelKey: 'settings.alertType.both', icon: 'notifications' },
@@ -48,6 +49,7 @@ export default function Settings() {
     const styles = useMemo(() => createStyles(colors), [colors]);
     const { mode, setMode } = useThemeStore();
     const { distanceUnit, setDistanceUnit } = useUnitStore();
+    const { favorites } = useFavoritePlaceStore();
     const {
         alertType, selectedSound, setAlertType, setSelectedSound,
         shakeToDismiss, setShakeToDismiss,
@@ -234,6 +236,17 @@ export default function Settings() {
                         label={t('settings.items.distanceUnit')}
                         description={getUnitStatusText(distanceUnit)}
                         onPress={() => setShowUnitModal(true)}
+                        rightElement={
+                            <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
+                        }
+                        colors={colors}
+                    />
+
+                    <SettingItem
+                        icon="star"
+                        label={t('settings.items.favoriteManage')}
+                        description={t('settings.items.favoriteManageDesc', { count: favorites.length })}
+                        onPress={() => router.push('/favorite-manage')}
                         rightElement={
                             <Ionicons name="chevron-forward" size={20} color={colors.textWeak} />
                         }
